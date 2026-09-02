@@ -1343,6 +1343,41 @@ VERDICT -> 4-acc without SLM lights and matches sc8
   8-row A-db tile. Next: B pipeline + ca.ca on
   sc8db, or ngen null-dest prefetch.
 
+### 2026-09-02ax - K2 sc8db B pipeline + ca.ca M=64
+
+CONTEXT -> sc8db A-db is 97-100 us vs W8A8 46. ngen
+  M=64 loads A/B ca.ca and keeps B in GRF (xaf).
+  Steal: B ping-pong + cached/cached on the 8-row
+  A-db tile. No SLM, no prefetch.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8bp, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=16 (64 dpas). A+B prologue, issue next
+  k64 before dpas. lsc_load_2d L1/L2 cached.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8bp.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8bp.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64-68x dpas.8x8, load_block2d
+  .ca.ca, store_block2d.d16, grf_count 128, no
+  slm_size. cosine=1.0 max_abs=0. timed act=2783
+  cur=2800 throttle=1. M=64: event 106.16/105.70
+  us, pipe_host 105.46/106.51 vs sc8db 97-100 vs
+  W8A8 46.
+
+VERDICT -> B-db + ca.ca lights and is ~6-9% slower
+  than A-db only at the same 2800/throttle=1. Extra
+  B GRF is a tax. Keep sc8db as the M=64 hand floor.
+  Next: ngen null-dest prefetch on sc8db (no extra
+  GRF), or stop M=64 load-path chasing.
+
+
 
 
 

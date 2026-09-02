@@ -435,3 +435,19 @@ grf_count 128, no slm_size.
 Matches sc8 (~120), loses to A-db (~98). Occupancy
 of the 8-row tile beat extra B reuse. Next: B
 pipeline + ca.ca on sc8db.
+
+## B pipeline + ca.ca on sc8db M=64 (2026-09-02ax)
+
+Same 8-row A-db tile plus B ping-pong and
+lsc_load_2d L1/L2 cached. spin=512. cosine=1.0
+max_abs=0. timed act=2783 cur=2800 throttle=1.
+IGA load_block2d.ca.ca, 64-68x dpas.8x8, grf 128,
+no SLM.
+
+| shape | card | event_us | pipe_host_us | sc8db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 106.156 | 105.455 | 96.641 | 46.167 |
+| 64 x 5120 | 1 | 105.703 | 106.511 | 100.435 | 46.450 |
+
+~6-9% slower than A-db only. Extra B GRF is a tax.
+Keep sc8db. Next: null-dest prefetch on sc8db.
