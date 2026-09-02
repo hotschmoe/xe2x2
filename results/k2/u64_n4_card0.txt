@@ -1,0 +1,29 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:836187504028 energy2=pkg:503224953918 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:749232818542 energy2=pkg:529812867980 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_u64 nt=4 rc=4 target=64dpas
+oneDNN W8A8 floor M=1/64/256 5120: 42-46 / 46-49 / 74-76 us
+=== u64 nt=4 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,44.526,0.0059,0,1
+timed,4,8,4,5120,5120,315.656,0.6644,0,1
+=== u64 nt=4 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,35.625,0.0074,0,1
+timed,4,8,64,5120,5120,487.042,6.8894,0,1
+=== u64 nt=4 m=256 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,8.932,0.0293,0,1
+timed,4,8,256,5120,5120,593.536,22.6132,0,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1700 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:837566903076 energy2=pkg:504011030822 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:750611242675 energy2=pkg:530622794006 temp2_mC=54000

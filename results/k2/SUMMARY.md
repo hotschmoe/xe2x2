@@ -148,3 +148,19 @@ dpas; NT=4 has 16. Not ngen's 64. max_abs=0.
 First pair (c0 nt2, c1 nt4) started D3hot cur=2800. Swap
 started ~1620 MHz warm. M=4 92-396 is clock + first-touch,
 not a 45 us beat. Floor stays 45 us.
+
+## 64 static dpas.8x4 unroll (2026-09-02ad)
+
+k64 steps unrolled so 2*NT*UNROLL=64. NT=4 U=8 innerK=512;
+NT=2 U=16 innerK=1024. ocloc: 64x `dpas.8x4` both kernels,
+grf_count 128. max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | W8A8 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 69 | 53 | 316 | 107 | 42-46 (M=1) |
+| 64 x 5120 | 570 | 436 | 487 | 314 | 46-49 |
+| 256 x 5120 | 1198 | 1186 | 594 | 1044 | 74-76 |
+
+NT=4 c0 started D3hot/2800 (slow M=4). Warm NT=2 is 53-69
+us at M=4, closer than k64, not a 45 us beat. Floor stays
+45 us.

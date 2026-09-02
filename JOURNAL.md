@@ -728,6 +728,34 @@ VERDICT -> k64 blocking with 4-16 dpas is not the 45 us
   kernel. Promote encoding + miss. Next: land ~64 static
   dpas.8x4 like ngen, not another SLM/NT micro.
 
+### 2026-09-02ad - K2 64 static dpas.8x4 unroll
+
+CONTEXT -> k64 blocking left 4/16 dpas. ngen M=1 is 64x
+  dpas.8x4. Unroll k64 steps so 2*NT*UNROLL=64.
+
+CONFIG -> sycl+l0, standalone dpas_s8_u64, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. NT=4 U=8 (innerK 512)
+  and NT=2 U=16 (innerK 1024). Shapes 4/64/256 x 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_u64.sh 0 4
+  gpu-run --card 1 kernels/esimd_dpas/run_u64.sh 1 2
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: both kernels 64x dpas.8x4 rW:b rA:b, GRF
+  128. max_abs=0 both cards both NT. M=4: NT=2 53-69 us
+  (warm) / NT=4 107-316 (D3hot 316). M=64: 314-570 vs W8A8
+  46-49. M=256: 594-1198 vs 75. Warm NT=2 decode is closer
+  than k64 92-396; still above 45.
+
+VERDICT -> 64 static dpas.8x4 lights and is not the 45 us
+  kernel. Do not freeze 53 us (pad M=4, clocks). Promote
+  encoding + miss. Next: ngen wg 8x2 / ska / prefetch, not
+  another unroll count.
+
 
 
 

@@ -396,6 +396,25 @@ VERDICT -> The ngen k64 *blocking* is not enough. IGC kept
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/k64_dpas_lines.txt`.
 
+## 64 static dpas.8x4 lights and does not beat 45 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_u64`, RC=4,
+  k64 steps unrolled so 2*NT*UNROLL=64 dpas. NT=4 U=8 and
+  NT=2 U=16. Both cards. Prior: ngen M=1 is 64x `dpas.8x4`.
+
+RESULT -> IGA 64x `dpas.8x4 (16|M0) ... :b :b` on both NT
+  kernels. zebin `grf_count 128`. max_abs=0. M=4 5120: NT=2
+  53-69 us warm vs NT=4 107-316 (D3hot first 316) vs W8A8
+  M=1 42-46. M=64: 314-570 vs 46-49. M=256: 594-1198 vs
+  74-76.
+
+VERDICT -> Matching ngen's dpas *count* is not the 45 us
+  kernel. Warm NT=2 is the closest decode so far; do not
+  freeze 53 us. Floor stays 45 us. Remaining steal is wg
+  8x2 / ska / prefetch, not more unroll.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/u64_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

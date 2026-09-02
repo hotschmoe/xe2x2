@@ -1,0 +1,12 @@
+K2 dpas_s8_u64 ocloc/IGA (CPU unbundle, no GPU)
+backend sycl+l0 AOT intel_gpu_bmg_g31
+- name:            _ZTSN12_GLOBAL__N_116DpasS8U64Nt4NameE
+grf_count:       128
+has_dpas:        true
+simd_size:       1
+- name:            _ZTSN12_GLOBAL__N_116DpasS8U64Nt2NameE
+grf_count:       128
+has_dpas:        true
+simd_size:       1
+.text._ZTSN12_GLOBAL__N_116DpasS8U64Nt2NameE.asm: 64 dpas {'8x4': 64}
+.text._ZTSN12_GLOBAL__N_116DpasS8U64Nt4NameE.asm: 64 dpas {'8x4': 64}
