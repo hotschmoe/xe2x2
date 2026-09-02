@@ -1870,6 +1870,66 @@ VERDICT -> Sibling matches. New s4 M=256 floor
   Rank us. Next: split s4 A-db on this 4-acc
   tile vs s4 decode N=17408.
 
+### 2026-09-02bn - K2 s4 k64 A-db on 4-acc M=256 card0
+
+CONTEXT -> s4 4-acc no A-db is 48.6 us at M=256.
+  s8 k32 A-db on this tile was a tax (135 vs
+  128). Steal k64 A ping-pong on s4. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s4_w48m4db,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. NT=2 U=8, 4 M-tiles, wg 4x8,
+  k128, k64 A-db, pack=2, no SLM. spin=512
+  warmup=10 iters=20. Fill s4 [-8,7] scales 0.02
+  out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_w48m4db.sh 0 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 128x dpas.8x8 rW:s4 rA:s4,
+  store_block2d d16, grf_count 128, no slm_size.
+  NT=2 no spill (NT=4 spill 4608 B). cosine=1.0
+  max_abs=0. timed act=cur=2800 throttle=0.
+  M=256 card0: event 50.740 us, pipe_host 51.937
+  vs no A-db 48.6 vs W8A8 75.
+
+VERDICT -> k64 A-db on s4 4-acc is a real tax
+  (~51.9 vs 48.6, ~1.07x). Same miss as s8.
+  Floor stays 48.6 us. Rank us.
+
+### 2026-09-02bo - K2 s4 decode N=17408 card1
+
+CONTEXT -> s4 RC=4 8x2-N is 16.5 us at M=1
+  N=5120. Qwen3.8-ish FFN-up is N=17408.
+  Napkin N-linear 16.5*17408/5120 ~56 us.
+  Same binary, one-card shape steal.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 1.
+  NT=2 U=16 pack=2 spin=4000. Fill s4 [-8,7]
+  scales 0.02 out f16. M=1 and M=4, N=17408
+  K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_sc_wide.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 29.039 us, pipe_host 29.754
+  vs N=5120 16.5 vs napkin 56. M=4 tracks
+  (pipe 29.739). Ratio 29.8/16.5 ~1.80x, not
+  3.40x.
+
+VERDICT -> Wide N is a real 29.8 us at 2800,
+  better than N-linear. One-card. Do not freeze
+  as a floor until card0. Rank us. Next: sibling
+  N=17408 vs s4 M=1 K=17408 (down-proj).
+
 
 
 

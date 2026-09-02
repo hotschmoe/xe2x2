@@ -646,3 +646,31 @@ Sibling matches (~1%). New s4 decode floor
 16.5 us at 2800 both cards. ~2.05x s8 34.
 M=4 tracks M=1. Next: s4 A-db M=256 vs s4
 decode N=17408.
+
+## s4 k64 A-db on 4-acc M=256 card0 (2026-09-02bn)
+
+Same 4-acc wg 4x8 k128 128 dpas plus k64 A
+ping-pong. spin=512. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0. IGA 128x
+dpas.8x8 rW:s4 rA:s4, grf 128, no SLM, NT=2
+no spill.
+
+| shape | card | event_us | pipe_host_us | no A-db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 50.740 | 51.937 | 48.650 | 76.1 |
+
+~1.07x tax vs no A-db. Floor stays 48.6 us.
+
+## s4 RC=4 N=17408 card1 (2026-09-02bo)
+
+Same decode tile, N=17408 K=5120. spin=4000.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | N=5120 | napkin |
+|---|---|---:|---:|---:|---:|
+| 1 x 17408 | 1 | 29.039 | 29.754 | 16.5 | 56 |
+| 4 x 17408 | 1 | 29.443 | 29.739 | 16.3 | 56 |
+
+~1.80x N=5120, not 3.40x. One-card. Next:
+sibling N=17408 vs K=17408 down-proj.

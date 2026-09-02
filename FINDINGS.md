@@ -1004,6 +1004,42 @@ Evidence: `results/k2/s4sc_n2_s4000_card0.txt`,
   `results/k2/s4sc_n2_s4000_card1.txt`,
   `results/k2/s4sc_dpas_lines.txt`.
 
+## s4 A-db on 4-acc is a tax at M=256 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s4_w48m4db`. Same 4-acc wg 4x8 k128
+  plus k64 A ping-pong. Card0 only, NT=2,
+  spin=512. Prior: s8 A-db was a tax here.
+
+RESULT -> IGA 128x `dpas.8x8` rW:s4 rA:s4,
+  `grf_count` 128, no SLM, NT=2 no spill.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=256 pipe_host 51.94 vs no
+  A-db 48.65 vs W8A8 75.
+
+VERDICT -> A-db is still a tax on this 4-acc
+  M=256 tile in s4 (~1.07x). Floor stays
+  48.6 us. Do not keep chasing A-db here.
+
+Evidence: `results/k2/s4w48m4db_m256_n2_s512_card0.txt`,
+  `results/k2/s4w48m4db_dpas_lines.txt`.
+
+## s4 decode N=17408 is 29.8 us on card1, pending sibling (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s4_sc`.
+  Same RC=4 8x2-N tile, N=17408 K=5120. Card1
+  only, NT=2, spin=4000. Prior: N-linear ~56 us.
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=1 pipe_host 29.75 vs N=5120 16.5
+  vs napkin 56. M=4 tracks (29.74).
+
+VERDICT -> Wide N is ~1.80x N=5120, not 3.40x.
+  One-card. Do not freeze 29.8 us as a floor
+  until card0 runs it.
+
+Evidence: `results/k2/s4sc_n17408_n2_s4000_card1.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -1146,7 +1182,9 @@ Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 s8 (34 vs 44 us) and s4 (16.5 vs 44 us), at
 M=64 s4 (33.6 vs 46 us), and at M=256 s4 (48.6 vs 75 us).
-Different dtype than W8A8, not a W8A8 replacement. It is
+Different dtype than W8A8, not a W8A8 replacement. One-card
+pending sibling: s4 M=1 N=17408 is 29.8 us (1.80x N=5120,
+not 3.4x). It is
 still true for INT8 s8 at M=64
 (best hand wg 4x8 A-db
 75 vs 46 us; 8x2-N A-db 97-100; 4-acc wg 4x2 115 vs 4x2x4
