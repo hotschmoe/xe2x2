@@ -1277,6 +1277,39 @@ VERDICT -> Vectorizing + byte pitch closes the fuse
   decode path. Next: ngen kr/double-buffer without
   barrier-per-k64, or stop re-reading A in the GEMM.
 
+### 2026-09-02av - K2 sc8 A double-buffer M=64 no SLM
+
+CONTEXT -> sc8 RC=8 8x2-N f16 is 120 us vs W8A8 46.
+  sc84 4x2x4+SLM is 136 (barrier-per-k64 tax). ngen
+  M=64 is kr xaf: A/B software pipeline, not SLM
+  share. Steal ska-style A ping-pong on the sc8 tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=16 (64 dpas). prologue A[k=0], issue A[k+64]
+  before dpas. No SLM. grf_size<256>. spin=512
+  warmup=10 iters=20. Fill [-64,64] scales 0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8db.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8db.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8, store_block2d.d16,
+  grf_count 128, no slm_size, no barrier_count.
+  cosine=1.0 max_abs=0. timed act=2783 cur=2800
+  throttle=1. M=64: event 97.93/103.40 us, pipe_host
+  96.64/100.44 vs sc8 120 vs sc84 136 vs W8A8 46.
+
+VERDICT -> A double-buffer without SLM is a real
+  ~17-19% us win vs sc8 at the same 2800/throttle=1.
+  Not a 46 us beat (~2.1x). Do not put A in SLM to
+  chase this. Next: ngen 4-acc M-tile (32 rows/
+  thread) without SLM, or B pipeline + ca.ca.
+
+
 
 
 

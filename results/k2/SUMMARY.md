@@ -403,3 +403,18 @@ store.slm.d64x32t + 32 load, grf_count 128.
 
 ~13% slower than no-SLM sc8. SLM A-share is a tax.
 Next: fuse K5 into M=1, not more barriers.
+
+## A double-buffer on sc8 M=64 (2026-09-02av)
+
+Same RC=8 8x2-N f16 contract. ska-style A ping-pong,
+no SLM. spin=512. cosine=1.0 max_abs=0. timed
+act=2783 cur=2800 throttle=1. IGA 64x dpas.8x8,
+store_block2d.d16, grf_count 128, no slm_size.
+
+| shape | card | event_us | pipe_host_us | sc8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 97.932 | 96.641 | 119.626 | 46.167 |
+| 64 x 5120 | 1 | 103.396 | 100.435 | 121.007 | 46.450 |
+
+~17-19% faster than no-db sc8. Still ~2.1x W8A8.
+Next: 4-acc M-tile without SLM, or B pipeline.
