@@ -241,6 +241,25 @@ VERDICT -> Fusion removes N=1 launch and is closed to max_abs<=1
 
 Evidence: `results/k5/SUMMARY.md`.
 
+## WG-256 fused RMSNorm-quant is tens of us, not 830 (K5)
+
+CONFIG -> same contract as the naive K5 micro, backend `sycl+l0`,
+  one work-group per row, WG=256, `reduce_over_group`. Both cards,
+  GT0 cur=2800 MHz.
+
+RESULT -> Fused M=1 K=5120: 36 us (card0 first), 13 us (card0
+  repeat), 7 us (card1). All max_abs<=1. Naive fused was 830 us
+  on both cards. Two-launch WG path is ~1.5x the fused us.
+  Short kernels still swing; M=64 K=17408 is ~20-38 us.
+
+VERDICT -> The 830 us was the 1-WI loop, not RMSNorm+quant as
+  an op. A producer epilogue at ~7-36 us sits next to the 45 us
+  W8A8 GEMM, not 18x above it. Do not freeze 7 us. 160 extra
+  launches would still lose; 1 fused write per residual is the
+  remaining launch question.
+
+Evidence: `results/k5/SUMMARY.md`.
+
 ## NVFP4 nibble LUT to s8 DPAS is numerically closed (K6)
 
 CONFIG -> backend `sycl+l0`, standalone ESIMD, same s8 DPAS tile
@@ -252,9 +271,26 @@ RESULT -> Host LUT + s8 DPAS and device unpack + s8 DPAS both
   550 MHz; 9/75 us card1). Absolute us follows clocks.
 
 VERDICT -> The nibble-LUT spoof is a real arm, not a bitcast.
-  Two-launch unpack is a small tax at this tile. In-register
-  fused LUT (4-bit B, one launch) is still open. Do not quote a
+  Two-launch unpack is a small tax at this tile. Do not quote a
   single us without the clock column.
+
+Evidence: `results/k6/SUMMARY.md`.
+
+## In-register E2M1 LUT lights VNNI4 and loses in us (K6)
+
+CONFIG -> backend `sycl+l0`, packed E2M1 load, GRF nibble LUT,
+  then s8 DPAS. Packs tried: raw, VNNI4 (4 along K), k-major.
+  Never bitcast s4. Both cards, 1024^3, GT0 cur=2800.
+
+RESULT -> VNNI4 max_abs=0 on the 8x16x32 check and 1024^3.
+  Raw 6959 / 124224. K-major 8240 / 107824. Timed VNNI4
+  2316-2317 us both cards vs two-launch unpack+DPAS 84-305 us.
+
+VERDICT -> VNNI4 is the s8 B pack that matches Transformed LSC
+  on these cards (host-prepack landmine was a different layout).
+  This scalar LUT in the DPAS loop is not a latency win. Keep
+  two-launch unpack as the fast closed spoof; vectorize the
+  LUT before claiming an in-register beat.
 
 Evidence: `results/k6/SUMMARY.md`.
 
@@ -268,7 +304,8 @@ not 2x; INT2 DPAS exists (s2xs2 and s2xs8 closed). Remaining:
   E4M3 unpack + bf16 dpas.8x8 (K1 JIT dump).
 - NVFP4 E2M1 x2 is exact int8; +-12 overflows s4; bitcast is wrong.
   Local: nibble LUT -> s8 DPAS closed (K6); two-term s4 compose
-  closed (K3). In-register fused LUT still open.
+  closed (K3). In-register VNNI4 pack closed, scalar LUT loses
+  us; vectorized in-register LUT still open.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

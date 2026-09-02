@@ -15,8 +15,13 @@ cd /work/kernels/epilogue_quant
 mkdir -p bin /work/results/k5
 LOG=/work/results/k5/compile.log
 icpx --version | tee "$LOG"
-icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O3 -std=c++17 -Wall \
-  -o bin/rmsnorm_epilogue rmsnorm_epilogue.cpp 2>&1 | tee -a "$LOG"
-ls -l bin/rmsnorm_epilogue | tee -a "$LOG"
-echo COMPILE_OK | tee -a "$LOG"
+fail=0
+for src in rmsnorm_epilogue.cpp rmsnorm_epilogue_bw.cpp; do
+  stem="${src%.cpp}"
+  icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O3 -std=c++17 -Wall \
+    -o "bin/${stem}" "$src" 2>&1 | tee -a "$LOG"
+  rc=${PIPESTATUS[0]}
+  if [ "$rc" -ne 0 ]; then fail=1; else ls -l "bin/${stem}" | tee -a "$LOG"; fi
+done
+if [ "$fail" -eq 0 ]; then echo COMPILE_OK | tee -a "$LOG"; else echo COMPILE_PARTIAL | tee -a "$LOG"; exit 1; fi
 '

@@ -14,5 +14,19 @@ DPAS (2 launches). Shape 1024^3. Numeric host s32 of A*q.
 
 Check tile 8x16x32 also max_abs=0 both cards.
 Unpack tax is ~12% of the s8 DPAS on both cards (clocks
-move the us, not the ratio). In-register fused LUT (one
-launch, 4-bit B into DPAS) is still open.
+move the us, not the ratio).
+
+## In-register LUT (2026-09-02v)
+
+One launch: packed load, GRF LUT, pack, s8 DPAS. Check-tile
+tried pack_raw / pack_vnni4 / pack_kmajor. GT0 cur=2800.
+
+| pack | check 8x16x32 max_abs | 1024^3 max_abs | 1024^3 us card0 | us card1 |
+|---|---:|---:|---:|---:|
+| raw | 6959 | 124224 | -- | -- |
+| vnni4 | 0 | 0 | 2316 | 2317 |
+| kmajor | 8240 | 107824 | -- | -- |
+
+VNNI4 is the s8 B layout that matches Transformed LSC. This
+scalar-unroll LUT is ~2316 us vs two-launch 84-305 us: layout
+closed, us lost. Vectorized in-register LUT still open.

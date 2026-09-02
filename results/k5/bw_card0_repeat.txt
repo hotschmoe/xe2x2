@@ -1,0 +1,23 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:495075819885 energy2=pkg:328116521789 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:406357268188 energy2=pkg:349437668090 temp2_mC=51000
+=== rmsnorm_epilogue_bw ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 contract=rmsnorm_gamma1_eps1e-6_sym_s8_qmax127 wg=256 warmup=5 iters=20
+arm,m,k,launches,us,max_abs,ok
+two_launch_wg256,1,5120,2,19.599,1,1
+fused_wg256,1,5120,1,12.969,1,1
+two_launch_wg256,1,17408,2,56.292,0,1
+fused_wg256,1,17408,1,38.282,1,1
+two_launch_wg256,64,5120,2,22.667,1,1
+fused_wg256,64,5120,1,15.818,1,1
+two_launch_wg256,64,17408,2,54.807,1,1
+fused_wg256,64,17408,1,37.568,1,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:495100474060 energy2=pkg:328131449340 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:406376547729 energy2=pkg:349449013732 temp2_mC=51000

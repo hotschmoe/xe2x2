@@ -31,11 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have first both-card RESULTS. K2 IGA: `dpas.8x8` typed
-`:b/:s4/:s2`. K5 naive fused quant 830 us at M=1 5120 (launch
-win, not a serving epilogue). K6 nibble LUT to s8 DPAS closed;
-unpack tax ~12%. Next: bandwidth K5 epilogue, in-register K6
-LUT, beat 45 us W8A8. Loop every 20m.
+K0-K6 have both-card RESULTS. K5 WG-256 fused RMSNorm-quant is
+7-36 us at M=1 5120 (naive 830 was the 1-WI loop). K6 in-register
+VNNI4 LUT is numeric-closed but 2316 us; two-launch unpack stays
+the fast spoof. Next: beat 45 us W8A8 at serving shapes (M=8
+pad / GEMV DPAS), vectorize K6 LUT. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

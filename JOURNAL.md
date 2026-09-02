@@ -526,3 +526,49 @@ RESULT -> max_abs=0 both cards. Host LUT DPAS 271 us (card0
 VERDICT -> Nibble LUT spoof is numerically closed. Promote.
   Absolute us is clock. In-register fused LUT still open.
 
+### 2026-09-02u - K5 WG-256 bandwidth epilogue both cards
+
+CONTEXT -> Naive fused RMSNorm-quant was 830 us at M=1 5120.
+  That was one WI looping K. Rewrite with WG=256 per row.
+
+CONFIG -> sycl+l0, standalone rmsnorm_epilogue_bw, same
+  contract, gpu-run --card N, GT0 cur=2800.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/epilogue_quant/run_k5_bw.sh 0
+  gpu-run --card 1 kernels/epilogue_quant/run_k5_bw.sh 1
+  # card0 repeat
+  ```
+
+RESULT -> Fused M=1 5120: 36 us card0 first, 13 us repeat,
+  7 us card1. max_abs<=1. ~20-100x vs naive 830 us. Fusion
+  still ~1.5x two-launch. Short kernels swing; do not freeze
+  7 us.
+
+VERDICT -> 830 us was the 1-WI loop. Producer epilogue is now
+  tens of us, next to 45 us W8A8 GEMM. Promote with the swing.
+
+### 2026-09-02v - K6 in-register nibble LUT VNNI4
+
+CONTEXT -> Two-launch unpack tax was ~12%. Try one-launch
+  packed load + GRF LUT + s8 DPAS. Never bitcast s4.
+
+CONFIG -> sycl+l0, nibble_lut_reg, packs raw/vnni4/kmajor,
+  1024^3, gpu-run --card N, GT0 cur=2800.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_reg.sh 1
+  gpu-run --card 0 kernels/nvfp4/run_k6_reg.sh 0
+  ```
+
+RESULT -> VNNI4 max_abs=0 both cards (check and 1024^3). Raw
+  and kmajor refuse. Timed VNNI4 2316-2317 us vs two-launch
+  84-305 us.
+
+VERDICT -> VNNI4 is the Transformed s8 B layout. This scalar
+  LUT loses in us. Keep two-launch as the fast spoof. Promote
+  the layout, not the 2316 us as a win.
+
+

@@ -15,8 +15,13 @@ cd /work/kernels/nvfp4
 mkdir -p bin /work/results/k6
 LOG=/work/results/k6/compile.log
 icpx --version | tee "$LOG"
-icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O3 -std=c++17 -Wall \
-  -o bin/nibble_lut_s8 nibble_lut_s8.cpp 2>&1 | tee -a "$LOG"
-ls -l bin/nibble_lut_s8 | tee -a "$LOG"
-echo COMPILE_OK | tee -a "$LOG"
+fail=0
+for src in nibble_lut_s8.cpp nibble_lut_reg.cpp; do
+  stem="${src%.cpp}"
+  icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O3 -std=c++17 -Wall \
+    -o "bin/${stem}" "$src" 2>&1 | tee -a "$LOG"
+  rc=${PIPESTATUS[0]}
+  if [ "$rc" -ne 0 ]; then fail=1; else ls -l "bin/${stem}" | tee -a "$LOG"; fi
+done
+if [ "$fail" -eq 0 ]; then echo COMPILE_OK | tee -a "$LOG"; else echo COMPILE_PARTIAL | tee -a "$LOG"; exit 1; fi
 '

@@ -1,0 +1,11 @@
+# first card0 run 2026-09-02u, cold after D3hot, cur=2800
+# CONFIG backend=sycl+l0 wg=256 warmup=5 iters=20
+arm,m,k,launches,us,max_abs,ok
+two_launch_wg256,1,5120,2,66.182,1,1
+fused_wg256,1,5120,1,35.984,1,1
+two_launch_wg256,1,17408,2,138.151,0,1
+fused_wg256,1,17408,1,93.938,1,1
+two_launch_wg256,64,5120,2,55.427,1,1
+fused_wg256,64,5120,1,38.651,1,1
+two_launch_wg256,64,17408,2,29.328,1,1
+fused_wg256,64,17408,1,20.047,1,1
