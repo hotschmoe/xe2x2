@@ -494,6 +494,25 @@ VERDICT -> Relabeling the 16-thread WG as 8x2 (N,M) is not
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/wg_dpas_lines.txt`.
 
+## 8x2 along N beats 1D u64 decode, not 45 us W8A8 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_wgn`. Same
+  64x `dpas.8x4` as u64. `nd_range<2>` local {8,2} both on
+  N (16 live N-groups). M is group(1). No SLM. Both cards.
+  Prior: (N,M) 8x2 idled half the WG at M=4.
+
+RESULT -> IGA 64x `dpas.8x4`, GRF 128, no barrier. max_abs=0.
+  Warm ~2800 MHz. M=4 NT=2: 47-50 us vs 1D u64 53-69 vs
+  (N,M) 8x2 69 vs W8A8 M=1 42-46. NT=4 M=4: 73 us both
+  cards. M=64 NT=4: 304-317 vs u64 314-570.
+
+VERDICT -> Mapping 8x2 onto N (no idle) is a real decode
+  us win vs 1D local=16 at the same M=4 pad. It is not a
+  beat of 45 us M=1 W8A8. Do not freeze 47 us. New hand
+  decode floor is ~47-50 us. Remaining: ngen SLM+64 dpas.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/wgn_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

@@ -31,10 +31,10 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. ngen wg 8x2 2D launch on
-64 dpas.8x4 lights (no SLM, no barrier) and does not beat
-1D u64 at decode (warm 69 vs 53-69 vs W8A8 45); M=4 idles
-half the WG. Next: 8x2 along N only (no idle) or ngen SLM
+K0-K6 have both-card RESULTS. 8x2 along N (no idle) on 64
+dpas.8x4 is a decode win vs 1D u64 (47-50 vs 53-69 vs
+W8A8 M=1 45) at warm 2800 MHz, both cards. Not a 45 us
+beat (pad M=4). New hand floor ~47-50 us. Next: ngen SLM
 plus 64 dpas as one bundle. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)

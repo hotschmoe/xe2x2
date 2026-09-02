@@ -875,6 +875,35 @@ VERDICT -> 8x2 2D launch lights and is not a 45 us beat.
   freeze 69 us. Floor stays 45 us. Next: 8x2 along N only
   (no idle) or ngen SLM plus 64 dpas together.
 
+### 2026-09-02ai - K2 wg 8x2 along N (no idle)
+
+CONTEXT -> wg 8x2 (N,M) idled half the WG at M=4 (warm 69).
+  Steal: local {8,2} both index N, 16 live N-groups, M is
+  group(1). Same 64 dpas tile as u64.
+
+CONFIG -> sycl+l0, standalone dpas_s8_wgn, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. NT=2 U=16 / NT=4 U=8.
+  No SLM, no extra ff.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_wgn.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_wgn.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4 rW:b rA:b, GRF 128, no barrier,
+  ff_prefetch=0. max_abs=0 both cards both NT. Warm ~2800
+  MHz. M=4: NT=2 47-50 us / NT=4 73 vs 1D u64 NT=2 53-69 vs
+  (N,M) 8x2 69 vs W8A8 M=1 42-46. M=64: 304-611 vs u64
+  314-570. M=256: 1184-1285 vs 75.
+
+VERDICT -> 8x2 along N is a decode win vs 1D u64 (47-50 vs
+  53-69) on both cards. It is not a 45 us W8A8 M=1 beat
+  (pad M=4). Do not freeze 47 us. New hand-tile decode
+  floor is ~47-50 us. Next: ngen SLM plus 64 dpas together.
+
 
 
 

@@ -226,3 +226,19 @@ no SLM. ocloc: 64x `dpas.8x4`, GRF 128, no barrier. max_abs=0.
 NT=2 c0 and NT=4 c1 started D3hot (slow M=4). Warm NT=2 is
 69 us, ties the slow end of 1D u64, not a 45 us beat.
 Floor stays 45 us.
+
+## wg 8x2 along N (2026-09-02ai)
+
+Same 64x dpas.8x4 as u64. local {8,2} both on N, M is
+group(1). ocloc: 64x `dpas.8x4`, GRF 128, no barrier.
+max_abs=0. Warm ~2800 MHz.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | u64 NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 47 | 50 | 73 | 73 | 53-69 |
+| 64 x 5120 | 570 | 611 | 304 | 317 | 436-570 |
+| 256 x 5120 | 1285 | 1225 | 1184 | 1193 | 594-1198 |
+
+NT=2 M=4 47-50 us both cards beats 1D u64 53-69. Not a
+45 us W8A8 M=1 beat (pad M=4). New hand decode floor
+~47-50 us.
