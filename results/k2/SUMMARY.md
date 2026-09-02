@@ -727,5 +727,19 @@ throttle=0.
 |---|---|---:|---:|---:|---:|
 | 256 x 17408 | 1 | 140.958 | 140.531 | 48.6 | 165 |
 
-~2.89x N=5120, like M=64's 2.81x. One-card.
-Next: sibling vs M=256 K=17408.
+~2.88x N=5120. Sibling card0 pipe 139.436 (bx).
+New M=256 wide-N floor 140.0 us both cards.
+
+## s4 4-acc M=256 K=17408 card1 (2026-09-02by)
+
+Same 4-acc wg 4x8 tile, N=5120 K=17408. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | K=5120 | napkin |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 x 17408 | 1 | 149.302 | 149.164 | 48.6 | 165 |
+
+~3.07x K=5120, near linear. Slower than wide-N
+140.0 at same B bytes. One-card. Next: sibling
+vs s8 M=64 N=17408.
