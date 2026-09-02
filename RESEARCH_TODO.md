@@ -52,10 +52,12 @@ s4 M=64 4x8 A-db stays 33.6 us (bi). s4 A-db on
 decode N=17408 is 29.5 us both cards (bp),
 1.80x N=5120 not 3.4x. s4 decode K=17408 is
 53.4 us both cards (br), ~3.24x K-linear.
-s4 M=64 N=17408 4x8 A-db is 94.6 us card1
-(bs), ~2.81x N=5120, pending sibling. Next:
-split. card0: sibling s4 M=64 N=17408.
-card1: s4 M=64 K=17408. Loop every 20m.
+s4 M=64 N=17408 4x8 A-db is 94.7 us both
+cards (bt), ~2.81x N=5120. s4 M=64 K=17408 is
+105.8 us card1 (bu), ~3.15x K-linear, pending
+sibling. Next: split. card0: sibling s4 M=64
+K=17408. card1: s4 M=256 N=17408. Loop every
+20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
