@@ -2269,23 +2269,61 @@ VERDICT -> INT8 4x8 A-db loses hard at wide N:
   freeze 338 us until card0. Rank us. Next:
   sibling s8 N=17408 vs s8 M=64 K=17408.
 
+### 2026-09-02cb - K2 s8 M=64 N=17408 sibling card0
 
+CONTEXT -> card1 s8 4x8 A-db N=17408 was 338.2 us
+  at M=64 2800, numeric closed. Sibling swap to
+  close the INT8 prefill wide-N floor.
 
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db48,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=512 as ca.
+  Fill s8 [-64,64] scales 0.02 out f16. M=64
+  N=17408 K=5120.
 
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8db48_wide.sh 0 2 512
+  ```
 
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card0: event 336.287 us, pipe_host 339.628
+  vs card1 338.151 vs N=5120 75 vs s4 94.7 vs
+  napkin 255. Spread ~0.4%.
 
+VERDICT -> Sibling matches. New s8 M=64 wide-N
+  floor 338.9 us at 2800 both cards. ~4.52x
+  N=5120, worse than linear. s4 94.7 is ~3.58x
+  this tile. Rank us.
 
+### 2026-09-02cc - K2 s8 M=64 K=17408 4x8 A-db card1
 
+CONTEXT -> s8 4x8 A-db is 75 us at M=64 K=5120.
+  s4 same tile K=17408 is 106.0 us (~3.15x).
+  Napkin K-linear 75*17408/5120 ~255 us. INT8
+  vs s4 at FFN-down prefill. One-card.
 
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db48,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=512.
+  Fill s8 [-64,64] scales 0.02 out f16. M=64
+  N=5120 K=17408.
 
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8db48_k17408.sh 1 2 512
+  ```
 
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card1: event 371.922 us, pipe_host 373.565
+  vs K=5120 75 vs N=17408 338.9 vs s4 106.0 vs
+  napkin 255. Ratio 373.6/75 ~4.98x, worse than
+  K-linear. s4 106.0 is ~3.52x this s8.
 
-
-
-
-
-
-
-
-
-
+VERDICT -> INT8 4x8 A-db loses harder at wide K:
+  4.98x K=5120 vs s4's 3.15x, slower than wide-N
+  338.9 at the same B bytes. One-card. Do not
+  freeze 373.6 us until card0. Rank us. Next:
+  sibling s8 K=17408 vs s8 M=256 N=17408.
