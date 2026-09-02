@@ -418,3 +418,20 @@ store_block2d.d16, grf_count 128, no slm_size.
 
 ~17-19% faster than no-db sc8. Still ~2.1x W8A8.
 Next: 4-acc M-tile without SLM, or B pipeline.
+
+## 4-acc M-tile no SLM M=64 (2026-09-02aw)
+
+32 rows/thread, 4x dpas.8x8 acc, own A, A ping-pong,
+NT=2 U=4 (64 dpas), 8x2 along N. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800 throttle=0.
+IGA 64x dpas.8x8 {Atomic}, store_block2d.d16,
+grf_count 128, no slm_size.
+
+| shape | card | event_us | pipe_host_us | sc8db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 118.990 | 119.833 | 96.641 | 46.167 |
+| 64 x 5120 | 1 | 118.750 | 119.688 | 100.435 | 46.450 |
+
+Matches sc8 (~120), loses to A-db (~98). Occupancy
+of the 8-row tile beat extra B reuse. Next: B
+pipeline + ca.ca on sc8db.

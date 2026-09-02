@@ -34,12 +34,13 @@ P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
 K0-K6 have both-card RESULTS. Held-clock scale-to-f16
 M=1 (ap) beats W8A8 34 vs 44 us. M=64: RC=4 245 (aq),
 RC=8 8x2-N 120 (ar), 4x2x4+SLM 136 (as), A-db 97-100
-(av) vs W8A8 46. av is numeric-closed at 2800,
-~17-19% faster than ar, still ~2.1x W8A8. GRF256
-still zebin 128. Vectorized RMSNorm-quant fuse (au)
-is 72 us, cosine=1.0; two-launch WG-256+GEMM stays.
-Next: ngen 4-acc M-tile (32 rows/thread) without
-SLM, or B pipeline + ca.ca. Loop every 20m.
+(av), 4-acc no-SLM 120 (aw) vs W8A8 46. av is the
+hand floor (~2.1x W8A8). 4-acc without SLM matches
+sc8, loses to A-db. GRF256 still zebin 128.
+Vectorized RMSNorm-quant fuse (au) is 72 us;
+two-launch WG-256+GEMM stays. Next: B pipeline +
+ca.ca on sc8db, or ngen null-dest prefetch. Loop
+every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

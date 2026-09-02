@@ -711,6 +711,26 @@ Evidence: `results/k2/sc8db_m64_n2_s512_card0.txt`,
   `results/k2/sc8db_m64_n2_s512_card1.txt`,
   `results/k2/sc8db_dpas_lines.txt`.
 
+## 4-acc M-tile without SLM matches sc8, loses to A-db (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8m4`.
+  4x RC=8 (32 rows/thread), 64x `dpas.8x8`, A ping-pong,
+  no SLM, f16 scales 0.02. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 64x `dpas.8x8` `{Atomic}`, `store_block2d.d16`,
+  zebin `grf_count` 128, no `slm_size`. cosine=1.0
+  max_abs=0. timed act=cur=2800 throttle=0. M=64
+  pipe_host 119.8/119.7 vs sc8db 97-100 vs sc8 120
+  vs W8A8 46.
+
+VERDICT -> ngen's 4-acc M-tile without SLM is not
+  the 46 us kernel and is slower than 8-row A-db.
+  Occupancy of the 8-row tile beat extra B reuse.
+
+Evidence: `results/k2/sc8m4_m64_n2_s512_card0.txt`,
+  `results/k2/sc8m4_m64_n2_s512_card1.txt`,
+  `results/k2/sc8m4_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -828,8 +848,8 @@ and health repeats a bullet, it stays a hypothesis.
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
-RC=8 A-db 97-100 vs 46 us; no-db 120; 4x2x4+SLM 136 is
-slower). Remaining
+RC=8 A-db 97-100 vs 46 us; no-db 120; 4-acc no-SLM 120;
+4x2x4+SLM 136 is slower). Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are

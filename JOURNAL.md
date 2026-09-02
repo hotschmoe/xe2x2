@@ -1309,6 +1309,41 @@ VERDICT -> A double-buffer without SLM is a real
   chase this. Next: ngen 4-acc M-tile (32 rows/
   thread) without SLM, or B pipeline + ca.ca.
 
+### 2026-09-02aw - K2 4-acc M-tile no SLM M=64
+
+CONTEXT -> sc8db A-db is 97-100 us vs W8A8 46. ngen
+  M=64 keeps 4 acc along M (32 rows/thread) and
+  reuses B. sc84 did that with SLM and lost. Steal
+  4x RC=8, own A, no SLM, A ping-pong, NT=2 U=4
+  (64 dpas).
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8m4, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  32 rows/thread, 8x2 along N, no SLM. grf_size<256>.
+  spin=512 warmup=10 iters=20. Fill [-64,64] scales
+  0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8m4.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8m4.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8 {Atomic}, store_block2d
+  d16, grf_count 128, no slm_size. cosine=1.0
+  max_abs=0. timed act=cur=2800 throttle=0.
+  M=64: event 118.99/118.75 us, pipe_host
+  119.83/119.69 vs sc8db 97-100 vs sc8 120 vs
+  sc84 136 vs W8A8 46.
+
+VERDICT -> 4-acc without SLM lights and matches sc8
+  (~120), not sc8db (~98). Fewer WGs (32-row tiles)
+  gave up occupancy; B reuse did not pay. Keep the
+  8-row A-db tile. Next: B pipeline + ca.ca on
+  sc8db, or ngen null-dest prefetch.
+
+
 
 
 
