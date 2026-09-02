@@ -1240,6 +1240,44 @@ VERDICT -> Naive scalar quant in the DPAS loop is not
   closed. Keep two-launch K5+GEMM. Next: vectorize the
   quant, or leave producer as its own WG-256 kernel.
 
+### 2026-09-02au - K5 vectorized RMSNorm-quant inside GEMM
+
+CONTEXT -> Scalar fuse (at) was 313 us, cosine 0.73.
+  f16 lsc_load_2d width/pitch was passed as elements
+  (API is bytes), so K>~surface/2 was OOB. Inner loop
+  was scalar rint/sqrt. Steal: simd convert/reduce/
+  hmax/rnde, pitch in bytes, same 64 dpas.8x4 f16.
+
+CONFIG -> sycl+l0, standalone dpas_s8_fusev, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 spin=4000 warmup=50 iters=40. Fill f16 A, s8 B
+  [-64,64], b_scale=0.02, out f16. Pad M=1 to RC=4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_fusev.sh 0 2 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_fusev.sh 1 2 4000
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4, rnde (32|M0) x128,
+  math.rsqt x4 + math.inv, load_block2d.d16 A /
+  d8v B, store_block2d.d16, grf 128, no SLM.
+  cosine=1.0 max_abs=0.015625 (1 f16 ulp) both
+  cards. timed act=cur=2800 throttle=0.
+  M=1: event 71.67/71.78 us, pipe_host 72.47/72.28.
+  M=4 tracks (72.44/72.32 event, 72.80/72.76 pipe).
+  vs scalar 313 vs GEMM-only 34 vs two-launch ~41-70.
+
+VERDICT -> Vectorizing + byte pitch closes the fuse
+  and is ~4.3x the scalar arm. It is not a 34 us
+  GEMM beat (~2.1x) and loses to two-launch when the
+  WG-256 producer is ~7 us. Every GEMM thread still
+  re-reads f16 A. Keep two-launch K5+GEMM as the
+  decode path. Next: ngen kr/double-buffer without
+  barrier-per-k64, or stop re-reading A in the GEMM.
+
+
 
 
 

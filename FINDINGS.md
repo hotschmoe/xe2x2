@@ -708,6 +708,30 @@ VERDICT -> This is the K6 scalar-LUT tax again. Do not
 Evidence: `results/k5/fuse_n2_s4000_card0.txt`,
   `results/k5/fuse_n2_s4000_card1.txt`.
 
+## Vectorized RMSNorm-quant fuse is 72 us, not 34 (K5)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fusev`.
+  simd convert/reduce/hmax/rnde, f16 2D load pitch in
+  bytes, 64x `dpas.8x4` f16 out. Both cards, NT=2,
+  spin=4000. Prior: scalar fuse 313 us cosine 0.73.
+
+RESULT -> IGA 64x `dpas.8x4`, `rnde (32|M0)`,
+  `math.rsqt` x4, A `load_block2d.d16`, B `d8v`,
+  `store_block2d.d16`, GRF 128, no SLM. cosine=1.0
+  max_abs=0.015625. timed act=cur=2800 throttle=0.
+  M=1 pipe_host 72.47/72.28 vs scalar 313 vs GEMM
+  34 vs two-launch 41-70. M=4 tracks M=1.
+
+VERDICT -> Vectorizing closes the fuse (~4.3x the
+  scalar arm). It is not a launch win vs WG-256
+  producer + 34 us GEMM. Scalar 0.73 was f16 pitch
+  in elements. Do not re-read A on every GEMM thread
+  to chase 34 us.
+
+Evidence: `results/k5/fusev_n2_s4000_card0.txt`,
+  `results/k5/fusev_n2_s4000_card1.txt`,
+  `results/k5/fusev_dpas_lines.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.

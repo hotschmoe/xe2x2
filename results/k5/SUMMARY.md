@@ -47,3 +47,17 @@ Scalar math in the k-loop. NT=2 spin=4000. timed 2800.
 | 1 x 5120 | 314.2 | 312.9 | 0.73 | 50 |
 
 ~9x GEMM-only 34 us. Not closed. Two-launch K5+GEMM stays.
+
+## vectorized RMSNorm-quant inside GEMM (2026-09-02au)
+
+Same contract, simd convert/reduce/hmax/rnde, f16 2D
+load pitch in bytes. NT=2 spin=4000. timed 2800.
+ocloc: 64x dpas.8x4, rnde (32|M0), no SLM.
+
+| shape | card0 event | card0 pipe | card1 event | card1 pipe | cosine | max_abs |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 x 5120 | 71.67 | 72.47 | 71.78 | 72.28 | 1.0 | 0.015625 |
+| 4 x 5120 | 72.44 | 72.80 | 72.32 | 72.76 | 1.0 | 0.015625 |
+
+~4.3x scalar 313 us. Closed at 1 f16 ulp. Not a 34 us
+GEMM beat. Two-launch WG-256 + GEMM still the decode path.

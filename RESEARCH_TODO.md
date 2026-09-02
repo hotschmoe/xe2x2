@@ -35,10 +35,12 @@ K0-K6 have both-card RESULTS. Held-clock scale-to-f16
 M=1 (ap) beats W8A8 34 vs 44 us. M=64: RC=4 245 (aq),
 RC=8 8x2-N 120 (ar), 4x2x4+SLM 136 (as) vs W8A8 46.
 as is numeric-closed at 2800, ~13% slower than ar.
-GRF256 still zebin 128. Scalar RMSNorm-quant inside
-the GEMM (at) is 313 us, not closed. Next: vectorize
-that quant, or ngen kr/double-buffer without
-barrier-per-k64. Loop every 20m.
+GRF256 still zebin 128. Vectorized RMSNorm-quant
+inside the GEMM (au) is 72 us, cosine=1.0, ~4.3x
+scalar at (313 us, not closed). Still ~2.1x the
+34 us GEMM; two-launch WG-256+GEMM stays. Next:
+ngen kr/double-buffer without barrier-per-k64, or
+stop re-reading A in the GEMM. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

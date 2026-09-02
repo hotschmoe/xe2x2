@@ -1,0 +1,17 @@
+K5 dpas_s8_fusev ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 simd RMSNorm-quant f16
+  - name:            _ZTSN12_GLOBAL__N_118DpasS8FusevNt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        (absent)
+      barrier_count:   (absent)
+.text._ZTSN12_GLOBAL__N_118DpasS8FusevNt2NameE.asm:
+  dpas.8x8=0 dpas.8x4=64 rnde=128 math=9 load2d=97 store2d=2
+  first_dpas: dpas.8x4 (16|M0) r104:d r104:d r48:b r23.0:b
+  math:       math.rsqt (4x) + math.inv (scale)
+  rnde:       rnde (32|M0)  (vector 32-wide, not scalar)
+  A load:     load_block2d.ugm.d16
+  B load:     load_block2d.ugm.d8v
+  store:      store_block2d.ugm.d16
+nt4 same 64x dpas.8x4, rnde=64, load2d=81, store2d=4, grf 128
