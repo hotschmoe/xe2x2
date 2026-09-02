@@ -1,0 +1,50 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build / compiler
+build/
+cmake-build-*/
+*.o
+*.so
+*.a
+*.spv
+*.bin
+*.ptx
+*.cubin
+
+# oneAPI / SYCL / Level Zero caches
+.cache/
+__pycache__/
+.icpx_cache/
+.sycl_cache/
+.neo_cache/
+
+# Jupyter / editors
+.ipynb_checkpoints/
+.vscode/
+.idea/
+*.swp
+
+# Large local artifacts (keep small tracked evidence under results/)
+models/
+weights/
+checkpoints/
+*.gguf
+*.safetensors
+*.bin.index.json
+core
+core.*
+
+# Runtime logs
+*.log
+logs/
+tmp/
+.gpu-lease
