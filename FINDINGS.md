@@ -1236,25 +1236,44 @@ VERDICT -> New s8 decode wide-N floor 141.6 us
 Evidence: `results/k2/sc_n17408_n2_s4000_card0.txt`,
   `results/k2/sc_n17408_n2_s4000_card1.txt`.
 
-## s8 decode K=17408 is 261.5 us on card1, pending sibling (K2)
+## s8 decode K=17408 is 261.6 us at 2800 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc`.
   Same RC=4 8x2-N INT8 tile, M=1 N=5120 K=17408.
-  Card1 only, NT=2, spin=4000. Prior: K-linear
+  Both cards, NT=2, spin=4000. Prior: K-linear
   ~116 us; s4 53.4.
 
 RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
-  throttle=0. M=1 pipe_host 261.51 vs K=5120 34
-  vs N=17408 141.6 vs s4 53.4 vs napkin 116.
-  M=4 tracks (261.44).
+  throttle=0. M=1 pipe_host 261.68/261.51 vs
+  K=5120 34 vs N=17408 141.6 vs s4 53.4 vs
+  napkin 116. M=4 tracks. Spread ~0.06%.
 
-VERDICT -> INT8 decode wide-K is ~7.69x K=5120,
-  much worse than linear. s4 53.4 is ~4.90x
-  this tile (s4 was 3.24x). One-card. Do not
-  freeze 261.5 us as a floor until card0 runs
-  it.
+VERDICT -> New s8 decode wide-K floor 261.6 us
+  at 2800 both cards. ~7.69x K=5120, much worse
+  than linear. s4 53.4 is ~4.90x this tile (s4
+  was 3.24x). Qwen FFN s8 map is closed. Rank us.
 
-Evidence: `results/k2/sc_k17408_n2_s4000_card1.txt`.
+Evidence: `results/k2/sc_k17408_n2_s4000_card0.txt`,
+  `results/k2/sc_k17408_n2_s4000_card1.txt`.
+
+## oneDNN W8A8 M=1 N=17408 is 158 us on card1, pending sibling (K4)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, sglang
+  int8 mtp6 `int8_gemm_w8a8` GEMM-only. Card1 only.
+  spin=2000 of M=1 then timed. Host oracle after
+  timed. n=17408 k=5120. Prior: K4 sweep 161 us.
+
+RESULT -> cosine=1.000 max_abs=0.055. timed
+  act=cur=2800 throttle=0. M=1 158.01 us vs K4
+  sweep 161 vs hand s8 141.6 vs s4 29.5.
+
+VERDICT -> Held-2800 oneDNN wide-N decode is
+  158.0 us on card1. Hand s8 141.6 is ~1.12x
+  this incumbent at the same clock. One-card.
+  Do not freeze 158 us as a floor until card0
+  runs it.
+
+Evidence: `results/k2/w8a8_m1hold_n17408_card1.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
@@ -1396,7 +1415,8 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 s8 (34 vs 44 us) and s4 (16.5 vs 44 us), at
+scale-to-f16 s8 (34 vs 44 us, and 141.6 vs 158
+us at N=17408 card1) and s4 (16.5 vs 44 us), at
 M=64 s4 (33.6 vs 46 us), and at M=256 s4 (48.6 vs 75 us).
 Different dtype than W8A8, not a W8A8 replacement. s4 M=1
 N=17408 is 29.5 us both cards (1.80x N=5120, not 3.4x).
@@ -1417,9 +1437,12 @@ s8 M=256 K=17408 is 477.4 us both cards
 (~3.73x K=5120 vs s4 149.0). Qwen FFN s8
 prefill map is closed. s8 decode N=17408 is
 141.6 us both cards (~4.16x N=5120 vs s4
-29.5; worse than linear). One-card pending
-sibling: s8 decode K=17408 is 261.5 us
-(~7.69x K=5120 vs s4 53.4).
+29.5; worse than linear). s8 decode K=17408
+is 261.6 us both cards (~7.69x K=5120 vs s4
+53.4). Qwen FFN s8 map is closed. Hand s8
+decode N=17408 141.6 vs oneDNN W8A8 158 us
+card1 at 2800 (~1.12x). One-card pending
+sibling: oneDNN W8A8 M=1 N=17408 is 158 us.
 It is
 still true for INT8 s8 at M=64
 (best hand wg 4x8 A-db

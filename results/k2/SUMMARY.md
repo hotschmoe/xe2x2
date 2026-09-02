@@ -834,7 +834,20 @@ act=cur=2800 throttle=0.
 | 1 x 5120 x 17408 | 1 | 261.716 | 261.510 | 34 | 53.4 | 116 |
 | 4 x 5120 x 17408 | 1 | 260.594 | 261.442 | 34 | 53.4 | 116 |
 
-~7.69x K=5120, much worse than linear. s4
-53.4 is ~4.90x this s8 (s4 was 3.24x).
-One-card. Next: sibling vs oneDNN W8A8
-M=1 N=17408.
+~7.69x K=5120, much worse than linear. Sibling
+card0 pipe 261.675 (cl). New decode wide-K
+floor 261.6 us both cards. s4 53.4 is ~4.90x
+this s8. Qwen FFN s8 map closed.
+
+## oneDNN W8A8 M=1 N=17408 card1 (2026-09-02cm)
+
+pytorch-xpu on sycl+l0, int8_gemm_w8a8 GEMM-only.
+spin=2000 of M=1. cosine=1.000 max_abs=0.055.
+timed act=cur=2800 throttle=0.
+
+| shape | card | us | K4 sweep | hand s8 | s4 |
+|---|---|---:|---:|---:|---:|
+| 1 x 17408 x 5120 | 1 | 158.006 | 161 | 141.6 | 29.5 |
+
+Hand s8 is ~1.12x this incumbent at 2800.
+One-card. Next: sibling vs W8A8 M=1 K=17408.

@@ -2574,3 +2574,63 @@ VERDICT -> INT8 decode loses harder at wide K:
   Do not freeze 261.5 us until card0. Rank us.
   Next: sibling s8 decode K=17408 vs oneDNN
   W8A8 M=1 N=17408.
+
+### 2026-09-02cl - K2 s8 decode K=17408 sibling card0
+
+CONTEXT -> card1 s8 RC=4 K=17408 was 261.5 us at
+  M=1 2800, numeric closed. Sibling swap to
+  close the INT8 FFN-down decode floor.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=4000 as ck.
+  Fill s8 [-64,64] scales 0.02 out f16. M=1 and
+  M=4, N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc_k17408.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 261.193 us, pipe_host 261.675
+  vs card1 261.510 vs K=5120 34 vs N=17408 141.6
+  vs s4 53.4 vs napkin 116. Spread ~0.06%.
+  M=4 tracks (pipe 261.257).
+
+VERDICT -> Sibling matches. New s8 decode wide-K
+  floor 261.6 us at 2800 both cards. ~7.69x
+  K=5120, much worse than linear. s4 53.4 is
+  ~4.90x this tile. Qwen FFN s8 map is closed.
+  Rank us.
+
+### 2026-09-02cm - K4 oneDNN W8A8 M=1 N=17408 card1
+
+CONTEXT -> K4 sweep M=1 N=17408 was 161 us, clocks
+  unnamed. Hand s8 decode N=17408 is 141.6 us at
+  2800. Held-clock incumbent control. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, sglang int8 mtp6
+  `int8_gemm_w8a8` GEMM-only, gpu-run --card 1.
+  spin=2000 of M=1 then 30 warmup + 40 timed.
+  Host oracle after timed. n=17408 k=5120.
+  First two holds (M=64 heat; oracle-before-timed)
+  dropped to 2050/1733 MHz and are not ranked.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/w8_compare/run_w8_m1hold_wide.sh 1
+  ```
+
+RESULT -> cosine=1.000 max_abs=0.055. timed
+  act=cur=2800 throttle=0.
+  M=1 card1: 158.006 us vs K4 sweep 161 vs hand
+  s8 141.6 vs s4 29.5.
+
+VERDICT -> Held-2800 oneDNN wide-N decode is
+  158.0 us on card1. Hand s8 141.6 is ~1.12x
+  this incumbent at the same clock and contract.
+  One-card. Do not freeze 158 us until card0.
+  Rank us. Next: sibling W8A8 M=1 N=17408 vs
+  W8A8 M=1 K=17408.

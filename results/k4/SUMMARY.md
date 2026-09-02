@@ -21,6 +21,8 @@ act scale and per-N wei scale (synthetic 0.02).
 INT8 cosine 1.000, max_abs ~0.06 (scale). FP8 cosine >=0.99997.
 
 M=1 17408: fp8 355-465 us, int8a8 161 us both cards.
+Held-2800 repeat card1 (cm, spin=2000): 158.0 us vs
+hand s8 141.6. Sibling pending.
 
 INT8 W8A8 GEMM-only is faster at every M here. Prefill gap is
 large (M=64: ~48 vs ~400 us). Cq (plus quant launches) not in
