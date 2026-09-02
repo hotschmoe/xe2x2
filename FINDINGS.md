@@ -912,6 +912,28 @@ Evidence: `results/k2/sc8m42_m64_n2_s512_card0.txt`,
   `results/k2/sc8m42_m64_n2_s512_card1.txt`,
   `results/k2/sc8m42_dpas_lines.txt`.
 
+## 4-acc wg 4x2x4 no SLM loses to 8-thread 4x2 at M=64 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8m424`.
+  Same 4-acc k64 A-db 64x `dpas.8x8` as sc8m42, ngen
+  wg 4x2x4 (32 threads), no SLM. Both cards, NT=2,
+  spin=512. Prior: 8-thread WG occupancy leftover.
+
+RESULT -> IGA 64x `dpas.8x8` (33 `{Atomic}`),
+  `grf_count` 128, no SLM, IGC spill 1792 B.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=64 pipe_host 132.6/132.9 vs
+  4x2 115 vs sc84 SLM 136 vs 4x8 A-db 75 vs
+  W8A8 46.
+
+VERDICT -> 32-thread ngen 4x2x4 without SLM is a
+  ~1.15x loss vs 8-thread 4x2. Occupancy was not
+  the leftover. Stop M=64 4-acc. Floor stays 75 us.
+
+Evidence: `results/k2/sc8m424_m64_n2_s512_card0.txt`,
+  `results/k2/sc8m424_m64_n2_s512_card1.txt`,
+  `results/k2/sc8m424_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -1051,7 +1073,8 @@ Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 wg 4x8 A-db 75 vs 46 us; 8x2-N A-db 97-100;
-  4-acc wg 4x2 115 vs 8x2-N 120) and at M=256
+  4-acc wg 4x2 115 vs 4x2x4 133 vs 8x2-N 120)
+  and at M=256
 (4-acc wg 4x8 128 vs 8-row 4x8 228 vs 6-acc 384-count
   210 vs A-db 4-acc 135 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra

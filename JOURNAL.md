@@ -1676,6 +1676,42 @@ VERDICT -> M-on-Y is a real small win vs 8x2-N
   4-acc wg 4x2x4 no SLM (32 threads), or stop
   M=64 4-acc chasing.
 
+### 2026-09-02bh - K2 4-acc wg 4x2x4 no SLM M=64
+
+CONTEXT -> 4-acc wg 4x2 (8 thr) is 115 us vs 4x8
+  A-db 75 vs W8A8 46. sc84 4x2x4+SLM was 136.
+  ngen M=64 is wg 4x2x4. Steal 32-thread 4x2x4
+  without SLM on the same 4-acc k64 A-db tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8m424, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=4, 4 M-tiles, wg 4x2x4 NxMxN, k64 A-db,
+  no SLM. grf_size<256>. spin=512 warmup=10
+  iters=20. Fill [-64,64] scales 0.02 out f16.
+  M=64 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8m424.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8m424.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8 (33x {Atomic}),
+  store_block2d d16, grf_count 128, no slm_size.
+  IGC spill 1792 B (NT=2). cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=64: event 131.91/131.82 us, pipe_host
+  132.62/132.94 vs 4x2 115 vs sc84 SLM 136 vs
+  4x8 A-db 75 vs W8A8 46.
+
+VERDICT -> 32-thread 4x2x4 no SLM is a real loss
+  vs 8-thread 4x2 (~133 vs 115, ~1.15x). Slightly
+  beats SLM 4x2x4 (136). Occupancy was not the
+  leftover. Stop M=64 4-acc chasing. Floor stays
+  75 us. Next: s4 on the M=64 4x8 A-db tile.
+
+
 
 
 

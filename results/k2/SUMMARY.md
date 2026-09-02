@@ -576,3 +576,19 @@ timed act=cur=2800 throttle=0. IGA 64x dpas.8x8
 
 ~1.04x vs 8x2-N. Floor stays 75 us. Next: 4-acc
 wg 4x2x4 no SLM (32 threads), or stop M=64 4-acc.
+
+## 4-acc wg 4x2x4 no SLM M=64 (2026-09-02bh)
+
+Same 4-acc k64 A-db 64 dpas, ngen wg 4x2x4 32
+threads, no SLM. spin=512. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0. IGA 64x dpas.8x8
+(33 Atomic), grf 128, no SLM, spill 1792 B.
+
+| shape | card | event_us | pipe_host_us | 4x2 | SLM 4x2x4 | 4x8 A-db |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 131.912 | 132.624 | 115.326 | 136 | 75.486 |
+| 64 x 5120 | 1 | 131.818 | 132.944 | 115.965 | 136 | 75.605 |
+
+~1.15x slower than 8-thread 4x2. Occupancy was
+not the leftover. Stop M=64 4-acc. Floor 75 us.
+Next: s4 on the M=64 4x8 A-db tile.
