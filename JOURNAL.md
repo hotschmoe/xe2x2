@@ -964,6 +964,30 @@ VERDICT -> Zero-pad M=1 is closed and is not a 45 us beat.
   97). Hand floor stays 47-50 us. ngen SLM steal is d32
   ska remainder, not A-pack.
 
+### 2026-09-02al - K2 clock-held M=1 NT=2 both cards
+
+CONTEXT -> M=1 pad was 49 vs 97 across cards. Heat 1024^3
+  s8 DPAS (80 timed iters) then time dec NT=2 at D0.
+
+CONFIG -> sycl+l0, dpas_s8 heat then dpas_s8_dec NT=2,
+  gpu-run --card N. Sample gt0 cur_freq every 0.2s.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_hold_dec.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_hold_dec.sh 1 2
+  ```
+
+RESULT -> After heat cur=1167, not 2800. max_abs=0. Heat
+  141 us card0 / 160 us card1. M=1 5120: 61.5 / 65.4 us.
+  M=4: 132 / 141. Freq log ~717-750 MHz during the hold.
+  End cur=2800 is after the kernels, not during.
+
+VERDICT -> Do not quote 46-48 us from this fire. Clocks
+  drooped. Hand floor stays warm wgn M=4 47-50 us. The
+  97 us D3hot vs 49 us warm still stands. Next: hold
+  clocks during the timed loop, not after a long heat.
+
 
 
 

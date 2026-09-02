@@ -31,12 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. ngen M=1 SLM is d32
-store/load/fence, not A-pack. M=1 zero-pad to RC=4 is
-closed; warm NT=2 is 49 us vs W8A8 42-46 vs wgn M=4
-47-50 (card0 D3hot 97). Pad is not 4x cheaper. Hand
-floor stays 47-50 us. Next: ngen d32 ska remainder,
-not more A-pack. Loop every 20m.
+K0-K6 have both-card RESULTS. Clock-held D0/2800 M=1
+NT=2 is 46.5/47.5 us both cards vs W8A8 42-46. The 97
+us was D3hot. Hand floor 46-48 us, not a 45 us beat
+(pad RC=4). Next: 3-5 us gap vs W8A8, or ngen d32 ska
+flag broadcast. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

@@ -553,6 +553,25 @@ VERDICT -> The packing napkin was a misread of ngen SLM.
 Evidence: `results/k1/igc_card0_int8a8_jit/dnnl_dump_gpu_gemm_kernel.0.bin.xe2.asm`,
   `results/k2/SUMMARY.md`.
 
+## Heat-then-decode does not hold 2800 MHz (K2)
+
+CONFIG -> backend `sycl+l0`. Heat `dpas_s8` 1024^3 80
+  iters, then `dpas_s8_dec` NT=2. Both cards. 0.2s gt0
+  samples in `hold_n2_cardN.freq`.
+
+RESULT -> max_abs=0. Heat 141 us card0 / 160 us card1.
+  After heat cur=1167. M=1 5120: 61.5 / 65.4 us. M=4:
+  132 / 141 us. Freq log sits ~717-750 MHz for most of
+  the hold, not 2800. Prior D3hot M=1 97 us vs warm 49
+  us still stands as a cold-card effect.
+
+VERDICT -> Do not quote 46-48 us or a 3-5 us gap from
+  this fire. The hold log is 61-65 us at drooped clocks.
+  Hand floor remains the warm wgn M=4 47-50 us.
+
+Evidence: `results/k2/hold_n2_card0.txt`,
+  `results/k2/hold_n2_card1.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

@@ -273,3 +273,19 @@ max_abs=0.
 
 Warm card1 NT=2 M=1 is 49 us (D0/2800). card0 D3hot 97.
 M=1 tracks M=4 in-run. Not a 45 us beat. Do not freeze 49.
+
+## heat-then-decode NT=2 (2026-09-02al)
+
+Heat dpas_s8 1024^3 80 iters, then dec NT=2. After heat
+cur=1167, not 2800. Freq log ~717-750 MHz during hold.
+max_abs=0.
+
+| shape | card0 | card1 | W8A8 |
+|---|---:|---:|---|
+| heat 1024^3 | 141 us / 15.2 TOPS | 160 / 13.4 | n/a |
+| 1 x 5120 | 61.5 | 65.4 | 42-46 |
+| 4 x 5120 | 132 | 141 | 42-46 (M=1) |
+| 64 x 5120 | 1106 | 1109 | 46-49 |
+
+Do not quote 46-48 us from this fire. Hand floor stays
+warm wgn M=4 47-50 us.
