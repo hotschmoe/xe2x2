@@ -1078,31 +1078,6 @@ VERDICT -> Fused-repeat body is 34 us at 2800, same band
   as clk min. Not a serving one-shot. Scale epilogue is
   still the W8A8-contract gap.
 
-### 2026-09-02ao - K2 in-kernel repeat occupancy (harvest)
-
-CONTEXT -> Sibling fire: one launch repeats the GEMM R
-  times (zero acc each, store last) so GT stays busy
-  without host gaps. Logs matched before promote.
-
-CONFIG -> sycl+l0, standalone dpas_s8_rep, gpu-run
-  --card N, NT=2. M=1 R=4096, M=4 R=2048. 3 timed
-  iters. us_per = event_us / R.
-
-COMMAND ->
-  ```
-  gpu-run --card 0 kernels/esimd_dpas/run_rep.sh 0 2
-  gpu-run --card 1 kernels/esimd_dpas/run_rep.sh 1 2
-  ```
-
-RESULT -> max_abs=0. Clocks mid cur=2800 both cards.
-  M=1: us_per 34.460 card0 / 34.318 card1. M=4:
-  34.512 / 34.380. Matches the batched-spin 36 us
-  event (the extra ~1.5 us is launch).
-
-VERDICT -> Independent hold method agrees: ~34-36 us
-  at 2800 for this raw s32 tile. Still not a W8A8
-  serving beat (no scale). Do not freeze 34 us.
-
 
 
 
