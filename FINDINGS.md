@@ -433,6 +433,28 @@ VERDICT -> The ff encoding landed. Issuing prefetch *before*
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/pf_dpas_lines.txt`.
 
+## Overlapped prefetch on 64 dpas is not a 45 us beat (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_ov`. Same
+  64x `dpas.8x4` as u64. Prologue `lsc_prefetch_2d` of k=0,
+  then load, first dpas, then ff of next k64 (ngen order).
+  Both cards. Prior: pf-before-load was slower than no-pf.
+
+RESULT -> IGA 64x `dpas.8x4` plus null-dest
+  `load_block2d.ugm.d8 ... rd:0`. GRF 128. ff sends 34/18
+  (unroll*2+prologue) vs pf 131/99. max_abs=0. M=4 NT=2:
+  100-264 us vs u64 no-pf 53-69 vs pf 83-208 vs W8A8 M=1
+  42-46. M=64: 350-970 vs u64 314-570. Warm NT=2 was 100 us
+  at 2083 MHz; first NT=4 was D3hot/2800 at 371 us.
+
+VERDICT -> Moving ff after the first dpas (and prologue
+  prefetch) is not the 45 us kernel. Decode still loses to
+  no-pf u64. Do not freeze 100 us. Floor stays 45 us.
+  Remaining steal is ngen wg 8x2 / ska double-buffer loads,
+  not more ff micro-moves.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/ov_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

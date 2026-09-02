@@ -31,11 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. Prefetch-before-load on 64
-dpas.8x4 lights (null-dest rd:0) and taxes decode vs u64
-(83-208 vs 53-69 vs W8A8 45). Next: overlap prefetch with
-dpas like ngen (ff during dpas), not more pre-load sends.
-Loop every 20m.
+K0-K6 have both-card RESULTS. Overlap-ff on 64 dpas.8x4
+lights (null-dest rd:0, 34/18 sends vs pf 131/99) and
+still loses decode to no-pf u64 (100-264 vs 53-69 vs
+W8A8 45). Next: ngen wg 8x2 / ska double-buffer loads,
+not more ff placement. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

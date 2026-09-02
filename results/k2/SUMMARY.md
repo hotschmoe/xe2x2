@@ -179,3 +179,20 @@ grf_count 128. max_abs=0.
 
 Prefetch-before-load is slower at decode than no-pf u64.
 Floor stays 45 us.
+
+## prefetch overlapped with dpas (2026-09-02af)
+
+Same 64x dpas.8x4 as u64. Prologue ff of k=0, then load,
+first dpas, then next-k64 `lsc_prefetch_2d`. ocloc: 64x
+`dpas.8x4` plus null-dest `load_block2d.ugm.d8 rd:0`.
+ff count 34 (NT=2) / 18 (NT=4) vs pf 131/99. GRF 128.
+max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | u64 NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 264 | 100 | 110 | 371 | 53-69 |
+| 64 x 5120 | 970 | 608 | 350 | 582 | 436-570 |
+| 256 x 5120 | 830 | 1010 | 995 | 513 | 594-1198 |
+
+NT=4 c1 started D3hot/2800 (slow M=4). Warm NT=2 is 100 us,
+still above u64 53-69 and W8A8 42-46. Floor stays 45 us.

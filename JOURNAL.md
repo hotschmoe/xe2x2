@@ -783,6 +783,38 @@ VERDICT -> ff lights and is not a 45 us beat. Warm NT=2
   Next: overlap prefetch with dpas (ngen order), not more
   pre-load sends.
 
+### 2026-09-02af - K2 prefetch overlapped with dpas
+
+CONTEXT -> pf-before-load taxed decode (83-208 vs u64
+  53-69 vs W8A8 45). ngen M=1 is load, then ff, then
+  dpas.8x4. Steal that order: prologue ff of k=0, then
+  load, first dpas, then lsc_prefetch_2d of next k64.
+
+CONFIG -> sycl+l0, standalone dpas_s8_ov, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Same NT=2 U=16 /
+  NT=4 U=8 as u64/pf.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_ov.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_ov.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4 rW:b rA:b, GRF 128, null-dest
+  load_block2d.ugm.d8 rd:0. ff count 34 (NT=2) / 18 (NT=4)
+  = unroll*2+prologue, vs pf 131/99. max_abs=0 both cards
+  both NT. M=4: NT=2 100-264 us (warm 100 at 2083 MHz) /
+  NT=4 110-371 (D3hot first 371). M=64: 350-970 vs u64
+  314-570 vs W8A8 46-49. M=256: 513-1010 vs 75. Inner IGA
+  is prologue ff then load/dpas; later unrolls load-ff-dpas.
+
+VERDICT -> ngen-order ff lights and is not a 45 us beat.
+  Warm NT=2 decode (100 us) still loses to no-pf u64 53-69.
+  Do not freeze 100 us. Floor stays 45 us. Next: ngen wg
+  8x2 / ska double-buffer loads, not another ff placement.
+
 
 
 

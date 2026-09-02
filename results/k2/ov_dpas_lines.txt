@@ -1,0 +1,34 @@
+K2 dpas_s8_ov ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31
+  - name:            _ZTSN12_GLOBAL__N_115DpasS8OvNt4NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+  - name:            _ZTSN12_GLOBAL__N_115DpasS8OvNt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+.text._ZTSN12_GLOBAL__N_115DpasS8OvNt2NameE.asm: 64 dpas {'8x4': 64} block2d=130 prefetch_or_rd0=34
+  send.ugm (1|M0)          null     r10  null:0  0x0            0x02080003           {I@2,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r9  null:0  0x0            0x02080003           {I@1,$4} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r20  null:0  0x0            0x02080003           {F@2,$12} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r21  null:0  0x0            0x02080003           {I@2,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  first_order: ff@56 -> load@93 -> dpas@185
+  ff: send.ugm (1|M0)          null     r10  null:0  0x0            0x02080003           {I@2,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  load: send.ugm (1|M0)          r5       r4  null:0  0x0            0x02200003           {A@1,$11} // wr:1+0, rd:2; load_block2d.ugm.d8.a64
+  dpas: dpas.8x4 (16|M0)         r106:d        r106:d            r12:b             r5.0:b           {$11}
+  near_first_dpas: load load load dpas dpas
+.text._ZTSN12_GLOBAL__N_115DpasS8OvNt4NameE.asm: 64 dpas {'8x4': 64} block2d=98 prefetch_or_rd0=18
+  send.ugm (1|M0)          null     r10  null:0  0x0            0x02080003           {I@2,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r9  null:0  0x0            0x02080003           {I@1,$4} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r20  null:0  0x0            0x02080003           {A@1,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  send.ugm (1|M0)          null     r20  null:0  0x0            0x02080003           {F@1,$12} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  first_order: ff@56 -> load@113 -> dpas@197
+  ff: send.ugm (1|M0)          null     r10  null:0  0x0            0x02080003           {I@2,$3} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  load: send.ugm (1|M0)          r5       r4  null:0  0x0            0x02200003           {A@1,$11} // wr:1+0, rd:2; load_block2d.ugm.d8.a64
+  dpas: dpas.8x4 (16|M0)         r104:d        r104:d            r12:b             r5.0:b           {$11}
+  near_first_dpas: load load load dpas load dpas load
+inner NT=2: prologue ff then loads; after first 2 dpas an ff then more loads.
+  later unrolls: load, ff, dpas (ngen catalog order). ff count 34 = 16*2+2.
+inner NT=4: same prologue. later ff mostly load->ff->dpas. ff count 18 = 8*2+2.
+  IGC did not keep ff strictly between two dpas. GRF 128. operands rW:b rA:b.
