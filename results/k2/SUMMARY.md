@@ -610,3 +610,33 @@ throttle=0. IGA 32x dpas.8x8 rW:s4 rA:s4, grf
 time (different dtype). New s4 hand floor 33.6
 us at 2800. Next: s4 M=256 4-acc and s4 M=1
 decode, split per card.
+
+## s4 4-acc wg 4x8 M=256 card0 (2026-09-02bj)
+
+Packed s4, 4 M-tiles, wg 4x8, k128, 128
+dpas.8x8 :s4/:s4, no A-db. spin=512. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+IGA 128x dpas.8x8 rW:s4 rA:s4, grf 128, no SLM.
+NT=2 no spill.
+
+| shape | card | event_us | pipe_host_us | s8 4-acc | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 48.266 | 48.650 | 128.390 | 76.1 |
+
+One-card ~2.63x vs s8 128 us, under W8A8 75.
+Do not freeze as floor until card1.
+
+## s4 RC=4 8x2-N M=1 card1 (2026-09-02bk)
+
+Packed s4, RC=4, wg 8x2 along N, 32 dpas.8x4
+:s4/:s4, pad M to 4. spin=4000. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+IGA 32x dpas.8x4 rW:s4 rA:s4, grf 128, no SLM.
+
+| shape | card | event_us | pipe_host_us | s8 RC=4 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 | 1 | 15.958 | 16.576 | 34.12 | 44.55 |
+| 4 x 5120 | 1 | 15.995 | 16.346 | 34.7 | 44 |
+
+One-card ~2.05x vs s8 34 us. M=4 tracks M=1.
+Do not freeze as floor until card0.

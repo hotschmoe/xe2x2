@@ -1,0 +1,12 @@
+K2 dpas_s4_w48m4 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 s4 4-acc wg 4x8 k128 f16 M=256
+  name:            _ZTSN12_GLOBAL__N_118DpasS4W48m4Nt4NameE, name:            _ZTSN12_GLOBAL__N_118DpasS4W48m4Nt2NameE
+  grf_count:       128, grf_count:       128, has_dpas:        true, has_dpas:        true
+  slm_size: (absent)
+  NT=4 spill_fill_space present; NT=2 no spill
+.text._ZTSN12_GLOBAL__N_118DpasS4W48m4Nt2NameE.asm dpas.8x8=128 :s4=128 slm=0 atomic=104
+  first_dpas: dpas.8x8 (16|M0)         r112:d        r112:d            r23:s4            r5.0:s4          {Atomic,Compacted,$4.dst}
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$3} // wr:1+4, rd:0; store_block2d.ugm.d16.a64
+.text._ZTSN12_GLOBAL__N_118DpasS4W48m4Nt4NameE.asm dpas.8x8=128 :s4=128
+  first_dpas: dpas.8x8 (16|M0)         r21:d         r21:d             r13:s4            r61.0:s4         {Compacted,$10}
+  store: send.ugm (1|M0)          null     r8  r4:4  0x0            0x02000207           {I@1,$9} // wr:1+4, rd:0; store_block2d.ugm.d16.a64

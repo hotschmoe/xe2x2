@@ -1748,6 +1748,72 @@ VERDICT -> s4 on this tile is a real ~2.24x vs
   Do not quote tok/s. Next: split s4 M=256 4-acc
   and s4 M=1 decode, one arm per card.
 
+### 2026-09-02bj - K2 s4 4-acc wg 4x8 M=256 card0
+
+CONTEXT -> s8 4-acc wg 4x8 is 128 us at M=256 vs
+  W8A8 75. s4 4x8 A-db is 33.6 us at M=64
+  (~2.24x s8). Steal native s4 onto the 4-acc
+  tile. One-card schedule steal; sibling later
+  if this is a new floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_w48m4, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 0.
+  NT=2 U=8 (128 s4 dpas), 4 M-tiles, wg 4x8 NxM,
+  k128, two s4 dpas per k128, no SLM, pack=2.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill s4 [-8,7] scales 0.02 out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_w48m4.sh 0 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 128x dpas.8x8 rW:s4 rA:s4,
+  store_block2d d16, grf_count 128, no slm_size.
+  NT=2 no spill (NT=4 spill 3584 B). cosine=1.0
+  max_abs=0. timed act=cur=2800 throttle=0.
+  M=256 card0: event 48.266 us, pipe_host 48.650
+  vs s8 4-acc 128 vs W8A8 75.
+
+VERDICT -> One-card s4 4-acc is a real ~2.63x vs
+  s8 128 us and under W8A8 75 us in wall time.
+  Do not promote 48.7 us as a floor until card1
+  runs it. Rank us. Next: sibling swap.
+
+### 2026-09-02bk - K2 s4 RC=4 8x2-N M=1 card1
+
+CONTEXT -> s8 RC=4 8x2-N scale-to-f16 is 34 us
+  at M=1 vs W8A8 44. s4 4x8 A-db is 33.6 us at
+  M=64. Steal native s4 onto the decode tile.
+  One-card; sibling later if a new floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 1.
+  NT=2 U=16 (32 s4 dpas.8x4), wg 8x2 along N,
+  pad M to RC=4, pack=2, no SLM. spin=4000
+  warmup=50 iters=40. Fill s4 [-8,7] scales 0.02
+  out f16. M=1 and M=4 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_sc.sh 1 2 4000
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 32x dpas.8x4 rW:s4 rA:s4,
+  store_block2d d16, grf_count 128, no slm_size.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 15.958 us, pipe_host 16.576
+  vs s8 34 vs W8A8 44. M=4 tracks (pipe 16.346).
+
+VERDICT -> One-card s4 decode is a real ~2.05x
+  vs s8 34 us and under W8A8 44 us. Pad still
+  does RC=4 work. Do not promote 16.6 us as a
+  floor until card0 runs it. Rank us. Next:
+  sibling swap of bj and bk.
+
 
 
 

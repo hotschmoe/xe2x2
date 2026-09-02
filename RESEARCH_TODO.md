@@ -44,9 +44,12 @@ Decode quant: producer+GEMM (ba) is 44 us.
 k32 A-db on 4-acc M=256 is 135 us (bf), a tax.
 4-acc wg 4x2 M-on-Y is 115 us (bg) vs 8x2-N 120;
 4x2x4 no SLM is 133 us (bh), a loss. Stop M=64
-4-acc s8. Next: split distinct one-card arms.
-card0: s4 on M=256 4-acc wg 4x8. card1: s4 on
-M=1 8x2-N RC=4 scale-to-f16. Loop every 20m.
+4-acc s8. s4 M=256 4-acc is 48.7 us card0 (bj),
+one-card, under W8A8 75, pending sibling. s4
+M=1 RC=4 8x2-N is 16.6 us card1 (bk), one-card,
+under s8 34, pending sibling. Next: sibling
+swap those two (card1 s4 M=256 4-acc, card0
+s4 M=1 decode) to close floors. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
