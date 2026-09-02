@@ -131,3 +131,20 @@ per K-chunk.
 
 SLM A + barrier is slower than per-thread A at decode. Floor
 stays 45 us.
+
+## k64 NT=2/4 RC=4 (2026-09-02ac)
+
+Stolen k64 blocking from W8A8 ngen M=1. Inner step: two
+K=32 DPAS, A reused across NT, no SLM. ocloc: `dpas.8x4
+(16|M0) rW:b rA:b`. ze_info grf_count 128. NT=2 has 4 static
+dpas; NT=4 has 16. Not ngen's 64. max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | W8A8 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 278 | 92 | 111 | 396 | 42-46 (M=1) |
+| 64 x 5120 | 728 | 482 | 293 | 529 | 46-49 |
+| 256 x 5120 | 616 | 810 | 962 | 599 | 74-76 |
+
+First pair (c0 nt2, c1 nt4) started D3hot cur=2800. Swap
+started ~1620 MHz warm. M=4 92-396 is clock + first-touch,
+not a 45 us beat. Floor stays 45 us.

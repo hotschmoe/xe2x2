@@ -1,0 +1,24 @@
+K2 dpas_s8_k64 ocloc/IGA (CPU unbundle, no GPU)
+backend sycl+l0 AOT intel_gpu_bmg_g31
+- name:            _ZTSN12_GLOBAL__N_116DpasS8K64Nt4NameE
+grf_count:       128
+has_dpas:        true
+simd_size:       1
+- name:            _ZTSN12_GLOBAL__N_116DpasS8K64Nt2NameE
+grf_count:       128
+has_dpas:        true
+simd_size:       1
+nt2.asm: 4 dpas instructions {'dpas.8x4': 4}
+  dpas.8x4 (16|M0) r52:d r52:d r15:b r11.0:b {$3}
+  dpas.8x4 (16|M0) r48:d r48:d r31:b r11.0:b {$4}
+  dpas.8x4 (16|M0) r52:d r52:d r23:b r13.0:b {$3}
+  dpas.8x4 (16|M0) r48:d r48:d r39:b r13.0:b {$4}
+nt4.asm: 16 dpas instructions {'dpas.8x4': 16}
+  dpas.8x4 (16|M0) r100:d null:d r12:b r5.0:b {$3}
+  dpas.8x4 (16|M0) r96:d null:d r30:b r5.0:b {$5}
+  dpas.8x4 (16|M0) r40:d null:d r53:b r5.0:b {$6}
+  dpas.8x4 (16|M0) r90:d null:d r72:b r5.0:b {$7}
+  dpas.8x4 (16|M0) r100:d r100:d r21:b r9.0:b {$8}
+  dpas.8x4 (16|M0) r96:d r96:d r44:b r9.0:b {$10}
+  dpas.8x4 (16|M0) r40:d r40:d r62:b r9.0:b {$11}
+  dpas.8x4 (16|M0) r90:d r90:d r81:b r9.0:b {$12}

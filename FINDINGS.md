@@ -377,6 +377,25 @@ VERDICT -> Copying "use SLM" without the rest of the ngen
 
 Evidence: `results/k2/SUMMARY.md`.
 
+## k64 blocking with 4-16 dpas.8x4 is not the 45 us kernel (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_k64`, RC=4,
+  k64=two K=32 DPAS per step, NT=2/4 A-reuse, no SLM.
+  Both cards. Prior: W8A8 M=1 ngen is 64x `dpas.8x4` k64.
+
+RESULT -> IGA `dpas.8x4 (16|M0) ... :b :b`. zebin `grf_count
+  128`, `has_dpas true`. NT=2 binary has 4 static dpas (K
+  loop remains). NT=4 has 16. max_abs=0. M=4 5120: 92-396 us
+  vs RC=4 no-SLM 77-168 vs W8A8 M=1 42-46. M=64: 293-728 vs
+  W8A8 46-49. M=256: 599-962 vs W8A8 74-76. First pair started
+  D3hot/2800 and was the slow M=4; warm swap was 92-111.
+
+VERDICT -> The ngen k64 *blocking* is not enough. IGC kept
+  a K loop; this is not 64 unrolled dpas. Floor stays 45 us.
+  Clocks explain the us spread; do not freeze 92 us.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/k64_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

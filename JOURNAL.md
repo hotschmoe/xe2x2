@@ -701,6 +701,33 @@ RESULT -> max_abs=0. M=4 5120: 372-463 us vs RC=4 no-SLM 77-168
 VERDICT -> SLM A + per-K barrier loses. Promote the miss.
   Floor stays 45 us. Need the ngen unroll/k64, not just SLM.
 
+### 2026-09-02ac - K2 k64 NT=2/4 vs 45 us W8A8
+
+CONTEXT -> SLM A lost. W8A8 M=1 ngen is 64x dpas.8x4 k64.
+  Try RC=4, two K=32 chunks per step, NT=2/4 A-reuse, no SLM.
+
+CONFIG -> sycl+l0, standalone dpas_s8_k64, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Shapes 4/64/256 x 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_k64.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_k64.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> max_abs=0 both cards both NT. IGA is dpas.8x4 rW:b
+  rA:b, GRF 128. NT=2 has 4 static dpas (K loop remains).
+  NT=4 has 16. Not ngen's 64. M=4: 92-396 us (D3hot first
+  pair 278/396, warm swap 92/111) vs RC=4 77-168 vs W8A8 45.
+  M=64: 293-728 vs W8A8 46-49 vs RC=8 274-373. M=256:
+  599-962 vs W8A8 75 vs RC=4 1028-1069. Clocks swing us.
+
+VERDICT -> k64 blocking with 4-16 dpas is not the 45 us
+  kernel. Promote encoding + miss. Next: land ~64 static
+  dpas.8x4 like ngen, not another SLM/NT micro.
+
 
 
 

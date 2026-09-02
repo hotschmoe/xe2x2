@@ -31,10 +31,10 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. RC=4 + SLM A share lost (M=4
-372-463 us vs no-SLM 77-168 vs W8A8 45). Next: unroll k64 /
-64 dpas.8x4 like the ngen M=1 kernel, not another SLM micro.
-Loop every 20m.
+K0-K6 have both-card RESULTS. k64 blocking NT=2/4 lost (M=4
+92-396 us vs RC=4 77-168 vs W8A8 45; IGA 4 or 16 dpas.8x4,
+not ngen's 64). Next: land ~64 static dpas.8x4 like the ngen
+M=1 kernel (unroll K), not another SLM/NT micro. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
