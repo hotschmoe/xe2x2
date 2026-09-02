@@ -467,3 +467,19 @@ load_block2d.d8.ca.ca (rd:0), 64x dpas.8x8, grf 128.
 ~30% slower than A-db. Stop M=64 load-path chasing.
 sc8db is the hand floor. Next: ngen M=256 k128 or
 K5 producer without re-reading A.
+
+## k128 A-db M=256 (2026-09-02az)
+
+RC=8, k128 (4x k32), A ping-pong, NT=2 U=8 (64 dpas).
+spin=512. cosine=1.0 max_abs=0. timed act=2550-2600
+cur=2800 throttle=1. IGA 64x dpas.8x8, grf 128,
+no SLM.
+
+| shape | card | event_us | pipe_host_us | 4x M=64 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 447.922 | 442.581 | ~392 | 76.1 |
+| 256 x 5120 | 1 | 431.531 | 439.442 | ~392 | 74.9 |
+
+~4.5x M=64 A-db, ~5.9x W8A8. k128 blocking is not
+the 75 us kernel. Next: K5 producer without
+re-reading A, or ngen wg 4x8.

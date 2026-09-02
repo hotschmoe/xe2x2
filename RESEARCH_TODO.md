@@ -33,13 +33,12 @@ server, JOURNAL entry written.
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
 K0-K6 have both-card RESULTS. Held-clock scale-to-f16
 M=1 (ap) beats W8A8 34 vs 44 us. M=64 hand floor is
-A-db 97-100 us (av), ~2.1x W8A8 46. Load-path extras
-all lost: SLM 136, 4-acc 120, B-db+ca.ca 105-107,
-ff prefetch 126-128 (ay). GRF256 still zebin 128.
-Vectorized RMSNorm-quant fuse (au) is 72 us;
-two-launch WG-256+GEMM stays. Next: ngen M=256
-k128, or K5 producer that does not re-read A.
-Loop every 20m.
+A-db 97-100 us (av), ~2.1x W8A8 46. M=256 k128 A-db
+(az) is 440 us, ~5.9x W8A8 75, ~4.5x the M=64
+floor. GRF256 still zebin 128. Vectorized
+RMSNorm-quant fuse (au) is 72 us; two-launch
+WG-256+GEMM stays. Next: K5 producer that does
+not re-read A, or ngen wg 4x8. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

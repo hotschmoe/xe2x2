@@ -771,6 +771,26 @@ Evidence: `results/k2/sc8ff_m64_n2_s512_card0.txt`,
   `results/k2/sc8ff_m64_n2_s512_card1.txt`,
   `results/k2/sc8ff_dpas_lines.txt`.
 
+## k128 A-db at M=256 is ~4.5x M=64, not 75 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8k128`.
+  RC=8, k128 (4x k32), A ping-pong, 64x `dpas.8x8`,
+  f16 scales 0.02. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 64x `dpas.8x8`, `store_block2d.d16`,
+  `grf_count` 128, no SLM. cosine=1.0 max_abs=0.
+  timed act=2550-2600 cur=2800 throttle=1. M=256
+  pipe_host 442.6/439.4 vs napkin 4x98~392 vs
+  K4 W8A8 74.9/76.1 (not same-session).
+
+VERDICT -> k128 blocking does not beat oneDNN at
+  M=256. Occupancy did not cancel the 4x M. Rank
+  us. Clocks lower than M=64 (throttle=1).
+
+Evidence: `results/k2/sc8k128_m256_n2_s512_card0.txt`,
+  `results/k2/sc8k128_m256_n2_s512_card1.txt`,
+  `results/k2/sc8k128_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -890,7 +910,8 @@ tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 RC=8 A-db 97-100 vs 46 us; no-db 120; 4-acc no-SLM 120;
 B-db+ca.ca 105-107; ff prefetch 126-128; 4x2x4+SLM 136
-is slower). Remaining
+is slower) and at M=256 (k128 A-db 440 vs K4 W8A8 75).
+Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
