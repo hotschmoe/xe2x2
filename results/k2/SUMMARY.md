@@ -388,3 +388,18 @@ cosine=1.0 max_abs=0. timed cur=2800 throttle=1.
 
 ~2x RC=4 (half M-blocks). Still ~2.6x W8A8. GRF256
 refused. Next: ngen wg / SLM pack.
+
+## ngen 4x2x4 + SLM A pack M=64 (2026-09-02as)
+
+32-thread wg 4x2x4, 4x RC=8, SLM A 4096, NT=2 U=4
+(64 dpas). spin=512. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0. IGA 64x dpas.8x8, 32
+store.slm.d64x32t + 32 load, grf_count 128.
+
+| shape | card | event_us | pipe_host_us | sc8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 135.172 | 136.102 | 119.626 | 46.167 |
+| 64 x 5120 | 1 | 135.938 | 136.003 | 121.007 | 46.450 |
+
+~13% slower than no-SLM sc8. SLM A-share is a tax.
+Next: fuse K5 into M=1, not more barriers.

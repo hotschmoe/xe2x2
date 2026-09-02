@@ -670,10 +670,26 @@ Evidence: `results/k2/sc8_m64_n2_s512_card0.txt`,
   `results/k2/sc8_m64_n2_s512_card1.txt`,
   `results/k2/sc8_dpas_lines.txt`.
 
-Evidence: `results/k2/sc_m64_n2_s4000_card0.txt`,
-  `results/k2/sc_m64_n2_s4000_card1.txt`,
-  `results/k2/w8a8_hold_card0.txt`,
-  `results/k2/w8a8_hold_card1.txt`.
+## ngen 4x2x4 + SLM A pack loses to no-SLM RC=8 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc84`.
+  WG 4x2x4, 4x RC=8 (32 rows/thread), SLM A per k64,
+  NT=2, 64x `dpas.8x8`, f16 scales 0.02. Both cards,
+  spin=512.
+
+RESULT -> IGA 64x `dpas.8x8`, `slm_size` 4096,
+  32 store.slm + 32 load.slm, `grf_count` 128.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=64 pipe_host 136.1/136.0 vs sc8
+  120 vs W8A8 46.
+
+VERDICT -> The ngen WG+SLM bundle as stolen here
+  is a tax vs the 8x2-N no-SLM RC=8 tile. Do not
+  keep adding barriers to chase 46 us. Rank us.
+
+Evidence: `results/k2/sc84_m64_s512_card0.txt`,
+  `results/k2/sc84_m64_s512_card1.txt`,
+  `results/k2/sc84_dpas_lines.txt`.
 
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
@@ -750,9 +766,10 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 (34 vs 44 us) and still true at M=64 (RC=8
-120 vs W8A8 46 us). Remaining hypotheses: decode cannot
-use INT2, PP=2 cannot win decode, we cannot beat XeTLA.
+scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
+RC=8 120 vs 46 us; 4x2x4+SLM 136 is slower). Remaining
+hypotheses: decode cannot use INT2, PP=2 cannot win decode,
+we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
 evidence-gated. Model shelf after the math floor: docs/MODELS.md.
 

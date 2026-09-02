@@ -1,0 +1,13 @@
+K2 dpas_s8_sc84 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 RC=8 wg 4x2x4 SLM A pack f16
+  - name:            _ZTSN12_GLOBAL__N_114DpasS8Sc84NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        4096
+      barrier_count:   1
+.text._ZTSN12_GLOBAL__N_114DpasS8Sc84NameE.asm:
+  dpas.8x8=64 dpas.8x4=0 store.slm=32 load.slm=32 fence.slm=8 barrier=8 d16=8
+  first_dpas: dpas.8x8 (16|M0)         r60:d         r60:d             r68:b             r121.0:b
+  first_slm:  store.slm.d64x32t.a32
+  store:      store_block2d.ugm.d16

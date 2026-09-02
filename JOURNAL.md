@@ -1178,6 +1178,42 @@ VERDICT -> RC=8 lights and is ~2x RC=4 (half the
   M-blocks), not a 46 us beat. GRF256 still refused.
   Next: ngen wg 4x2x4 / SLM pack, not another RC.
 
+### 2026-09-02as - K2 ngen wg 4x2x4 + SLM A pack M=64
+
+CONTEXT -> RC=8 8x2-N f16 is 120 us vs W8A8 46.
+  ngen M=64 catalog is wg 4x2x4 kr grf256 k64 + 53
+  SLM, 64x dpas.8x8. Steal 32-thread 4x2x4, 4x RC=8
+  (32 rows/thread), SLM A share per k64.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc84, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=4 (64 dpas). slm 4096. grf_size<256>.
+  spin=512 warmup=10 iters=20. Fill [-64,64]
+  scales 0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc84.sh 0 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc84.sh 1 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8, slm_size 4096,
+  barrier_count 1, 32 store.slm.d64x32t + 32 load
+  + 8 fence.slm + 8 barriers, store_block2d.d16,
+  grf_count 128 (request refused). cosine=1.0
+  max_abs=0. timed act=cur=2800 throttle=0.
+  M=64: event 135.17/135.94 us, pipe_host
+  136.10/136.00 vs sc8 120 vs W8A8 46.17/46.45.
+
+VERDICT -> 4x2x4 + SLM A pack lights and is
+  numeric-closed, ~13% slower than no-SLM sc8
+  at the same 2800. Not a 46 us beat. SLM
+  A-share plus barrier-per-k64 is a tax on this
+  tile (same class as decode slm64). Next: fuse
+  K5 into the M=1 GEMM that already wins, or
+  steal ngen kr/double-buffer without that barrier.
+
 
 
 
