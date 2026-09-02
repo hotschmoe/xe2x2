@@ -184,6 +184,23 @@ VERDICT -> Xe2 has no native FP8 XMX in this op. The 56 us M=1
 
 Evidence: `results/k1/SUMMARY.md`, `results/k1/fp8_card0_isa.md`.
 
+## W8A8 ngen is s8 DPAS with RC=4 at M=1 and GRF256 at M=64 (K1)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, sglang int8 mtp6,
+  `ONEDNN_JIT_DUMP=1`, IGA Xe2 of ngen bins. Both cards, bins
+  md5-identical. oneDNN 3.12.0.
+
+RESULT -> xe_hp_systolic skipped. M=1 5120: 64x `dpas.8x4`
+  rW:b rA:b acc:d, wg 8x2, k64, some SLM. M=64: 64x `dpas.8x8`,
+  wg 4x2x4, grf256, k64, 53 SLM. M=256: 384x `dpas.8x8`,
+  grf256, k128, no SLM.
+
+VERDICT -> The 45 us floor is native s8 XMX. Steal RC=4 for
+  decode and GRF256+SLM for M=64. Our hand tile used RC=8 /
+  GRF128 / no SLM. Do not copy fp8's bf16 dpas onto this op.
+
+Evidence: `results/k1/int8a8_ngen_isa.md`.
+
 ## Compose-of-s8 did not lose (K3)
 
 CONFIG -> backend `sycl+l0`, standalone ESIMD, same tile as K2.

@@ -636,6 +636,28 @@ RESULT -> max_abs=0. M=64: NT=2 269-352 us, NT=4 318-474 vs
 VERDICT -> A-reuse does not close the gap. Promote the miss.
   Floor stays 45 us. Next: SLM/GRF256/prefetch or W8A8 ngen dump.
 
+### 2026-09-02z - int8_gemm_w8a8 ngen ISA both cards
+
+CONTEXT -> Hand 8x16 and NT=2/4 lost 6x+ to W8A8. Dump the
+  incumbent schedule like fp8 (ONEDNN_JIT_DUMP + IGA Xe2).
+
+CONFIG -> pytorch-xpu on sycl+l0, sglang int8 mtp6,
+  gpu-run --card N, ONEDNN_JIT_DUMP=1. CPU libiga64 Xe2 disasm.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/onednn_isa/run_w8a8_jitdump.sh 0
+  gpu-run --card 1 kernels/onednn_isa/run_w8a8_jitdump.sh 1
+  python3 kernels/onednn_isa/iga_disasm.py dnnl_dump_gpu_gemm_kernel.{0,2,4}.bin
+  ```
+
+RESULT -> Bins md5-identical across cards. M=1: 64x dpas.8x4
+  wg 8x2 k64. M=64: 64x dpas.8x8 grf256 wg 4x2x4 + SLM.
+  M=256: 384x dpas.8x8 grf256 k128 no SLM. Native s8 `:b`.
+
+VERDICT -> Steal RC=4 for decode and GRF256 for prefill. Promote.
+
+
 
 
 

@@ -31,9 +31,9 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. 8x16 DPAS and A-reuse NT=2/4 both
-lose to 45 us W8A8 at M=64 (269-474 vs 46-49 us). Next: dump
-int8_gemm_w8a8 ngen ISA, then SLM/GRF256/prefetch. Loop every 20m.
+K0-K6 have both-card RESULTS. W8A8 ngen: M=1 is dpas.8x4 wg 8x2;
+M=64 is dpas.8x8 grf256 + SLM. Hand RC=8/GRF128 still loses.
+Next: ESIMD RC=4 decode tile and GRF256 M=64 tile. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

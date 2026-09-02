@@ -44,6 +44,12 @@ Image: b70-sglang-xpu-int8-runtime:20260826-mtp6. Signature
 M=1 5120: INT8 W8A8 GEMM 45 us vs FP8 W8A16 56-58 us.
 K0 naive s8 GEMV at the same shape was 990 us.
 
+ngen ISA 2026-09-02z (both cards, identical bins): M=1 is
+`dpas.8x4` wg 8x2 k64 (64 DPAS, some SLM). M=64 is `dpas.8x8`
+wg 4x2x4 **grf256** k64 + 53 SLM. M=256 is 384x `dpas.8x8`
+grf256 k128, no SLM. Native s8 `:b`, not s4. See
+`int8a8_ngen_isa.md`.
+
 ## int8_gemm_w8a16 (ref_matmul, not XMX)
 
 Image: b70-sglang-xpu-int8-w8a16:20260828-2dd55f3. Both cards.
