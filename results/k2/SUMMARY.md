@@ -451,3 +451,19 @@ no SLM.
 
 ~6-9% slower than A-db only. Extra B GRF is a tax.
 Keep sc8db. Next: null-dest prefetch on sc8db.
+
+## Null-dest prefetch on sc8db M=64 (2026-09-02ay)
+
+A-db plus lsc_prefetch_2d cached/cached of next k64
+A and B. spin=512. cosine=1.0 max_abs=0. timed
+act~2770 cur=2800 throttle=1. IGA 32x null
+load_block2d.d8.ca.ca (rd:0), 64x dpas.8x8, grf 128.
+
+| shape | card | event_us | pipe_host_us | sc8db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 127.036 | 125.826 | 96.641 | 46.167 |
+| 64 x 5120 | 1 | 127.448 | 128.072 | 100.435 | 46.450 |
+
+~30% slower than A-db. Stop M=64 load-path chasing.
+sc8db is the hand floor. Next: ngen M=256 k128 or
+K5 producer without re-reading A.

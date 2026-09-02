@@ -751,6 +751,26 @@ Evidence: `results/k2/sc8bp_m64_n2_s512_card0.txt`,
   `results/k2/sc8bp_m64_n2_s512_card1.txt`,
   `results/k2/sc8bp_dpas_lines.txt`.
 
+## Null-dest prefetch on sc8db is a tax at M=64 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8ff`.
+  sc8db A-db plus `lsc_prefetch_2d` cached/cached of
+  next k64 A and B. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 32x null `load_block2d.d8.ca.ca` (rd:0),
+  64x `dpas.8x8`, `grf_count` 128, no SLM. cosine=1.0
+  max_abs=0. timed act~2770 cur=2800 throttle=1.
+  M=64 pipe_host 125.8/128.1 vs sc8db 96.6/100.4
+  vs W8A8 46.
+
+VERDICT -> ngen ff as stolen here is ~30% slower
+  than A-db only. Stop M=64 load-path chasing.
+  sc8db remains the hand floor.
+
+Evidence: `results/k2/sc8ff_m64_n2_s512_card0.txt`,
+  `results/k2/sc8ff_m64_n2_s512_card1.txt`,
+  `results/k2/sc8ff_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -869,7 +889,8 @@ Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 RC=8 A-db 97-100 vs 46 us; no-db 120; 4-acc no-SLM 120;
-B-db+ca.ca 105-107; 4x2x4+SLM 136 is slower). Remaining
+B-db+ca.ca 105-107; ff prefetch 126-128; 4x2x4+SLM 136
+is slower). Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are

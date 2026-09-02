@@ -1,0 +1,13 @@
+K2 dpas_s8_sc8ff ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 A-db + lsc_prefetch_2d f16 no SLM
+  name:            _ZTSN12_GLOBAL__N_118DpasS8Sc8ffNt4NameE, name:            _ZTSN12_GLOBAL__N_118DpasS8Sc8ffNt2NameE
+  grf_count:       128, grf_count:       128, has_dpas:        true, has_dpas:        true
+  slm_size: (absent)
+.text._ZTSN12_GLOBAL__N_118DpasS8Sc8ffNt2NameE.asm dpas.8x8=64 null_prefetch=32 ca.ca=32 slm=0
+  first_dpas: dpas.8x8 (16|M0)         r50:d         r50:d             r15:b             r59.0:b          {Compacted,$3}
+  first_ff: send.ugm (1|M0)          null     r5  null:0  0x0            0x02080003           {A@1,$10} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$13} // wr:1+4, rd:0; store_block2d.ugm.d16.a64
+.text._ZTSN12_GLOBAL__N_118DpasS8Sc8ffNt4NameE.asm dpas.8x8=64 null_prefetch=16 ca.ca=16 slm=0
+  first_dpas: dpas.8x8 (16|M0)         r66:d         r66:d             r15:b             r75.0:b          {Compacted,$3}
+  first_ff: send.ugm (1|M0)          null     r5  null:0  0x0            0x02080003           {A@1,$12} // wr:1+0, rd:0; load_block2d.ugm.d8.a64.ca.ca
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$1} // wr:1+4, rd:0; store_block2d.ugm.d16.a64

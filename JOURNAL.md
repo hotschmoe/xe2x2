@@ -1377,6 +1377,42 @@ VERDICT -> B-db + ca.ca lights and is ~6-9% slower
   Next: ngen null-dest prefetch on sc8db (no extra
   GRF), or stop M=64 load-path chasing.
 
+### 2026-09-02ay - K2 sc8db + ngen null-dest prefetch M=64
+
+CONTEXT -> sc8db A-db is 97-100 us vs W8A8 46. B-db
+  + ca.ca was a GRF tax. ngen M=64 issues
+  load_block2d to null (ff) then real loads. Steal:
+  lsc_prefetch_2d cached/cached of next k64 A and B
+  on the A-db tile. No extra B GRF.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8ff, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=16. A ping-pong plus prefetch next k64.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8ff.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8ff.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8, 32x null dest
+  load_block2d.d8.ca.ca (rd:0), grf_count 128, no
+  slm_size. cosine=1.0 max_abs=0. timed act~2770
+  cur=2800 throttle=1. M=64: event 127.04/127.45
+  us, pipe_host 125.83/128.07 vs sc8db 97-100 vs
+  W8A8 46.
+
+VERDICT -> ngen ff prefetch lights and is ~30%
+  slower than A-db only. Extra null sends are a
+  tax on this tile. Stop M=64 load-path chasing;
+  sc8db 97-100 us is the hand floor (~2.1x W8A8).
+  Next: ngen M=256 k128, or K5 producer that does
+  not re-read A.
+
+
 
 
 
