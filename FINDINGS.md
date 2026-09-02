@@ -189,6 +189,22 @@ VERDICT -> The napkin "compose loses" is false on this tile.
 
 Evidence: `results/k3/SUMMARY.md`.
 
+## INT8 W8A8 GEMM beats FP8 W8A16 as kernels (K4)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`. fp8 image r50-s01
+  per-tensor scale=1. int8 sglang mtp6 GEMM-only (no act quant).
+  Qwen3.8-ish 5120, both cards, cosine vs host ref.
+
+RESULT -> M=1 5120: INT8 42-46 us vs FP8 70-72 us. M=64: INT8
+  46-49 us vs FP8 382-430 us. M=1024: INT8 230-256 us (~210-234
+  TOPS) vs FP8 1111-1126 us (~48 TOPS). Cosine ~1.0 both arms.
+
+VERDICT -> Unmixed, GEMM-only INT8 W8A8 is the faster kernel at
+  decode and prefill shapes. Serving still mixed in ~160 quant
+  launches; that is K5. Do not treat tok/s as the kernel result.
+
+Evidence: `results/k4/SUMMARY.md`.
+
 Open campaign (questions, not findings): docs/KERNEL_CAMPAIGN.md.
 Sibling-lab claims to reproduce before they can enter this file.
 Now local (K2): s4 DPAS exists but was 1.49x s8 at 1024^3 / ~583 MHz,

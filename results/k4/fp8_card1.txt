@@ -1,0 +1,12 @@
+gpu-run: [xe2x2-k4-fp8-c1] acquired card(s) 1 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -e ZE_AFFINITY_MASK=1 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu --entrypoint python3 b70-local/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-s01 /work/kernels/w8_compare/bench_w8.py --op fp8
+CONFIG backend=pytorch-xpu sitting on sycl+l0 op fp8 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+arm,m,n,k,us,GBs,TOPS,cosine,max_abs,ok
+fp8_gemm_w8a16,1,5120,5120,70.340,372.681,0.7454,0.999999,0.49699,1
+fp8_gemm_w8a16,1,17408,5120,355.497,250.717,0.5014,1.000001,0.86829,1
+fp8_gemm_w8a16,2,5120,5120,95.282,275.124,1.1005,1.000000,0.88843,1
+fp8_gemm_w8a16,4,5120,5120,102.026,256.938,2.0555,1.000000,0.79028,1
+fp8_gemm_w8a16,64,5120,5120,382.163,68.595,8.7801,0.999986,0.97702,1
+fp8_gemm_w8a16,256,5120,5120,856.089,30.621,15.6780,0.999972,0.99939,1
+fp8_gemm_w8a16,1024,5120,5120,1110.847,23.599,48.3299,1.000129,0.99738,1
+DONE
+gpu-run: [xe2x2-k4-fp8-c1] done in 25s (exit 0)

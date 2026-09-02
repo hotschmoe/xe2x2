@@ -433,3 +433,27 @@ RESULT -> dpas.8x8 rW:bf rA:bf rAcc:f. E4M3 unpack is shl+mul
 
 VERDICT -> Sibling "no native FP8 XMX" is now a local ISA
   FINDING. 56 us is decompress+bf16, not FP8 systolic. Promote.
+
+### 2026-09-02q - K4 W8 A/B both cards plus git milestone
+
+CONTEXT -> P0-K3 committed 8caea59 and pushed. K4 unmixes GEMM
+  from serving quant.
+
+CONFIG -> bench_w8.py, gpu-run --card N, M=1,2,4,64,256,1024
+  at 5120, plus M=1 17408. Cosine vs host.
+
+COMMAND ->
+  ```
+  run_w8.sh 0 fp8 <fp8-image>
+  run_w8.sh 1 int8a8 <sglang>
+  # swap
+  git commit / git push origin master
+  ```
+
+RESULT -> INT8 W8A8 GEMM-only faster at every M. M=1 5120:
+  42-46 vs 70-72 us. M=64: 46-49 vs 382-430 us. Cosine ~1.
+  Milestone: https://github.com/hotschmoe/xe2x2/commit/8caea59
+
+VERDICT -> Kernel ranking is INT8 W8A8, then FP8 W8A16 emulate.
+  K5 must add quant launches before claiming a serve win. Promote
+  the GEMM table.

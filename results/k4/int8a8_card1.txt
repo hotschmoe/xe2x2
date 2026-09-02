@@ -1,0 +1,12 @@
+gpu-run: [xe2x2-k4-int8a8-c1] acquired card(s) 1 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -e ZE_AFFINITY_MASK=1 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu --entrypoint python3 b70-sglang-xpu-int8-runtime:20260826-mtp6 /work/kernels/w8_compare/bench_w8.py --op int8a8
+CONFIG backend=pytorch-xpu sitting on sycl+l0 op int8a8 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+arm,m,n,k,us,GBs,TOPS,cosine,max_abs,ok
+int8_gemm_w8a8,1,5120,5120,46.093,568.730,1.1375,1.000000,0.042191,1
+int8_gemm_w8a8,1,17408,5120,161.379,552.297,1.1046,0.999999,0.061096,1
+int8_gemm_w8a8,2,5120,5120,46.500,563.749,2.2550,1.000000,0.057877,1
+int8_gemm_w8a8,4,5120,5120,46.378,565.228,4.5218,0.999999,0.056778,1
+int8_gemm_w8a8,64,5120,5120,48.934,535.712,68.5711,0.999997,0.062164,1
+int8_gemm_w8a8,256,5120,5120,74.945,349.780,179.0873,1.000018,0.062531,1
+int8_gemm_w8a8,1024,5120,5120,229.792,114.079,233.6338,1.000239,0.0625,1
+DONE
+gpu-run: [xe2x2-k4-int8a8-c1] done in 18s (exit 0)
