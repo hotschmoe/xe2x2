@@ -1814,6 +1814,62 @@ VERDICT -> One-card s4 decode is a real ~2.05x
   floor until card0 runs it. Rank us. Next:
   sibling swap of bj and bk.
 
+### 2026-09-02bl - K2 s4 RC=4 M=1 sibling card0
+
+CONTEXT -> card1 s4 RC=4 8x2-N was 16.6 us at
+  M=1 2800, numeric closed. Sibling swap to
+  close the decode floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 0.
+  Same NT=2 U=16 pack=2 spin=4000 as bk.
+  Fill s4 [-8,7] scales 0.02 out f16. M=1 and
+  M=4 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_sc.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 16.013 us, pipe_host 16.411
+  vs card1 16.576 vs s8 34 vs W8A8 44.
+  M=4 pipe 16.345 vs card1 16.346. Spread ~1%.
+
+VERDICT -> Sibling matches. New s4 decode floor
+  16.5 us at 2800 both cards. ~2.05x s8 34.
+  Pad still RC=4 work. Rank us. Do not quote
+  tok/s.
+
+### 2026-09-02bm - K2 s4 4-acc M=256 sibling card1
+
+CONTEXT -> card0 s4 4-acc wg 4x8 was 48.7 us at
+  M=256 2800, numeric closed. Sibling swap to
+  close the M=256 s4 floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_w48m4, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 1.
+  Same NT=2 U=8 pack=2 spin=512 as bj.
+  Fill s4 [-8,7] scales 0.02 out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_w48m4.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=256 card1: event 48.724 us, pipe_host 48.471
+  vs card0 48.650 vs s8 128 vs W8A8 75.
+  Spread ~0.4%.
+
+VERDICT -> Sibling matches. New s4 M=256 floor
+  48.6 us at 2800 both cards. ~2.63x s8 128
+  and under W8A8 75. Different dtype than W8A8.
+  Rank us. Next: split s4 A-db on this 4-acc
+  tile vs s4 decode N=17408.
+
 
 
 

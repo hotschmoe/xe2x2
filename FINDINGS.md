@@ -962,45 +962,46 @@ Evidence: `results/k2/s4db48_m64_n2_s512_card0.txt`,
   `results/k2/s4db48_m64_n2_s512_card1.txt`,
   `results/k2/s4db48_dpas_lines.txt`.
 
-## s4 4-acc M=256 is 48.7 us on card0, pending sibling (K2)
+## s4 4-acc M=256 is 48.6 us at 2800 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s4_w48m4`.
   Packed s4, 4x RC=8, wg 4x8, k128, 128x `dpas.8x8`
-  `:s4/:s4`, no SLM. Card0 only, NT=2, spin=512.
+  `:s4/:s4`, no SLM. Both cards, NT=2, spin=512.
 
 RESULT -> IGA 128x `dpas.8x8` rW:s4 rA:s4,
   `grf_count` 128, no SLM, NT=2 no spill.
   cosine=1.0 max_abs=0. timed act=cur=2800
-  throttle=0. M=256 pipe_host 48.65 vs s8 128
-  vs W8A8 75.
+  throttle=0. M=256 pipe_host 48.65/48.47 vs
+  s8 128 vs W8A8 75. Spread ~0.4%.
 
-VERDICT -> Encoding and numeric closed on card0.
-  ~2.63x the s8 4-acc tile and under W8A8 75 us.
-  One-card. Do not freeze 48.7 us as the M=256
-  s4 floor until card1 runs it.
+VERDICT -> New s4 M=256 hand floor 48.6 us at
+  2800 both cards. ~2.63x the s8 4-acc tile and
+  under W8A8 75 us. Different dtype than W8A8.
+  INT8 s8 floor stays 128 us. Rank us.
 
 Evidence: `results/k2/s4w48m4_m256_n2_s512_card0.txt`,
+  `results/k2/s4w48m4_m256_n2_s512_card1.txt`,
   `results/k2/s4w48m4_dpas_lines.txt`.
 
-## s4 RC=4 decode is 16.6 us on card1, pending sibling (K2)
+## s4 RC=4 decode is 16.5 us at 2800 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s4_sc`.
   Packed s4, RC=4, wg 8x2 along N, 32x `dpas.8x4`
-  `:s4/:s4`, pad M to 4, f16 scales 0.02. Card1
-  only, NT=2, spin=4000.
+  `:s4/:s4`, pad M to 4, f16 scales 0.02. Both
+  cards, NT=2, spin=4000.
 
 RESULT -> IGA 32x `dpas.8x4` rW:s4 rA:s4,
   `store_block2d.d16`, `grf_count` 128, no SLM.
   cosine=1.0 max_abs=0. timed act=cur=2800
-  throttle=0. M=1 pipe_host 16.58 vs s8 34 vs
-  W8A8 44. M=4 tracks (16.35).
+  throttle=0. M=1 pipe_host 16.41/16.58 vs s8
+  34 vs W8A8 44. M=4 tracks. Spread ~1%.
 
-VERDICT -> s4 RC=4 lights as `dpas.8x4` `:s4`.
-  One-card ~2.05x vs s8 34 us. Do not freeze
-  16.6 us as the decode s4 floor until card0
-  runs it. Pad still does RC=4 work.
+VERDICT -> New s4 decode floor 16.5 us at 2800
+  both cards. ~2.05x s8 34 us. Pad still does
+  RC=4 work. Different dtype than W8A8. Rank us.
 
-Evidence: `results/k2/s4sc_n2_s4000_card1.txt`,
+Evidence: `results/k2/s4sc_n2_s4000_card0.txt`,
+  `results/k2/s4sc_n2_s4000_card1.txt`,
   `results/k2/s4sc_dpas_lines.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
@@ -1118,11 +1119,12 @@ Evidence: `results/k6/SUMMARY.md`.
 Open campaign (questions, not findings): docs/KERNEL_CAMPAIGN.md.
 Sibling-lab claims to reproduce before they can enter this file.
 Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
-~2.24x s8 at M=64 4x8 A-db / 2800 (33.6 vs 75 us). INT2 DPAS
-exists (s2xs2 and s2xs8 closed). Remaining:
+~2.05x at M=1 (16.5 vs 34), ~2.24x at M=64 (33.6 vs 75),
+~2.63x at M=256 (48.6 vs 128) held 2800. INT2 DPAS exists
+(s2xs2 and s2xs8 closed). Remaining:
 
-- ESIMD `dpas<s4,s4>` ~2x s8 MAC rate -- 1.49x at 1024^3; ~2.24x
-  wall time at M=64 4x8 A-db held 2800. Tile-dependent.
+- ESIMD `dpas<s4,s4>` ~2x s8 MAC rate -- 1.49x at 1024^3;
+  serving shapes at 2800 are ~2.05-2.63x. Tile-dependent.
 - Xe2 has no native FP8 XMX -- reproduced: fp8_gemm_w8a16 is
   E4M3 unpack + bf16 dpas.8x8 (K1 JIT dump).
 - NVFP4 E2M1 x2 is exact int8; +-12 overflows s4; bitcast is wrong.
@@ -1142,11 +1144,10 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 s8 (34 vs 44 us). s4xs4 on the M=64 4x8 A-db
-tile is 33.6 us, under W8A8 46 in wall time (different dtype,
-not a W8A8 replacement). One-card pending sibling: s4 M=1
-16.6 us (bk card1), s4 M=256 4-acc 48.7 us (bj card0).
-It is still true for INT8 s8 at M=64
+scale-to-f16 s8 (34 vs 44 us) and s4 (16.5 vs 44 us), at
+M=64 s4 (33.6 vs 46 us), and at M=256 s4 (48.6 vs 75 us).
+Different dtype than W8A8, not a W8A8 replacement. It is
+still true for INT8 s8 at M=64
 (best hand wg 4x8 A-db
 75 vs 46 us; 8x2-N A-db 97-100; 4-acc wg 4x2 115 vs 4x2x4
 133 vs 8x2-N 120) and at M=256 s8
