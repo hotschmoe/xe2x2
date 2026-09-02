@@ -1930,6 +1930,65 @@ VERDICT -> Wide N is a real 29.8 us at 2800,
   as a floor until card0. Rank us. Next: sibling
   N=17408 vs s4 M=1 K=17408 (down-proj).
 
+### 2026-09-02bp - K2 s4 decode N=17408 sibling card0
+
+CONTEXT -> card1 s4 RC=4 N=17408 was 29.8 us at
+  M=1 2800, numeric closed. Sibling swap to
+  close the wide-N floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 0.
+  Same NT=2 U=16 pack=2 spin=4000 as bo.
+  Fill s4 [-8,7] scales 0.02 out f16. M=1 and
+  M=4, N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_sc_wide.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 29.552 us, pipe_host 29.235
+  vs card1 29.754 vs N=5120 16.5 vs napkin 56.
+  M=4 pipe 29.537 vs card1 29.739. Spread ~1.8%.
+
+VERDICT -> Sibling matches. New s4 wide-N floor
+  29.5 us at 2800 both cards. ~1.80x N=5120,
+  not 3.4x. Rank us.
+
+### 2026-09-02bq - K2 s4 decode K=17408 card1
+
+CONTEXT -> s4 M=1 N=5120 K=5120 is 16.5 us.
+  N=17408 K=5120 is 29.5 us. FFN-down is
+  N=5120 K=17408. Same B bytes as wide N.
+  Napkin K-linear 16.5*17408/5120 ~56 us.
+  One-card shape steal.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 1.
+  NT=2 U=16 pack=2 spin=4000. Fill s4 [-8,7]
+  scales 0.02 out f16. M=1 and M=4, N=5120
+  K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_sc_k17408.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 52.922 us, pipe_host 53.367
+  vs N=5120 16.5 vs N=17408 29.5 vs napkin 56.
+  M=4 tracks (pipe 53.303). Ratio 53.4/16.5
+  ~3.24x, near K-linear 3.40x.
+
+VERDICT -> Down-proj K=17408 is a real 53.4 us,
+  near K-linear, slower than wide-N at the same
+  B bytes (29.5). One-card. Do not freeze until
+  card0. Rank us. Next: sibling K=17408 vs s4
+  M=64 N=17408.
+
 
 
 

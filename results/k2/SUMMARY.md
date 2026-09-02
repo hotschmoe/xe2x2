@@ -672,5 +672,21 @@ throttle=0.
 | 1 x 17408 | 1 | 29.039 | 29.754 | 16.5 | 56 |
 | 4 x 17408 | 1 | 29.443 | 29.739 | 16.3 | 56 |
 
-~1.80x N=5120, not 3.40x. One-card. Next:
-sibling N=17408 vs K=17408 down-proj.
+~1.80x N=5120, not 3.40x. Sibling card0 pipe
+29.235 (bp). New wide-N floor 29.5 us both
+cards.
+
+## s4 RC=4 K=17408 card1 (2026-09-02bq)
+
+Same decode tile, N=5120 K=17408. spin=4000.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | K=5120 | napkin |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 1 | 52.922 | 53.367 | 16.5 | 56 |
+| 4 x 5120 x 17408 | 1 | 52.984 | 53.303 | 16.3 | 56 |
+
+~3.24x K=5120, near K-linear. Slower than
+wide-N 29.5 at same B bytes. One-card. Next:
+sibling K=17408 vs M=64 N=17408.
