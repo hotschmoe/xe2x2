@@ -294,6 +294,38 @@ VERDICT -> VNNI4 is the s8 B pack that matches Transformed LSC
 
 Evidence: `results/k6/SUMMARY.md`.
 
+## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
+  same RC=8 N=16 tile. Qwen3.8-ish N,K=5120. M=8 is padded
+  decode. Both cards. oneDNN W8A8 GEMM-only floor: 42-46 us
+  at M=1, 46-49 at M=64, 74-76 at M=256.
+
+RESULT -> Numeric max_abs=0. M=64 5120: s8 274-373 us, s4
+  387-393 us. M=256: s8 892-1064 us, s4 691 us. Padded M=8
+  s4 swings 34-120 us (repeat 64-87); s8 56-230 us.
+
+VERDICT -> This tile is not the incumbent. Do not call the
+  34 us M=8 s4 a beat of 45 us M=1: clocks disagree and the
+  work is 8 rows. Hand ESIMD must change schedule (block, GRF,
+  prefetch) before it can beat oneDNN in us.
+
+Evidence: `results/k2/SUMMARY.md`.
+
+## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
+
+CONFIG -> same VNNI4 in-register spoof, simd nibble decode +
+  simd VNNI4 `select`. Backend `sycl+l0`. Both cards, 1024^3.
+
+RESULT -> max_abs=0. 304 us card0 (start 633 MHz), 406 us
+  card1 (start 2800). Scalar unroll was 2316 us both cards.
+
+VERDICT -> Vectorizing the LUT is a real us win vs the scalar
+  in-register arm. It is not yet a matched-clock beat of
+  two-launch unpack. Keep both arms.
+
+Evidence: `results/k6/SUMMARY.md`.
+
 Open campaign (questions, not findings): docs/KERNEL_CAMPAIGN.md.
 Sibling-lab claims to reproduce before they can enter this file.
 Now local (K2): s4 DPAS exists but was 1.49x s8 at 1024^3 / ~583 MHz,
@@ -304,8 +336,9 @@ not 2x; INT2 DPAS exists (s2xs2 and s2xs8 closed). Remaining:
   E4M3 unpack + bf16 dpas.8x8 (K1 JIT dump).
 - NVFP4 E2M1 x2 is exact int8; +-12 overflows s4; bitcast is wrong.
   Local: nibble LUT -> s8 DPAS closed (K6); two-term s4 compose
-  closed (K3). In-register VNNI4 pack closed, scalar LUT loses
-  us; vectorized in-register LUT still open.
+  closed (K3). In-register VNNI4 pack closed; scalar LUT lost
+  us; simd LUT is ~6-8x that arm (304-406 us) and still clock-
+  bound vs two-launch unpack.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

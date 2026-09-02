@@ -31,11 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. K5 WG-256 fused RMSNorm-quant is
-7-36 us at M=1 5120 (naive 830 was the 1-WI loop). K6 in-register
-VNNI4 LUT is numeric-closed but 2316 us; two-launch unpack stays
-the fast spoof. Next: beat 45 us W8A8 at serving shapes (M=8
-pad / GEMV DPAS), vectorize K6 LUT. Loop every 20m.
+K0-K6 have both-card RESULTS. Untuned 8x16 DPAS loses to 45 us
+W8A8 at Qwen M=64/256 (274-1064 vs 46-76 us). K6 simd in-register
+LUT is 304-406 us (~7x scalar 2316), still clock-bound vs
+two-launch unpack. Next: a real GEMM schedule (block/prefetch/
+GRF) to beat 45 us. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

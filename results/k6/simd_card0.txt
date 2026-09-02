@@ -1,0 +1,17 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=650 cur=633 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:547252428588 energy2=pkg:354974479003 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:458873147949 energy2=pkg:377219296936 temp2_mC=55000
+=== nibble_lut_simd ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_lut_simd_vnni4 never_bitcast_s4 warmup=5 iters=20
+phase,arm,m,n,k,launches,us,TOPS,GBs_packedB,max_abs,ok
+check,reg_lut_simd_vnni4,8,16,32,1,7.708,0.0011,0.033,0,1
+timed,reg_lut_simd_vnni4,1024,1024,1024,1,304.182,7.0599,1.724,0,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1583 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:547330259643 energy2=pkg:355019078613 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:458950964782 energy2=pkg:377265338317 temp2_mC=54000

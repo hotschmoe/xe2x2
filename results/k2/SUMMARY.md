@@ -68,3 +68,18 @@ cur_freq, not a new algorithm:
 
 At a 2800 MHz start, s4 is 69 us / 31 TOPS (still ~8% of 367).
 The 1.49x s4/s8 ratio was a 583 MHz pair; do not freeze it.
+
+## Serving shapes vs oneDNN W8A8 (2026-09-02w)
+
+Same 8x16 tile. M=8 is padded decode (RC=8). Numeric max_abs=0.
+oneDNN W8A8 GEMM-only: M=1 42-46 us, M=64 46-49, M=256 74-76.
+
+| shape | s8 c0 us | s8 c1 us | s4 c0 us | s4 c1 us |
+|---|---:|---:|---:|---:|
+| 8 x 5120 x 5120 | 230 | 56 | 34 / 64 rpt | 120 / 87 rpt |
+| 8 x 17408 x 5120 | 524 | 286 | 127 | 216 |
+| 64 x 5120 x 5120 | 274 | 373 | 387 | 393 |
+| 256 x 5120 x 5120 | 892 | 1064 | 691 | 691 |
+
+This tile does not beat 45 us W8A8. Clocks swing padded M=8.
+M=64/256 lose by ~6-12x. Need a real schedule, not 8x16.

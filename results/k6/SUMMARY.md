@@ -29,4 +29,17 @@ tried pack_raw / pack_vnni4 / pack_kmajor. GT0 cur=2800.
 
 VNNI4 is the s8 B layout that matches Transformed LSC. This
 scalar-unroll LUT is ~2316 us vs two-launch 84-305 us: layout
-closed, us lost. Vectorized in-register LUT still open.
+closed, us lost.
+
+## Vectorized in-register LUT (2026-09-02x)
+
+simd nibble decode + simd VNNI4 select. max_abs=0 both cards.
+
+| card | start MHz | 1024^3 us | vs scalar 2316 |
+|---|---:|---:|---|
+| 0 | 633 | 304 | ~7.6x |
+| 1 | 2800 | 406 | ~5.7x |
+
+Now in the same us class as two-launch unpack+DPAS (84-305).
+Do not freeze a winner without matched clocks. Keep two-launch
+as the robust fast spoof.

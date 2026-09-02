@@ -571,4 +571,48 @@ VERDICT -> VNNI4 is the Transformed s8 B layout. This scalar
   LUT loses in us. Keep two-launch as the fast spoof. Promote
   the layout, not the 2316 us as a win.
 
+### 2026-09-02w - serving-shape DPAS vs 45 us W8A8
+
+CONTEXT -> Beat oneDNN int8_gemm_w8a8 at Qwen shapes. Existing
+  8x16 tile, M=8 padded decode (RC=8). Napkin: pad M=1 to 8
+  and maybe beat 45 us.
+
+CONFIG -> sycl+l0, dpas_s8 and dpas_s4, gpu-run --card N,
+  shapes M=8/64/256 x 5120 x 5120 and M=8 x 17408 x 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_serving.sh 0 s8
+  gpu-run --card 1 kernels/esimd_dpas/run_serving.sh 1 s4
+  # swap, plus M=8 s4 warmup20/iters40 repeat
+  ```
+
+RESULT -> max_abs=0. M=64 5120: s8 274-373 us vs W8A8 46-49.
+  M=256: 691-1064 vs 75. Padded M=8 s4 34-120 us (repeat
+  64-87); s8 56-230 us.
+
+VERDICT -> This tile loses. Do not promote the 34 us one-off.
+  Floor stays 45 us. Next is a real GEMM schedule.
+
+### 2026-09-02x - K6 vectorized in-register LUT
+
+CONTEXT -> Scalar in-register LUT was 2316 us. Vectorize
+  nibble decode and VNNI4 pack.
+
+CONFIG -> sycl+l0, nibble_lut_simd, 1024^3, gpu-run --card N.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_simd.sh 0
+  gpu-run --card 1 kernels/nvfp4/run_k6_simd.sh 1
+  ```
+
+RESULT -> max_abs=0 both cards. 304 us card0 (633 MHz start)
+  / 406 us card1 (2800 start). ~6-8x vs scalar 2316 us.
+
+VERDICT -> simd LUT is a us win vs scalar in-register. Not a
+  matched-clock beat of two-launch unpack. Promote the ratio,
+  not a single us.
+
+
 
