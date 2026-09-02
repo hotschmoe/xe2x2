@@ -1,0 +1,109 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=1767 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1267370659362 energy2=pkg:725634965087 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1182660588684 energy2=pkg:758963802429 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_clk nt=2 prime=3 heat=none
+oneDNN W8A8 floor M=1 5120: 42-46 us; warm wgn M=4 NT=2 47-50 us
+Do not quote a beat unless median_us_high is under 42-46 at cur>=2400
+=== clk nt=2 prime=3 m=1 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 wg=8x2_alongN padM=RC Bload=Transformed warmup=30 iters=40 card=0 prime=3 mhz=2400 heat=none
+phase,nt,unroll,m,n,k,mean_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+check,2,16,4,32,1024,19.584,0.0134,0,1,19.584,19.584,19.584,450.0,0,-1.000,2400,3
+iter,us,act,cur,power,throttle
+0,205.000,450,450,D0,0
+1,200.208,450,450,D0,0
+2,198.230,450,450,D0,0
+3,201.875,450,450,D0,0
+4,206.875,450,450,D0,0
+5,204.167,450,450,D0,0
+6,197.188,450,450,D0,0
+7,205.104,450,450,D0,0
+8,203.854,450,450,D0,0
+9,200.938,450,450,D0,0
+10,199.166,450,450,D0,0
+11,140.729,650,633,D0,0
+12,142.917,650,633,D0,0
+13,143.854,650,633,D0,0
+14,138.229,650,633,D0,0
+15,142.292,650,633,D0,0
+16,142.709,650,633,D0,0
+17,143.750,650,633,D0,0
+18,136.771,650,633,D0,0
+19,142.604,650,633,D0,0
+20,142.083,650,633,D0,0
+21,144.062,650,633,D0,0
+22,138.125,650,633,D0,0
+23,142.292,650,633,D0,0
+24,142.604,650,633,D0,0
+25,143.542,650,633,D0,0
+26,138.854,650,633,D0,0
+27,142.916,650,633,D0,0
+28,143.125,650,633,D0,0
+29,141.875,650,633,D0,0
+30,140.729,650,633,D0,0
+31,142.500,650,633,D0,0
+32,143.542,650,633,D0,0
+33,142.188,650,633,D0,0
+34,136.875,650,633,D0,0
+35,138.646,650,633,D0,0
+36,141.459,650,633,D0,0
+37,141.042,650,633,D0,0
+38,138.646,650,633,D0,0
+39,143.646,650,633,D0,0
+phase,nt,unroll,m,n,k,mean_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+timed,2,16,1,5120,5120,158.130,0.3316,0,1,142.812,136.771,206.875,633.0,0,-1.000,2400,3
+=== clk nt=2 prime=3 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 wg=8x2_alongN padM=RC Bload=Transformed warmup=30 iters=40 card=0 prime=3 mhz=2400 heat=none
+phase,nt,unroll,m,n,k,mean_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+check,2,16,4,32,1024,5.105,0.0514,0,1,5.105,5.105,5.105,1983.0,0,-1.000,2400,3
+iter,us,act,cur,power,throttle
+0,66.042,1450,1417,D0,0
+1,65.000,1450,1417,D0,0
+2,64.167,1450,1417,D0,0
+3,64.063,1450,1417,D0,0
+4,65.729,1450,1417,D0,0
+5,65.625,1450,1417,D0,0
+6,63.646,1450,1417,D0,0
+7,66.458,1450,1417,D0,0
+8,64.271,1450,1417,D0,0
+9,64.688,1450,1417,D0,0
+10,64.791,1450,1417,D0,0
+11,66.042,1450,1417,D0,0
+12,66.667,1450,1417,D0,0
+13,65.208,1450,1417,D0,0
+14,63.958,1450,1417,D0,0
+15,66.042,1450,1417,D0,0
+16,65.209,1450,1417,D0,0
+17,65.625,1450,1417,D0,0
+18,64.792,1450,1417,D0,0
+19,64.479,1450,1417,D0,0
+20,65.104,1450,1417,D0,0
+21,65.416,1450,1417,D0,0
+22,65.208,1450,1417,D0,0
+23,65.625,1450,1417,D0,0
+24,66.666,1450,1417,D0,0
+25,65.104,1450,1417,D0,0
+26,66.041,1450,1417,D0,0
+27,64.375,1450,1417,D0,0
+28,65.937,1450,1417,D0,0
+29,65.625,1450,1417,D0,0
+30,64.687,1450,1417,D0,0
+31,66.146,1450,1417,D0,0
+32,67.500,1450,1417,D0,0
+33,66.667,1600,1600,D0,0
+34,58.437,1600,1600,D0,0
+35,59.791,1600,1600,D0,0
+36,59.896,1600,1600,D0,0
+37,59.271,1600,1600,D0,0
+38,58.854,1600,1600,D0,0
+39,58.438,1600,1600,D0,0
+phase,nt,unroll,m,n,k,mean_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+timed,2,16,4,5120,5120,64.432,3.2548,0,1,65.156,58.437,67.500,1417.0,0,-1.000,2400,3
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1600 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1267430818542 energy2=pkg:725670167114 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1182718822937 energy2=pkg:758998424987 temp2_mC=53000

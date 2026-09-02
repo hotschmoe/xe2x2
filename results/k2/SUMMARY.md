@@ -289,3 +289,57 @@ max_abs=0.
 
 Do not quote 46-48 us from this fire. Hand floor stays
 warm wgn M=4 47-50 us.
+
+## clocks during the timed loop (2026-09-02am)
+
+No 1024^3 heat. `dpas_s8_clk` is the wgn 8x2-N 64-dpas tile
+with M pad to RC=4. Per-iter sysfs in the timed loop kept
+duty cycle low (M=1 77-180 us at 467-1250 MHz). Batched
+spin of the same kernel (4000 submits, wait every 256)
+held act/cur=2800 at timed_begin/end. max_abs=0. NT=2.
+40 timed iters. min_freq is root-only; not locked.
+
+| shape | card | event_us | wait_host_us | pipe_host_us | timed cur |
+|---|---|---:|---:|---:|---|
+| 1 x 5120 | 0 | 35.958 | 50.443 | 36.443 | 2800 |
+| 1 x 5120 | 1 | 35.797 | 49.987 | 36.431 | 2800 |
+| 4 x 5120 | 0 | 36.146 | 51.623 | 36.697 | 2800 |
+| 4 x 5120 | 1 | 36.039 | 50.201 | 36.654 | 2800 |
+
+Event min-max at M=1 is 34.4-37.2. pipe_host matches
+W8A8's pipelined us_bench. W8A8 K4 host was 42.1/46.1
+and applies scales to out_dtype; this kernel stores s32.
+Do not call a serving beat. Prior 47-50 us was not
+held-2800. New hand decode floor at held 2800: ~36 us
+event / ~36.4 us pipelined host (raw s32).
+
+## ngen d32 flag broadcast (2026-09-02an)
+
+Prologue lid0 `slm_block_store` d32 token=0, barrier,
+all lanes load, token added into k0. ocloc: 64x
+`dpas.8x4`, `store.slm.d32` + `fence.slm.none.group` +
+`send.gtwy` barrier + `load.slm.d32`. GRF 128, slm_size
+1024, barrier_count 1. max_abs=0. No 2800 spin (same
+protocol as old wgn 47-50).
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | wgn NT=2 |
+|---|---:|---:|---:|---:|---|
+| 1 x 5120 | 90 | 194 | 91 | 104 | 47-50 (M=4) / 36 held |
+| 4 x 5120 | 133 | 197 | 165 | 163 | 47-50 |
+| 64 x 5120 | 1023 | 1143 | 552 | 576 | 570-611 |
+
+Dummy d32 flag + barrier lights the ngen encoding and
+loses decode. Hand floor stays the no-SLM 36 us at 2800.
+
+## in-kernel GEMM repeats (2026-09-02ao)
+
+One launch, R inner GEMMs, store last. us_per=event/R.
+max_abs=0. Mid-run cur=2800.
+
+| shape | R | card0 us_per | card1 us_per |
+|---|---:|---:|---:|
+| 1 x 5120 | 4096 | 34.460 | 34.318 |
+| 4 x 5120 | 2048 | 34.512 | 34.380 |
+
+Agrees with batched-spin 36 us event; ~1.5 us is launch.
+Still raw s32.

@@ -1,0 +1,28 @@
+K2 dpas_s8_d32 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 prologue slm d32 flag + barrier
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8D32Nt4NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        1024
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8D32Nt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        1024
+.text._ZTSN12_GLOBAL__N_116DpasS8D32Nt2NameE.asm: 64 dpas.8x4 slm=6 barrierish=2
+  first_dpas: dpas.8x4 (16|M0)         r114:d        r114:d            r12:b             r5.0:b           {$9}
+  send.slm (1|M0)          null     r2  r4:1  0x0            0x02000504           {I@1,$3} // wr:1+1, rd:0; store.slm.d32.a32
+  (W)     send.slm (1|M0)          r4       r104  null:0  0x0            0x0210001F           {$4} // wr:1+0, rd:1; fence.slm.none.group
+  (W)     send.gtwy (1|M0)         null     r5  null:0  0x0            0x02000004           {I@2,$5} // wr:1+0, rd:0; signal barrier
+  (W)     sync.bar                             0x0
+  send.slm (1|M0)          r107     r6  null:0  0x0            0x02100500           {$6} // wr:1+0, rd:1; load.slm.d32.a32
+  (W)     send.gtwy (1|M0)         null     r127  null:0  0x0            0x02000010           {EOT,F@1,$4} // wr:1+0, rd:0; end of thread
+.text._ZTSN12_GLOBAL__N_116DpasS8D32Nt4NameE.asm: 64 dpas.8x4 slm=6 barrierish=2
+  first_dpas: dpas.8x4 (16|M0)         r118:d        r118:d            r12:b             r5.0:b           {$11}
+  send.slm (1|M0)          null     r2  r4:1  0x0            0x02000504           {I@1,$3} // wr:1+1, rd:0; store.slm.d32.a32
+  (W)     send.slm (1|M0)          r4       r97  null:0  0x0            0x0210001F           {$4} // wr:1+0, rd:1; fence.slm.none.group
+  (W)     send.gtwy (1|M0)         null     r5  null:0  0x0            0x02000004           {I@2,$5} // wr:1+0, rd:0; signal barrier
+  (W)     sync.bar                             0x0
+  send.slm (1|M0)          r98      r6  null:0  0x0            0x02100500           {$6} // wr:1+0, rd:1; load.slm.d32.a32
+  (W)     send.gtwy (1|M0)         null     r127  null:0  0x0            0x02000010           {EOT,F@1,$14} // wr:1+0, rd:0; end of thread

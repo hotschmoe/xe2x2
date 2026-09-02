@@ -1,0 +1,29 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1278565821228 energy2=pkg:731409589904 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1193908901672 energy2=pkg:764911036682 temp2_mC=54000
+CONFIG backend=sycl+l0 card=1 arm=dpas_s8_d32 nt=4 rc=4 wg=8x2_alongN slm=d32_flag
+oneDNN W8A8 floor M=1 5120: 42-46 us; wgn M=4 NT=2 47-50 us
+=== d32 nt=4 m=1 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC slm=d32_flag Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,4.844,0.0541,0,1
+timed,4,8,1,5120,5120,104.479,0.5018,0,1
+=== d32 nt=4 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC slm=d32_flag Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,7.833,0.0335,0,1
+timed,4,8,4,5120,5120,162.974,1.2868,0,1
+=== d32 nt=4 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC slm=d32_flag Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,11.766,0.0223,0,1
+timed,4,8,64,5120,5120,576.391,5.8215,0,1
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=767 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1278917584289 energy2=pkg:731611159973 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1194261965698 energy2=pkg:765118222290 temp2_mC=53000

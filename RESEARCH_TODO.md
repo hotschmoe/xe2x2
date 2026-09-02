@@ -31,11 +31,13 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. Clock-held D0/2800 M=1
-NT=2 is 46.5/47.5 us both cards vs W8A8 42-46. The 97
-us was D3hot. Hand floor 46-48 us, not a 45 us beat
-(pad RC=4). Next: 3-5 us gap vs W8A8, or ngen d32 ska
-flag broadcast. Loop every 20m.
+K0-K6 have both-card RESULTS. Held-2800 decode (batched
+same-kernel spin, 2026-09-02am) is ~36 us event / ~36.4 us
+pipelined host, raw s32, both cards, max_abs=0. Prior
+47-50 us was not held-2800. W8A8 K4 host 42-46 includes
+scales. ngen d32 flag+barrier lights and loses (90-194
+us). Next: scale epilogue to match the W8A8 contract at
+the same 2800 hold. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

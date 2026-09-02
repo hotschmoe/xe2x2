@@ -508,8 +508,9 @@ RESULT -> IGA 64x `dpas.8x4`, GRF 128, no barrier. max_abs=0.
 
 VERDICT -> Mapping 8x2 onto N (no idle) is a real decode
   us win vs 1D local=16 at the same M=4 pad. It is not a
-  beat of 45 us M=1 W8A8. Do not freeze 47 us. New hand
-  decode floor is ~47-50 us. Remaining: ngen SLM+64 dpas.
+  beat of 45 us M=1 W8A8. Do not freeze 47 us. That 47-50
+  was later shown not held-2800; the 2800 floor is ~36 us
+  (see batched-spin finding). Remaining then: ngen SLM.
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/wgn_dpas_lines.txt`.
 
@@ -567,10 +568,75 @@ RESULT -> max_abs=0. Heat 141 us card0 / 160 us card1.
 
 VERDICT -> Do not quote 46-48 us or a 3-5 us gap from
   this fire. The hold log is 61-65 us at drooped clocks.
-  Hand floor remains the warm wgn M=4 47-50 us.
 
 Evidence: `results/k2/hold_n2_card0.txt`,
   `results/k2/hold_n2_card1.txt`.
+
+## Batched same-kernel spin holds 2800; decode is 36 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_clk`
+  (wgn 8x2-along-N 64x `dpas.8x4`, pad M to RC=4). No
+  1024^3 heat. Both cards, NT=2. Batched spin=4000 of
+  the same kernel (wait every 256), then 40 timed iters.
+  Event us plus pipelined host us (matched to W8A8
+  `us_bench`). min_freq not writable without root.
+
+RESULT -> max_abs=0. timed_begin/end act=cur=2800.
+  M=1 5120: event 35.80-35.96 us (min-max 34.4-37.2),
+  pipelined host 36.43-36.44 us. M=4 tracks M=1
+  (event 36.04-36.15, pipe 36.65-36.70). Per-iter sysfs
+  or 1024^3 heat does not hold 2800. Prior 47-50 us was
+  not held-2800. W8A8 K4 host 42.1/46.1 applies scales;
+  this kernel stores s32.
+
+VERDICT -> The way to hold 2800 on a short decode is a
+  batched spin of that decode, not a long square GEMM.
+  New hand floor is ~36 us at 2800 (raw s32). An
+  in-kernel R-repeat fire gave 34.3-34.5 us_per at the
+  same clock (launch removed). Do not call a serving
+  beat of 42-46 until the scale epilogue is on the same
+  clock and the same contract.
+
+Evidence: `results/k2/clk_n2_p0_s4000_card0.txt`,
+  `results/k2/clk_n2_p0_s4000_card1.txt`,
+  `results/k2/rep_n2_card0.txt`,
+  `results/k2/rep_n2_card1.txt`.
+
+## ngen d32 flag broadcast is not the 36 us kernel (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.
+  Prologue SLM d32 token + group barrier on the wgn
+  64-dpas tile. Both cards. CPU ocloc of the AOT zebin.
+
+RESULT -> IGA `store.slm.d32` + `fence.slm.none.group`
+  + `send.gtwy` barrier + `load.slm.d32` + 64x
+  `dpas.8x4`. GRF 128. max_abs=0. M=1: 90-194 us vs
+  held-clock no-SLM 36 us vs no-hold wgn 47-50.
+
+VERDICT -> The ngen d32 encoding landed. A dummy flag
+  plus barrier is a decode tax, not the 3-5 us steal.
+  Hand floor stays no-SLM 36 us at 2800.
+
+Evidence: `results/k2/d32_dpas_lines.txt`,
+  `results/k2/SUMMARY.md`.
+
+## In-kernel GEMM repeats: 34 us body at 2800 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_rep`.
+  Same 8x2-along-N 64x `dpas.8x4`. One launch repeats
+  GEMM 4096x (M=1) or 2048x (M=4). Both cards. Freq
+  every 0.1s during the kernel.
+
+RESULT -> max_abs=0. 8 samples act=2800/cur=2800 both
+  cards. us_per 34.36-34.46 (M=1) and 34.47-34.51 (M=4).
+  Matches clk event min 34.4 us. Held one-shot is 36 us.
+
+VERDICT -> Body and batched one-shot agree at 34-36 us
+  at 2800. Do not quote 34 as a one-token serving beat.
+  Scale epilogue is the remaining W8A8-contract gap.
+
+Evidence: `results/k2/rep_n2_card0.txt`,
+  `results/k2/rep_n2_card1.txt`.
 
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 

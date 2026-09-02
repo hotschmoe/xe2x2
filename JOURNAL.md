@@ -988,6 +988,121 @@ VERDICT -> Do not quote 46-48 us from this fire. Clocks
   97 us D3hot vs 49 us warm still stands. Next: hold
   clocks during the timed loop, not after a long heat.
 
+### 2026-09-02am - K2 clocks during the timed decode loop
+
+CONTEXT -> Heat-then-decode dropped cur to ~750 MHz
+  (61-65 us). Prior 47-50 us wgn quoted start/end
+  cur=2800, not act during the event. Hold clocks
+  DURING the timed loop. min_freq is root-only.
+
+CONFIG -> sycl+l0, standalone dpas_s8_clk (wgn 8x2-N
+  64 dpas, pad M to RC=4). No 1024^3 heat. gpu-run
+  --card N. Sample .freq every 50 ms. Arms: prime=0/3
+  with in-loop sysfs (duty-cycle miss), then spin=4000
+  batched same-kernel occupancy, no in-loop sysfs.
+  Event us + per-iter wait host us + pipelined host us
+  (matched to W8A8 us_bench). NT=2. Both cards.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_clk.sh 0 2 0 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_clk.sh 1 2 0 4000
+  ```
+
+RESULT -> In-loop sysfs: M=1 77-180 us at 467-1250 MHz.
+  Batched spin holds act/cur=2800 at timed_begin/end.
+  max_abs=0. M=1 5120: event 35.96/35.80 us, wait-host
+  50.4/50.0, pipe-host 36.44/36.43. M=4 tracks M=1
+  (36.15/36.04 event, 36.70/36.65 pipe). 40-iter event
+  min-max 34.4-37.2. W8A8 K4 host 42.1/46.1 includes
+  scales; this stores s32.
+
+VERDICT -> Long heat dumps clocks. Per-iter sysfs waits
+  also dump duty cycle. Batched same-kernel spin holds
+  2800. New hand decode floor is ~36 us event / ~36.4 us
+  pipelined host at 2800, not 47-50. Do not call a
+  serving beat of 42-46 (no scale epilogue). Next: d32
+  ska flag broadcast, then scale to match W8A8.
+
+### 2026-09-02an - K2 ngen d32 flag broadcast
+
+CONTEXT -> ngen M=1 SLM is 14x store/load/fence.slm.d32
+  plus send.gtwy barrier, not A-pack. Steal the prologue
+  once per launch on the wgn 64-dpas tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_d32, icpx 2026.1.1
+  AOT intel_gpu_bmg_g31, gpu-run --card N. NT=2 U=16 /
+  NT=4 U=8. Token=0 kept live in k0. No 2800 spin.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_d32.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_d32.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4, store.slm.d32,
+  fence.slm.none.group, send.gtwy barrier, load.slm.d32.
+  GRF 128, slm_size 1024, barrier_count 1. max_abs=0.
+  M=1: NT=2 90-194 / NT=4 91-104 vs held-clock wgn 36
+  vs no-hold wgn 47-50. M=4 133-197. M=64 552-1143.
+
+VERDICT -> The ngen d32 encoding lights and is not a
+  36 us or 45 us beat. Dummy flag+barrier is a decode
+  tax. Hand floor stays no-SLM 36 us at 2800. Next:
+  scale epilogue to match W8A8's 42-46 host contract.
+
+### 2026-09-02ao - K2 in-kernel GEMM repeats at 2800
+
+CONTEXT -> Batched one-shot spin (am) is ~36 us at 2800.
+  Confirm with R fused GEMMs in one launch (zero acc,
+  store last) so sysfs samples land inside the kernel.
+
+CONFIG -> sycl+l0, standalone dpas_s8_rep, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. NT=2. M=1 R=4096,
+  M=4 R=2048.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_rep.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_rep.sh 1 2
+  ```
+
+RESULT -> max_abs=0 both cards. Freq: 8 samples act=2800
+  cur=2800 each card during the kernel. M=1 us_per 34.46 /
+  34.36. M=4 us_per 34.51 / 34.47. Event ~141 ms / 4096.
+  Matches clk min 34.4 us. One-shot held floor stays 36 us.
+
+VERDICT -> Fused-repeat body is 34 us at 2800, same band
+  as clk min. Not a serving one-shot. Scale epilogue is
+  still the W8A8-contract gap.
+
+### 2026-09-02ao - K2 in-kernel repeat occupancy (harvest)
+
+CONTEXT -> Sibling fire: one launch repeats the GEMM R
+  times (zero acc each, store last) so GT stays busy
+  without host gaps. Logs matched before promote.
+
+CONFIG -> sycl+l0, standalone dpas_s8_rep, gpu-run
+  --card N, NT=2. M=1 R=4096, M=4 R=2048. 3 timed
+  iters. us_per = event_us / R.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_rep.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_rep.sh 1 2
+  ```
+
+RESULT -> max_abs=0. Clocks mid cur=2800 both cards.
+  M=1: us_per 34.460 card0 / 34.318 card1. M=4:
+  34.512 / 34.380. Matches the batched-spin 36 us
+  event (the extra ~1.5 us is launch).
+
+VERDICT -> Independent hold method agrees: ~34-36 us
+  at 2800 for this raw s32 tile. Still not a W8A8
+  serving beat (no scale). Do not freeze 34 us.
+
 
 
 

@@ -1,0 +1,43 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1277549236450 energy2=pkg:730872738647 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1192890306640 energy2=pkg:764359833251 temp2_mC=54000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_clk nt=2 prime=0 spin=4000 heat=none
+oneDNN W8A8 floor M=1 5120: 42-46 us; warm wgn M=4 NT=2 47-50 us
+Do not quote a beat unless mean_us sits under 42-46 while .freq cur>=2400
+=== clk nt=2 prime=0 spin=4000 m=1 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 wg=8x2_alongN padM=RC Bload=Transformed warmup=50 iters=40 card=0 prime=0 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+check,2,16,4,32,1024,3.229,27.363,12.203,0.0812,0,1,3.229,3.229,3.229,-1.0,0,-1.000,2400,0
+# note in-loop sysfs only if sample_every>0; duty-cycle clocks live in the .freq log
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+timed,2,16,1,5120,5120,35.958,50.443,36.443,1.4580,0,1,35.938,35.209,37.188,-1.0,0,-1.000,2400,0
+# note in-loop sysfs only if sample_every>0; duty-cycle clocks live in the .freq log
+=== clk nt=2 prime=0 spin=4000 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 wg=8x2_alongN padM=RC Bload=Transformed warmup=50 iters=40 card=0 prime=0 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2350 cur=2317 power=D0 throttle=0
+timed_begin act=2350 cur=2317 power=D0 throttle=0
+timed_end act=2350 cur=2317 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+check,2,16,4,32,1024,3.855,27.682,13.205,0.0680,0,1,3.855,3.855,3.855,-1.0,0,-1.000,2400,0
+# note in-loop sysfs only if sample_every>0; duty-cycle clocks live in the .freq log
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,max_abs,ok,median_us,min_us,max_us,median_cur,n_cur_ge_mhz,median_us_high,mhz,prime
+timed,2,16,4,5120,5120,36.146,51.623,36.697,5.8019,0,1,36.042,35.104,38.958,-1.0,0,-1.000,2400,0
+# note in-loop sysfs only if sample_every>0; duty-cycle clocks live in the .freq log
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1277658429382 energy2=pkg:730942475219 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1192996670471 energy2=pkg:764429666809 temp2_mC=54000

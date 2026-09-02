@@ -55,3 +55,4 @@ tmp/
 results/**/cache_*/
 results/**/igc_*/
 results/**/ocloc_aot/
+/dump/
