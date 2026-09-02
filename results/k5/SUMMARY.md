@@ -36,3 +36,14 @@ Short kernels still swing (7-36 us at M=1 5120). All are ~20-100x
 the naive 830 us. Fusion still beats two-launch. Do not freeze
 one us. This epilogue is now in the same class as 45 us W8A8
 GEMM, not 18x larger.
+
+## scalar RMSNorm-quant inside GEMM (2026-09-02at)
+
+One launch, f16 A -> RMSNorm+s8 then 64 dpas.8x4 f16 out.
+Scalar math in the k-loop. NT=2 spin=4000. timed 2800.
+
+| shape | card0 event | card1 event | cosine | max_abs |
+|---|---:|---:|---:|---:|
+| 1 x 5120 | 314.2 | 312.9 | 0.73 | 50 |
+
+~9x GEMM-only 34 us. Not closed. Two-launch K5+GEMM stays.

@@ -691,6 +691,23 @@ Evidence: `results/k2/sc84_m64_s512_card0.txt`,
   `results/k2/sc84_m64_s512_card1.txt`,
   `results/k2/sc84_dpas_lines.txt`.
 
+## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
+  f16 A RMSNorm+s8 then 64x `dpas.8x4` f16 out. Scalar
+  sqrt/rint in the k-loop. Both cards, NT=2, spin=4000.
+
+RESULT -> timed act=cur=2800. M=1 314/313 us vs GEMM
+  34 vs K5 extra launch 7-36. cosine 0.73 max_abs 50.
+
+VERDICT -> This is the K6 scalar-LUT tax again. Do not
+  fuse by putting a scalar quant in the DPAS loop.
+  Two-launch WG-256 producer + 34 us GEMM stays the
+  robust decode path.
+
+Evidence: `results/k5/fuse_n2_s4000_card0.txt`,
+  `results/k5/fuse_n2_s4000_card1.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.

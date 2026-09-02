@@ -1214,6 +1214,32 @@ VERDICT -> 4x2x4 + SLM A pack lights and is
   K5 into the M=1 GEMM that already wins, or
   steal ngen kr/double-buffer without that barrier.
 
+### 2026-09-02at - K5 scalar RMSNorm-quant inside GEMM
+
+CONTEXT -> GEMM-only f16 is 34 us. K5 WG-256 is 7-36 us
+  extra launch. Steal: one ESIMD launch, each WG
+  RMSNorms f16 A, quant to s8, 64 dpas.8x4, scale f16.
+
+CONFIG -> sycl+l0, standalone dpas_s8_fuse, icpx 2026.1.1
+  AOT intel_gpu_bmg_g31, gpu-run --card N. NT=2 spin=4000.
+  Scalar rint/sqrt in the k-loop. Pad M=1 to RC=4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_fuse.sh 0 2 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_fuse.sh 1 2 4000
+  ```
+
+RESULT -> timed act=cur=2800. M=1 event 314.2/312.9 us,
+  pipe 312.6/313.5 vs GEMM-only 34 vs two-launch ~41-70.
+  cosine 0.73 max_abs 50, not closed (ok=0). Same class
+  as K6 scalar in-register LUT (2316 us).
+
+VERDICT -> Naive scalar quant in the DPAS loop is not
+  a launch win. ~9x the 34 us GEMM and not numeric-
+  closed. Keep two-launch K5+GEMM. Next: vectorize the
+  quant, or leave producer as its own WG-256 kernel.
+
 
 
 
