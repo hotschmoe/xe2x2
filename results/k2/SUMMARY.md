@@ -97,3 +97,22 @@ N-tiles. max_abs=0. oneDNN W8A8 M=64/256: 46-49 / 74-76 us.
 
 A-reuse is closed and is not a 6x win. NT=4 can help M=256
 slightly (694 vs 892) and can lose at M=64. Floor stays 45 us.
+
+## RC=4 decode tile (2026-09-02aa)
+
+Stolen from W8A8 ngen M=1 (`dpas.8x4`). ocloc: `dpas.8x4 (16|M0)
+r22:d r22:d r14:b r11.0:b`. ze_info grf_count 128. max_abs=0.
+
+| shape | card0 us | card1 us | W8A8 |
+|---|---:|---:|---|
+| 4 x 5120 (pad M=1) | 168 | 77 | 42-46 (M=1) |
+| 64 x 5120 | 894 | 614 | 46-49 |
+| 256 x 5120 | 1028 | 1069 | 74-76 |
+
+RC=4 lights and is not a 45 us beat. Prefill is worse than RC=8.
+
+## GRF256 request (2026-09-02aa)
+
+`intelex::grf_size<256>` compiled. `-ftarget-register-alloc-mode=pvc:large`
+on dpas_s8 also compiled. Both AOT zebins still `grf_count: 128`.
+Not a 256-GRF RESULT. Do not quote those us as a GRF A/B.

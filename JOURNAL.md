@@ -657,6 +657,31 @@ RESULT -> Bins md5-identical across cards. M=1: 64x dpas.8x4
 
 VERDICT -> Steal RC=4 for decode and GRF256 for prefill. Promote.
 
+### 2026-09-02aa - ESIMD RC=4 tile; GRF256 request refused
+
+CONTEXT -> W8A8 ngen M=1 is dpas.8x4. Hand tile was RC=8.
+  Try RC=4 decode pad M=4, and request GRF256 for M=64.
+
+CONFIG -> sycl+l0, dpas_s8_rc4 and dpas_s8_grf256, gpu-run
+  --card N. GRF via intelex::grf_size<256> and separately
+  -ftarget-register-alloc-mode=pvc:large.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 run_rc4_grf.sh 0 rc4
+  gpu-run --card 1 run_rc4_grf.sh 1 grf256
+  # swap
+  ocloc disasm AOT zebin
+  ```
+
+RESULT -> RC=4 IGA is dpas.8x4, max_abs=0. M=4 5120: 77-168 us
+  vs W8A8 M=1 45 us. M=64: 614-894 vs RC=8 274-373. GRF256
+  zebin still grf_count 128 (property and pvc:large).
+
+VERDICT -> RC=4 lights, does not beat 45 us. GRF256 request
+  did not take. Promote the encoding + the miss.
+
+
 
 
 

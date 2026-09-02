@@ -346,6 +346,21 @@ VERDICT -> The napkin is weak here. A-reuse is not the 6x.
 
 Evidence: `results/k2/SUMMARY.md`.
 
+## ESIMD RC=4 is dpas.8x4 and does not beat 45 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_rc4`, RepeatCount=4,
+  Transformed B. Both cards. Prior: oneDNN M=1 uses dpas.8x4.
+
+RESULT -> IGA `dpas.8x4 (16|M0) ... r14:b r11.0:b`. max_abs=0.
+  Padded decode M=4 5120: 77-168 us vs W8A8 M=1 42-46 us. M=64:
+  614-894 us vs RC=8 274-373 vs W8A8 46-49.
+
+VERDICT -> RC=4 compiles and matches the stolen encoding. It is
+  not the 45 us kernel. Prefill prefers RC=8 on this tile.
+  `grf_size<256>` and `pvc:large` left zebin `grf_count: 128`.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/rc4_dpas_line.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +
