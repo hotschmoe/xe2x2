@@ -1444,6 +1444,39 @@ VERDICT -> k128 A-db lights and tracks ~4.5x the
   / GRF256 still open. Next: K5 producer that does
   not re-read A, or ngen wg 4x8.
 
+### 2026-09-02ba - K5 WG-256 producer then s8 GEMM
+
+CONTEXT -> fusev one-launch was 72 us because every
+  GEMM thread re-scanned f16 A. GEMM-only is 34 us.
+  K5 WG-256 extra 7-36 us. Steal: producer writes
+  s8 A + scale once, then the 64 dpas.8x4 GEMM
+  loads s8. Two kernels, one in-order queue.
+
+CONFIG -> sycl+l0, standalone dpas_s8_prod, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 spin=4000 warmup=50 iters=40. f16 A, s8 B
+  [-64,64], b_scale=0.02, out f16. Pad M=1 to RC=4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_prod.sh 0 2 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_prod.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0.015625. timed
+  act=cur=2800 throttle=0. M=1: prod 10.46/10.40
+  us, gemm 33.06/33.20, pair_event 43.66/43.75,
+  pipe_host 44.30/44.43. M=4 tracks. vs fusev 72
+  vs GEMM-only 34 vs two-launch 41-70.
+
+VERDICT -> Producer that does not re-read A is a
+  real us win vs fusev (44 vs 72) and matches the
+  best two-launch. Extra 10 us over GEMM-only 34.
+  Keep two-kernel producer+GEMM as the decode
+  quant path. Next: ngen wg 4x8 at M=256, or stop
+  decode-quant chasing.
+
+
 
 
 

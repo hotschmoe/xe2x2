@@ -61,3 +61,19 @@ ocloc: 64x dpas.8x4, rnde (32|M0), no SLM.
 
 ~4.3x scalar 313 us. Closed at 1 f16 ulp. Not a 34 us
 GEMM beat. Two-launch WG-256 + GEMM still the decode path.
+
+## WG-256 producer then s8 GEMM (2026-09-02ba)
+
+Producer writes s8 A + scale once; GEMM is the 64
+dpas.8x4 f16 tile. In-order queue, no host wait.
+NT=2 spin=4000. timed 2800. cosine=1.0 max_abs=0.015625.
+
+| shape | card | prod_us | gemm_us | pair_event | pipe_host |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 10.46 | 33.06 | 43.66 | 44.30 |
+| 1 x 5120 | 1 | 10.40 | 33.20 | 43.75 | 44.43 |
+| 4 x 5120 | 0 | 10.43 | 33.26 | 43.82 | 44.87 |
+| 4 x 5120 | 1 | 10.40 | 33.20 | 43.72 | 44.99 |
+
+Beats fusev 72 us. Extra ~10 us over GEMM-only 34.
+Keep two-kernel producer+GEMM.

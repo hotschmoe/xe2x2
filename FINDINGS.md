@@ -832,6 +832,27 @@ Evidence: `results/k5/fusev_n2_s4000_card0.txt`,
   `results/k5/fusev_n2_s4000_card1.txt`,
   `results/k5/fusev_dpas_lines.txt`.
 
+## Producer+GEMM two-kernel is 44 us, beats fusev 72 (K5)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_prod`.
+  WG-256 RMSNorm-quant writes s8 A + scale, then
+  64x `dpas.8x4` f16 GEMM. In-order queue, no host
+  wait between. Both cards, NT=2, spin=4000.
+
+RESULT -> cosine=1.0 max_abs=0.015625. timed
+  act=cur=2800 throttle=0. M=1 prod 10.5/10.4,
+  gemm 33.1/33.2, pipe_host 44.3/44.4 vs fusev 72
+  vs GEMM-only 34. M=4 tracks. This pair is the
+  two-launch (prior 41-70 range was producer us
+  plus GEMM, not one queue).
+
+VERDICT -> Do not re-read A inside the GEMM. A
+  standalone producer plus the 34 us GEMM is the
+  decode quant path. Extra ~10 us over GEMM-only.
+
+Evidence: `results/k5/prod_n2_s4000_card0.txt`,
+  `results/k5/prod_n2_s4000_card1.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.
@@ -911,7 +932,8 @@ scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 RC=8 A-db 97-100 vs 46 us; no-db 120; 4-acc no-SLM 120;
 B-db+ca.ca 105-107; ff prefetch 126-128; 4x2x4+SLM 136
 is slower) and at M=256 (k128 A-db 440 vs K4 W8A8 75).
-Remaining
+Decode quant: producer+GEMM 44 us beats fusev 72; extra
+~10 us over GEMM-only 34. Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
