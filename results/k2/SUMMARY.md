@@ -343,3 +343,20 @@ max_abs=0. Mid-run cur=2800.
 
 Agrees with batched-spin 36 us event; ~1.5 us is launch.
 Still raw s32.
+
+## W8A8 scale epilogue to f16 (2026-09-02ap)
+
+Same 8x2-N 64 dpas tile. acc * 0.02 * 0.02, store f16.
+Fill [-64,64]. Spin=4000, 40 timed, NT=2. max_abs=0
+cosine=1.0. timed act/cur=2800. ocloc store_block2d.d16.
+
+| shape | card | event_us | pipe_host_us | W8A8 M=1 hold |
+|---|---|---:|---:|---:|
+| 1 x 5120 | 0 | 33.292 | 34.118 | 44.545 |
+| 1 x 5120 | 1 | 33.386 | 34.341 | 43.817 |
+| 4 x 5120 | 0 | 33.474 | 34.113 | n/a |
+| 4 x 5120 | 1 | 33.451 | 34.392 | n/a |
+
+W8A8 control is M=64 heat then M=1, same image, pipelined
+host. K4 first-shape 42.1/46.1 still stands as the older
+floor. Cold first-shape this session was 79/85.

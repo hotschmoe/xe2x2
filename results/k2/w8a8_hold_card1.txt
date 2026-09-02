@@ -1,0 +1,24 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1304153545959 energy2=pkg:744624723999 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1219595163085 energy2=pkg:778520428039 temp2_mC=56000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=int8_gemm_w8a8 warmup=30 iters=40
+hand sc f16 floor M=1: event 33 us / pipe 34 us at 2800
+CONFIG backend=pytorch-xpu sitting on sycl+l0 op int8a8 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+arm,m,n,k,us,GBs,TOPS,cosine,max_abs,ok
+int8_gemm_w8a8,1,5120,5120,84.597,309.874,0.6197,1.000000,0.057724,1
+int8_gemm_w8a8,1,17408,5120,159.160,559.996,1.1200,1.000000,0.06192,1
+int8_gemm_w8a8,2,5120,5120,46.533,563.354,2.2534,1.000000,0.061981,1
+int8_gemm_w8a8,4,5120,5120,55.647,471.083,3.7687,0.999999,0.058151,1
+int8_gemm_w8a8,64,5120,5120,46.450,564.356,72.2376,0.999999,0.062332,1
+int8_gemm_w8a8,256,5120,5120,71.726,365.480,187.1256,1.000014,0.062363,1
+int8_gemm_w8a8,1024,5120,5120,218.672,119.880,245.5138,1.000234,0.0625,1
+DONE
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2550 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1305194579162 energy2=pkg:745220380065 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1220637356201 energy2=pkg:779133281433 temp2_mC=54000

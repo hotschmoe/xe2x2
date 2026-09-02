@@ -1078,6 +1078,41 @@ VERDICT -> Fused-repeat body is 34 us at 2800, same band
   as clk min. Not a serving one-shot. Scale epilogue is
   still the W8A8-contract gap.
 
+### 2026-09-02ap - K2 W8A8 scale epilogue to f16
+
+CONTEXT -> Raw s32 at 2800 is 36 us. W8A8 stores f16
+  with A_scale (M) * B_scale (N). ngen epilogue is
+  mov :hf then store_block2d.ugm.d16. Steal that
+  contract on the wgn tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc, icpx 2026.1.1
+  AOT intel_gpu_bmg_g31, gpu-run --card N. NT=2. Fill
+  s8 [-64,64], a_s=b_s=0.02, out f16. Spin=4000 then
+  40 timed. Control: int8_gemm_w8a8 M=1 after M=64 heat,
+  same image, warmup 30 iters 40, both cards.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc.sh 0 2 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_sc.sh 1 2 4000
+  gpu-run --card N kernels/w8_compare/run_w8_m1hold.sh N
+  ```
+
+RESULT -> max_abs=0 cosine=1.0 both cards. timed
+  act/cur=2800. M=1: event 33.29/33.39 us, pipe_host
+  34.12/34.34. M=4 tracks (33.47/33.45 event, 34.11/
+  34.39 pipe). ocloc: 64x dpas.8x4, store_block2d.ugm.d16.
+  W8A8 M=1 after M=64 heat: 44.55/43.82 us host
+  pipelined (cosine 1.0). K4 first-shape floor was
+  42.1/46.1. Cold first-shape W8A8 this session was
+  79/85 (not the floor).
+
+VERDICT -> Scale-to-f16 on the wgn tile is a real us
+  beat of same-session W8A8 M=1 (34 vs 44 pipe host)
+  at held 2800, same s8/scale/f16 contract, both cards.
+  Do not quote tok/s. Pad M=1 still does RC=4 work.
+  Next: M=64 GRF256/SLM, or fuse K5 producer into this.
+
 
 
 

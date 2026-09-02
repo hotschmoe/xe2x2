@@ -602,6 +602,32 @@ Evidence: `results/k2/clk_n2_p0_s4000_card0.txt`,
   `results/k2/rep_n2_card0.txt`,
   `results/k2/rep_n2_card1.txt`.
 
+## Scale-to-f16 decode beats same-session W8A8 M=1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc`.
+  Same 8x2-along-N 64x `dpas.8x4` as wgn. acc * A_scale
+  * B_scale, store f16. Scales 0.02, fill [-64,64] like
+  the W8A8 bench. Spin=4000, both cards, NT=2. Control:
+  `int8_gemm_w8a8` M=1 after M=64 heat, same image,
+  pipelined host us.
+
+RESULT -> max_abs=0 cosine=1.0. timed act=cur=2800.
+  M=1 event 33.29/33.39 us, pipe_host 34.12/34.34 vs
+  W8A8 44.55/43.82. M=4 tracks M=1. IGA 64x `dpas.8x4`
+  + `store_block2d.ugm.d16`. K4 first-shape 42-46 was
+  not this session's cold 79-85.
+
+VERDICT -> This is a kernel beat in us of the live
+  W8A8 GEMM-only at decode M=1, same scale/f16
+  contract, held 2800, both cards. Rank us. Do not
+  quote tok/s. Pad still does RC=4 work.
+
+Evidence: `results/k2/sc_n2_s4000_card0.txt`,
+  `results/k2/sc_n2_s4000_card1.txt`,
+  `results/k2/w8a8_m1hold_card0.txt`,
+  `results/k2/w8a8_m1hold_card1.txt`,
+  `results/k2/sc_dpas_lines.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.
@@ -676,8 +702,9 @@ Until an xe2x2 run with named backend, card pin, compiler identity,
 and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
-tile (see above). Remaining hypotheses: decode cannot use INT2,
-PP=2 cannot win decode, we cannot beat XeTLA.
+tile. "we cannot beat oneDNN" is false at decode M=1 5120
+scale-to-f16 (34 vs 44 us). Remaining hypotheses: decode cannot
+use INT2, PP=2 cannot win decode, we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
 evidence-gated. Model shelf after the math floor: docs/MODELS.md.
 

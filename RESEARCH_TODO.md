@@ -31,12 +31,12 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. Held-2800 decode is ~36 us
-one-shot (am) and ~34 us fused-repeat body (ao), raw s32,
-act=2800 both cards. W8A8 42-46 includes scales. ngen
-d32 flag+barrier loses (90-194 us). Next: scale epilogue
-to match the W8A8 contract at the same 2800 hold.
-Loop every 20m.
+K0-K6 have both-card RESULTS. Held-2800 scale-to-f16
+decode (2026-09-02ap) is 33 us event / 34 us pipe host
+vs same-session W8A8 M=1 44 us (M=64 heat then M=1).
+cosine=1 max_abs=0 both cards. Raw s32 was 36 us. ngen
+d32 flag+barrier still loses. Next: M=64 GRF256/SLM, or
+fuse K5 producer into this GEMM. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
