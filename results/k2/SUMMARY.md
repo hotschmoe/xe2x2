@@ -527,3 +527,20 @@ grf 128, no SLM.
 
 ~1.8x vs 8-row 4x8. New M=256 hand floor 128 us,
 ~1.7x W8A8. Next: 384 unroll or 4-acc on M=64 4x8.
+
+## 384 dpas 6-acc wg 4x8 M=256 (2026-09-02be)
+
+48 rows/thread, pad 288, wg 4x8, k128, 384 dpas.8x8,
+no A-db. spin=512. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0. IGA 384x dpas.8x8 (192
+Atomic), grf 128, no SLM, spill 768 B NT=2.
+
+| shape | card | event_us | pipe_host_us | 4-acc | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 209.484 | 210.060 | 128.390 | 76.1 |
+| 256 x 5120 | 1 | 209.599 | 209.951 | 128.568 | 74.9 |
+
+~1.64x slower than 4-acc. This arm is ~2.8x
+W8A8. Floor stays 4-acc 128 us (~1.7x). 384
+count is not the 75 us kernel. Next: A-db on
+4-acc M=256, or 4-acc M=64 wg 4x2.

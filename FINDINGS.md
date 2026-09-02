@@ -842,11 +842,35 @@ RESULT -> IGA 256x `dpas.8x8` `{Atomic}`, `grf_count`
 
 VERDICT -> 4-acc on the 4x8 geometry is a real ~1.8x
   vs 8-row at M=256. New floor 128 us, ~1.7x oneDNN.
-  256 dpas landed; 384 still open.
+  256 dpas landed; 384-count 6-acc lost (be).
 
 Evidence: `results/k2/sc8w48m4_m256_n2_s512_card0.txt`,
   `results/k2/sc8w48m4_m256_n2_s512_card1.txt`,
   `results/k2/sc8w48m4_dpas_lines.txt`.
+
+## 384-count 6-acc loses to 4-acc at M=256 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8w48m6`.
+  6x RC=8 (48 rows/thread), wg 4x8, k128, 384x
+  `dpas.8x8`, pad M 256->288, no A-db. Both cards,
+  NT=2, spin=512. Prior: ngen 384 dpas is 16 acc
+  (4M x 4N); 5120 is not a multiple of 768, so
+  this is the 384 count that divides K.
+
+RESULT -> IGA 384x `dpas.8x8` (192 `{Atomic}`),
+  `grf_count` 128, no SLM, IGC spill 768 B.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=256 pipe_host 210.1/210.0 vs
+  4-acc 128 vs W8A8 75.
+
+VERDICT -> Hitting ngen's 384 *count* with 6 M-tiles
+  is a ~1.64x loss vs 4-acc 256 dpas. Floor stays
+  128 us. Do not chase dpas count without the 16-acc
+  4M x 4N tile and GRF256.
+
+Evidence: `results/k2/sc8w48m6_m256_n2_s512_card0.txt`,
+  `results/k2/sc8w48m6_m256_n2_s512_card1.txt`,
+  `results/k2/sc8w48m6_dpas_lines.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
@@ -987,7 +1011,8 @@ Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 wg 4x8 A-db 75 vs 46 us; 8x2-N A-db 97-100) and at M=256
-(4-acc wg 4x8 128 vs 8-row 4x8 228 vs K4 W8A8 75).
+(4-acc wg 4x8 128 vs 8-row 4x8 228 vs 6-acc 384-count
+  210 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
 ~10 us over GEMM-only 34. Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,

@@ -35,9 +35,10 @@ K0-K6 have both-card RESULTS. Held-clock scale-to-f16
 M=1 (ap) beats W8A8 34 vs 44 us. M=64 hand floor is
 wg 4x8 A-db 75 us (bc), ~1.63x W8A8 46. M=256 hand
 floor is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
-8-row 4x8 was 228 (bb). GRF256 still zebin 128.
+8-row 4x8 was 228 (bb). 384-count 6-acc is 210 us
+(be), a loss. GRF256 still zebin 128.
 Decode quant: producer+GEMM (ba) is 44 us. Next:
-384 dpas unroll, or 4-acc on the M=64 4x8 tile.
+A-db on 4-acc M=256, or 4-acc on M=64 wg 4x2.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)

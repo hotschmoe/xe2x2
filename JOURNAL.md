@@ -1570,6 +1570,43 @@ VERDICT -> 4-acc on wg 4x8 is a real ~1.8x vs 8-row
   256 dpas not 384. Next: 384 unroll, or 4-acc on
   the M=64 4x8 tile.
 
+### 2026-09-02be - K2 384 dpas 6-acc wg 4x8 M=256
+
+CONTEXT -> 4-acc wg 4x8 k128 is 128 us at M=256 vs
+  W8A8 75. ngen is 384x dpas.8x8 (16 acc = 4M x 4N
+  x 24 k32; inner K=768 does not divide 5120).
+  Steal the 384 count that does: 6x RC=8 (48
+  rows/thread) NT=2 U=8 -> 384 dpas. Pad M 256->288.
+  No A-db. Rank pipe_host vs 128 and 75.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m6, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=8, 6 M-tiles, wg 4x8 NxM, k128, no SLM.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48m6.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48m6.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 384x dpas.8x8 (NT=2 192x {Atomic}),
+  store_block2d d16, grf_count 128, no slm_size.
+  IGC spill 768 B (NT=2). cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=256: event 209.48/209.60 us, pipe_host
+  210.06/209.95 vs 4-acc 128 vs W8A8 75.
+
+VERDICT -> 384-count via 6-acc is a real loss vs
+  4-acc (210 vs 128, ~1.64x). This arm is ~2.8x
+  W8A8. Floor stays 4-acc 128 us (~1.7x W8A8).
+  Matching ngen's dpas *count* is not the 75 us
+  kernel. Next: A-db on 4-acc M=256, or 4-acc on
+  M=64 wg 4x2 (4x8 would idle).
+
+
 
 
 
