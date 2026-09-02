@@ -2,8 +2,11 @@
 
 Device-side work for Xe2 / Arc Pro B70.
 
-Put kernel sources, microbenchmarks, IGC dumps, and SYCL/Level Zero
-harnesses here. One question per experiment directory.
+Put kernel sources, microbenchmarks, IGC dumps, and SYCL / Level Zero
+harnesses here. One question per experiment directory. Name the
+backend in the experiment README (`sycl+l0` default; OpenCL and
+Vulkan are controls). AOT for these cards is `intel_gpu_bmg_g31`.
+See ../docs/BACKENDS.md.
 
 Questions this tree exists to answer:
 

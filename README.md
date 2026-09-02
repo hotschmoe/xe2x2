@@ -5,7 +5,9 @@ Kernel and 2x2 parallelism lab for the dual Intel Arc Pro B70 host.
 This machine is two Battlemage (Xe2) GPUs. The charter is not generic
 multi-GPU serving. It is:
 
-1. Intel GPU kernels (Xe2 / B70, Level Zero, SYCL, IGC).
+1. Intel GPU kernels (Xe2 / B70). Level Zero is the native path; SYCL
+   rides it (or OpenCL as a control). IGC compiles. See
+   [docs/BACKENDS.md](docs/BACKENDS.md).
 2. Tensor parallel = 2 (one shard per card).
 3. Pipeline parallel = 2 (one stage per card).
 4. The 2x2 combinations those two axes imply, including why they fail.
@@ -37,7 +39,8 @@ Full inventory: [docs/HOST.md](docs/HOST.md).
 kernels/     device kernels, microbenchmarks, IGC/SYCL/L0 traces
 parallel/    TP=2, PP=2, and 2x2 experiment protocols
 results/     small tracked evidence (large artifacts stay gitignored)
-docs/        host, topology, and standing notes
+docs/        host, backends, references, topology
+refs/        attached community trees (git submodules)
 scripts/     xe2x2 harnesses; GPU lease stays in b70_ai_things
 ```
 
@@ -50,11 +53,23 @@ Do not bypass the lease from this repo.
 
 ## Start here
 
-- [AGENTS.md](AGENTS.md): safety, scope, and GPU lease.
+- [AGENTS.md](AGENTS.md): safety, scope, and GPU lease. This is the
+  only agent file.
 - [RESEARCH_TODO.md](RESEARCH_TODO.md): work order, P0 first.
 - [FINDINGS.md](FINDINGS.md): current evidence ledger.
 - [JOURNAL.md](JOURNAL.md): newest experiment window.
 - [docs/HOST.md](docs/HOST.md): measured inventory of this machine.
+- [docs/BACKENDS.md](docs/BACKENDS.md): Level Zero, SYCL, OpenCL,
+  PyTorch XPU, Triton-XPU, oneCCL.
+- [docs/REFERENCES.md](docs/REFERENCES.md): community labs plus
+  first-party Intel / oneAPI trees.
+
+Peek locally (after `git submodule update --init --depth 1`):
+
+- `refs/b70-optimization-lab/` -- Steve, also https://neural.download/
+- `refs/intel-arc-pro-b70-inference-cookbook/`
+- `refs/flashnext-harness/`
+- https://xecores.com/ (site only, not cloned)
 
 Work order:
 

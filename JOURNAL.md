@@ -28,3 +28,34 @@ RESULT -> https://github.com/hotschmoe/xe2x2 created. Local path
 VERDICT -> Lab open. Next work is RESEARCH_TODO P0: freeze identities
   and run per-card plus two-rank collective health. Do not start mixed
   2x2 before both single-axis maps have a passing run.
+
+### 2026-09-02b - references and backends
+
+CONTEXT -> Operator: attach Steve (neural.download git), the SergiioB
+  cookbook, flashnext-harness, and xecores.com. Drop CLAUDE.md. Write
+  Level Zero / SYCL backends and first-party Intel refs.
+
+CONFIG -> Submodules under refs/, shallow. Agent file is AGENTS.md
+  only.
+
+COMMAND ->
+  ```
+  git rm CLAUDE.md
+  git submodule add --depth 1 \
+    https://github.com/steveseguin/b70-optimization-lab.git \
+    refs/b70-optimization-lab
+  git submodule add --depth 1 \
+    https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook.git \
+    refs/intel-arc-pro-b70-inference-cookbook
+  git submodule add --depth 1 \
+    https://github.com/bbeartheancient/flashnext-harness.git \
+    refs/flashnext-harness
+  ```
+
+RESULT -> docs/BACKENDS.md and docs/REFERENCES.md added. Intel OMIX,
+  L0 spec, intel/llvm SYCL, compute-runtime, IGC, oneDNN, oneCCL,
+  sycl-tla (intel_gpu_bmg_g31), torch-xpu-ops, Triton-XPU listed.
+  Default Xe2 path is SYCL on Level Zero V2 immediate lists.
+
+VERDICT -> Peek list is local. Do not import foreign tok/s into
+  FINDINGS. CLAUDE.md stays gone.

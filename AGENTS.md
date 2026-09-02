@@ -1,7 +1,8 @@
 # AGENTS.md -- standing rules for xe2x2
 
 Keep this file short. Evidence lives in JOURNAL.md, FINDINGS.md, results/,
-and docs/.
+and docs/. This file is the only agent briefing. Do not add CLAUDE.md
+or other vendor agent files.
 
 ## Charter
 
@@ -9,10 +10,14 @@ This lab is for Intel GPU kernels and 2x2 parallelism on the dual B70 host.
 
 In scope:
 
-- Xe2 / B70 kernels (SYCL, Level Zero, IGC, OpenCL, Triton-XPU).
+- Xe2 / B70 kernels. Native path is Level Zero. SYCL (DPC++) rides
+  Level Zero by default, or OpenCL as a labeled control. IGC compiles.
+  Triton-XPU and PyTorch XPU sit on that same L0/SYCL stack. See
+  docs/BACKENDS.md.
 - Tensor parallel = 2.
 - Pipeline parallel = 2.
-- Collectives, P2P, PCI topology, and the failure modes of the above.
+- Collectives (oneCCL / XCCL vs llama.cpp tensor-split), P2P, PCI
+  topology, and the failure modes of the above.
 
 Out of scope unless explicitly expanded:
 
@@ -29,6 +34,10 @@ Out of scope unless explicitly expanded:
   the journal.
 - Do not claim speed or stability without matched configuration, coherence,
   identity, health, and teardown evidence.
+- Name the backend in every CONFIG (`level_zero`, `sycl+l0`,
+  `sycl+opencl`, `opencl`, `pytorch-xpu`, `triton-xpu`, `vulkan`).
+- Community numbers from refs/ or neural.download / xecores.com are
+  not local evidence. Reproduce on this host before FINDINGS.md.
 - Preserve user changes in a dirty worktree.
 
 ## Host and GPU discipline

@@ -8,6 +8,8 @@ kernel changes, and parallelism-map changes in one comparison.
 - Record kernel, KMD, firmware, UMD / Compute Runtime, Level Zero
   loader, IGC, oneCCL, and PyTorch XPU identities into docs/HOST.md
   (extend the creation snapshot; do not replace it blindly).
+- Record `sycl-ls` (level_zero vs opencl) and whether L0 V2 is the
+  live adapter. See docs/BACKENDS.md.
 - Run b70_ai_things per-card health on both B70s through gpu-run.
 - Run two-rank collective health with P2P disabled.
 - Confirm neither card is display-held and no live serve holds the

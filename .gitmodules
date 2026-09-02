@@ -1,0 +1,12 @@
+[submodule "refs/intel-arc-pro-b70-inference-cookbook"]
+	path = refs/intel-arc-pro-b70-inference-cookbook
+	url = https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook.git
+	shallow = true
+[submodule "refs/flashnext-harness"]
+	path = refs/flashnext-harness
+	url = https://github.com/bbeartheancient/flashnext-harness.git
+	shallow = true
+[submodule "refs/b70-optimization-lab"]
+	path = refs/b70-optimization-lab
+	url = https://github.com/steveseguin/b70-optimization-lab.git
+	shallow = true
