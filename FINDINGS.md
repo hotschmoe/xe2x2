@@ -791,6 +791,25 @@ Evidence: `results/k2/sc8k128_m256_n2_s512_card0.txt`,
   `results/k2/sc8k128_m256_n2_s512_card1.txt`,
   `results/k2/sc8k128_dpas_lines.txt`.
 
+## wg 4x8 halves M=256 vs 8x2-along-N, not 75 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8w48`.
+  Same k128 A-db 8-row tile, launch wg 4 along N x
+  8 along M. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 64x `dpas.8x8`, `grf_count` 128, no SLM.
+  cosine=1.0 max_abs=0. timed act=2733-2750 cur=2800
+  throttle=1. M=256 pipe_host 229.5/227.7 vs k128
+  8x2-N 440 vs W8A8 75.
+
+VERDICT -> Mapping M onto the WG Y dim is a real
+  ~1.9x vs all-N 8x2. Still ~3x oneDNN. Geometry
+  beat k128 blocking.
+
+Evidence: `results/k2/sc8w48_m256_n2_s512_card0.txt`,
+  `results/k2/sc8w48_m256_n2_s512_card1.txt`,
+  `results/k2/sc8w48_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -931,7 +950,8 @@ tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 RC=8 A-db 97-100 vs 46 us; no-db 120; 4-acc no-SLM 120;
 B-db+ca.ca 105-107; ff prefetch 126-128; 4x2x4+SLM 136
-is slower) and at M=256 (k128 A-db 440 vs K4 W8A8 75).
+is slower) and at M=256 (wg 4x8 228 vs k128 8x2-N 440
+vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
 ~10 us over GEMM-only 34. Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,

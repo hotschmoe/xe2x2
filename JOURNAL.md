@@ -1476,6 +1476,39 @@ VERDICT -> Producer that does not re-read A is a
   quant path. Next: ngen wg 4x8 at M=256, or stop
   decode-quant chasing.
 
+### 2026-09-02bb - K2 ngen wg 4x8 k128 M=256
+
+CONTEXT -> k128 A-db 8x2-along-N is 440 us at M=256
+  vs W8A8 75. ngen is wg 4x8 k128. Steal launch
+  geometry: 4 along N, 8 along M. Same 8-row tile,
+  k128 A-db, 64 dpas, no SLM.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=8, wg 4x8 NxM. grf_size<256>. spin=512
+  warmup=10 iters=20. Fill [-64,64] scales 0.02
+  out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8, store_block2d.d16,
+  grf_count 128, no slm_size. cosine=1.0 max_abs=0.
+  timed act=2733-2750 cur=2800 throttle=1.
+  M=256: event 228.53/230.15 us, pipe_host
+  229.54/227.72 vs k128 8x2-N 440 vs W8A8 75.
+
+VERDICT -> wg 4x8 (M on Y) is a real ~1.9x vs
+  packing local dims along N. Not a 75 us beat
+  (~3.0x). Geometry matters more than k128 here.
+  Next: steal 4x8 on the M=64 A-db tile, or 384
+  dpas unroll.
+
+
 
 
 

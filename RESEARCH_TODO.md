@@ -33,12 +33,12 @@ server, JOURNAL entry written.
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
 K0-K6 have both-card RESULTS. Held-clock scale-to-f16
 M=1 (ap) beats W8A8 34 vs 44 us. M=64 hand floor is
-A-db 97-100 us (av), ~2.1x W8A8 46. M=256 k128 A-db
-(az) is 440 us, ~5.9x W8A8 75. GRF256 still zebin
-128. Decode quant path: producer+GEMM (ba) is 44 us
-(prod 10 + gemm 33), beats fusev 72. Keep two-kernel.
-Next: ngen wg 4x8 at M=256, or stop decode-quant
-chasing. Loop every 20m.
+A-db 97-100 us (av), ~2.1x W8A8 46. M=256: k128
+8x2-N 440 (az), wg 4x8 228 (bb) vs W8A8 75. bb is
+~1.9x az, still ~3x oneDNN. GRF256 still zebin 128.
+Decode quant: producer+GEMM (ba) is 44 us. Next:
+steal 4x8 geometry on the M=64 A-db tile, or 384
+dpas unroll. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

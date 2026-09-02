@@ -483,3 +483,18 @@ no SLM.
 ~4.5x M=64 A-db, ~5.9x W8A8. k128 blocking is not
 the 75 us kernel. Next: K5 producer without
 re-reading A, or ngen wg 4x8.
+
+## ngen wg 4x8 k128 M=256 (2026-09-02bb)
+
+Same k128 A-db 8-row tile, wg 4 along N x 8 along M.
+spin=512. cosine=1.0 max_abs=0. timed act=2733-2750
+cur=2800 throttle=1. IGA 64x dpas.8x8, grf 128,
+no SLM.
+
+| shape | card | event_us | pipe_host_us | 8x2-N | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 228.526 | 229.544 | 442.581 | 76.1 |
+| 256 x 5120 | 1 | 230.146 | 227.723 | 439.442 | 74.9 |
+
+~1.9x vs 8x2-along-N. Still ~3x W8A8. Geometry beat
+k128. Next: 4x8 on M=64 A-db, or 384 dpas unroll.
