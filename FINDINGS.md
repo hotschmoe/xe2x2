@@ -1153,24 +1153,46 @@ VERDICT -> New s8 M=64 wide-N floor 338.9 us at
 Evidence: `results/k2/sc8db48_m64_n17408_n2_s512_card0.txt`,
   `results/k2/sc8db48_m64_n17408_n2_s512_card1.txt`.
 
-## s8 M=64 K=17408 is 373.6 us on card1, pending sibling (K2)
+## s8 M=64 K=17408 is 374.7 us at 2800 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
   `dpas_s8_sc8db48`. Same 4x8 A-db INT8 tile,
-  M=64 N=5120 K=17408. Card1 only, NT=2,
+  M=64 N=5120 K=17408. Both cards, NT=2,
   spin=512. Prior: K-linear ~255 us; s4 106.0.
 
 RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
-  throttle=0. M=64 pipe_host 373.57 vs K=5120 75
-  vs N=17408 338.9 vs s4 106.0 vs napkin 255.
+  throttle=0. M=64 pipe_host 375.90/373.57 vs
+  K=5120 75 vs N=17408 338.9 vs s4 106.0 vs
+  napkin 255. Spread ~0.6%.
 
-VERDICT -> INT8 wide-K is ~4.98x K=5120, worse
-  than linear and slower than wide-N 338.9 at
-  the same B bytes. s4 106.0 is ~3.52x this
-  tile. One-card. Do not freeze 373.6 us as a
-  floor until card0 runs it.
+VERDICT -> New s8 M=64 wide-K floor 374.7 us at
+  2800 both cards. ~5.00x K=5120, worse than
+  linear and slower than wide-N 338.9 at the
+  same B bytes. s4 106.0 is ~3.53x this tile.
+  Rank us.
 
-Evidence: `results/k2/sc8db48_m64_k17408_n2_s512_card1.txt`.
+Evidence: `results/k2/sc8db48_m64_k17408_n2_s512_card0.txt`,
+  `results/k2/sc8db48_m64_k17408_n2_s512_card1.txt`.
+
+## s8 M=256 N=17408 is 467.9 us on card1, pending sibling (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s8_sc8w48m4`. Same 4-acc wg 4x8 INT8
+  tile, M=256 N=17408 K=5120. Card1 only, NT=2,
+  spin=512. Prior: N-linear ~435 us; s4 140.0.
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2733
+  cur=2800 throttle=1 (same flag as the 128 us
+  N=5120 floor on this tile). M=256 pipe_host
+  467.88 vs N=5120 128 vs s4 140.0 vs napkin 435.
+
+VERDICT -> INT8 prefill-256 wide-N is ~3.66x
+  N=5120, near linear, better than M=64's 4.52x.
+  s4 140.0 is ~3.34x this tile. One-card,
+  throttle=1. Do not freeze 467.9 us as a floor
+  until card0 runs it.
+
+Evidence: `results/k2/sc8w48m4_m256_n17408_n2_s512_card1.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
@@ -1324,9 +1346,12 @@ cards (~2.88x). s4 M=256 K=17408 is 149.0 us both
 cards (~3.07x). Qwen FFN s4 map is closed. s8
 M=64 N=17408 is 338.9 us both cards (~4.52x
 N=5120, worse than linear; s4 94.7 is ~3.58x
-this). One-card pending sibling: s8 M=64
-K=17408 is 373.6 us (~4.98x K=5120 vs s4
-106.0; slower than wide-N 338.9).
+this). s8 M=64 K=17408 is 374.7 us both
+cards (~5.00x K=5120 vs s4 106.0; slower
+than wide-N 338.9). One-card pending sibling:
+s8 M=256 N=17408 is 467.9 us (~3.66x N=5120
+vs s4 140.0; throttle=1 like the 128 us
+floor).
 It is
 still true for INT8 s8 at M=64
 (best hand wg 4x8 A-db

@@ -769,7 +769,22 @@ throttle=0.
 |---|---|---:|---:|---:|---:|---:|
 | 64 x 5120 x 17408 | 1 | 371.922 | 373.565 | 75 | 106.0 | 255 |
 
-~4.98x K=5120, worse than linear. s4 106.0 is
-~3.52x this s8. Slower than wide-N 338.9 at
-the same B bytes. One-card. Next: sibling vs
-s8 M=256 N=17408.
+~4.98x K=5120, worse than linear. Sibling
+card0 pipe 375.899 (cd). New M=64 wide-K
+floor 374.7 us both cards. s4 106.0 is
+~3.53x this s8.
+
+## s8 4-acc M=256 N=17408 card1 (2026-09-02ce)
+
+Same s8 4-acc wg 4x8 tile, N=17408 K=5120.
+spin=512. cosine=1.0 max_abs=0. timed act=2733
+cur=2800 throttle=1 (same as N=5120 128 us
+floor).
+
+| shape | card | event_us | pipe_host_us | N=5120 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 17408 | 1 | 468.786 | 467.880 | 128 | 140.0 | 435 |
+
+~3.66x N=5120, near linear, better than M=64
+4.52x. s4 140.0 is ~3.34x this s8. One-card.
+Next: sibling vs s8 M=256 K=17408.

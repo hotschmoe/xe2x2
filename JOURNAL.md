@@ -2327,3 +2327,62 @@ VERDICT -> INT8 4x8 A-db loses harder at wide K:
   338.9 at the same B bytes. One-card. Do not
   freeze 373.6 us until card0. Rank us. Next:
   sibling s8 K=17408 vs s8 M=256 N=17408.
+
+### 2026-09-02cd - K2 s8 M=64 K=17408 sibling card0
+
+CONTEXT -> card1 s8 4x8 A-db K=17408 was 373.6 us
+  at M=64 2800, numeric closed. Sibling swap to
+  close the INT8 prefill wide-K floor.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db48,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=512 as cc.
+  Fill s8 [-64,64] scales 0.02 out f16. M=64
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8db48_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card0: event 375.953 us, pipe_host 375.899
+  vs card1 373.565 vs K=5120 75 vs N=17408 338.9
+  vs s4 106.0 vs napkin 255. Spread ~0.6%.
+
+VERDICT -> Sibling matches. New s8 M=64 wide-K
+  floor 374.7 us at 2800 both cards. ~5.00x
+  K=5120, worse than linear. s4 106.0 is ~3.53x
+  this tile. Rank us.
+
+### 2026-09-02ce - K2 s8 M=256 N=17408 4-acc card1
+
+CONTEXT -> s8 4-acc is 128 us at M=256 N=5120.
+  s4 same tile N=17408 is 140.0 us (~2.88x).
+  Napkin N-linear 128*17408/5120 ~435 us. INT8
+  vs s4 at FFN-up prefill-256. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=8 spin=512.
+  Fill s8 [-64,64] scales 0.02 out f16. M=256
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48m4_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2733
+  cur=2800 throttle=1 (same flag as the N=5120
+  128 us floor on this tile).
+  M=256 card1: event 468.786 us, pipe_host 467.880
+  vs N=5120 128 vs s4 140.0 vs napkin 435.
+  Ratio 467.9/128 ~3.66x, near N-linear, better
+  than M=64's 4.52x. s4 140.0 is ~3.34x this s8.
+
+VERDICT -> Prefill-256 wide-N is a real 467.9 us
+  at cur=2800, ~3.66x N=5120. Throttle=1, one-card.
+  Do not freeze until card0. Rank us. Next:
+  sibling s8 M=256 N=17408 vs s8 M=256 K=17408.
