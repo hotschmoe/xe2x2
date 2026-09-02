@@ -513,6 +513,25 @@ VERDICT -> Mapping 8x2 onto N (no idle) is a real decode
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/wgn_dpas_lines.txt`.
 
+## SLM A-broadcast plus 64 dpas is not a 45 us beat (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_slm64`. Same
+  8x2-along-N 64x `dpas.8x4` as wgn. lid0 stores A[k64] to
+  SLM, two barriers per k64. Both cards. Prior: ngen M=1
+  bundles SLM + 64 dpas + wg 8x2; old SLM-per-k32 lost.
+
+RESULT -> IGA 64x `dpas.8x4`, GRF 128, `slm_size` 1024,
+  unrolled barriers. max_abs=0. M=4 NT=2: 101-140 us vs
+  wgn no-SLM 47-50 vs old SLM 372-463 vs W8A8 M=1 42-46.
+  NT=4 M=4: 111-114. M=64: 422-634 vs wgn 304-611.
+
+VERDICT -> The ngen bundle is not "broadcast A in SLM."
+  This is faster than per-k32 SLM and slower than no-SLM
+  wgn at decode. Hand floor stays 47-50 us. W8A8 floor
+  stays 45 us. Next: ngen SLM packing, not more A-share.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/slm64_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

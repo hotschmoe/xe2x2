@@ -242,3 +242,19 @@ max_abs=0. Warm ~2800 MHz.
 NT=2 M=4 47-50 us both cards beats 1D u64 53-69. Not a
 45 us W8A8 M=1 beat (pad M=4). New hand decode floor
 ~47-50 us.
+
+## SLM A share plus 64 dpas 8x2-N (2026-09-02aj)
+
+Same 8x2-along-N 64 dpas as wgn. lid0 A[k64] to SLM, two
+barriers per k64. ocloc: 64x `dpas.8x4`, GRF 128, slm 1024.
+max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | wgn NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 101 | 140 | 114 | 111 | 47-50 |
+| 64 x 5120 | 625 | 634 | 422 | 443 | 570-611 |
+| 256 x 5120 | 899 | 933 | 1187 | 1184 | 1225-1285 |
+
+NT=2 c1 started D3hot (140). Decode loses to no-SLM wgn.
+Faster than old per-k32 SLM 372-463. Hand floor stays
+47-50 us.

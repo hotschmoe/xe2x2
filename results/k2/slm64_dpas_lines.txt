@@ -1,0 +1,18 @@
+K2 dpas_s8_slm64 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 8x2-N + SLM A per k64
+  - name:            _ZTSN12_GLOBAL__N_118DpasS8Slm64Nt4NameE
+      barrier_count:   1
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        1024
+  - name:            _ZTSN12_GLOBAL__N_118DpasS8Slm64Nt2NameE
+      barrier_count:   1
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      slm_size:        1024
+.text._ZTSN12_GLOBAL__N_118DpasS8Slm64Nt2NameE.asm: 64 dpas {'8x4': 64} slm_send=96 barrier=64
+  first_dpas: dpas.8x4 (16|M0)         r54:d         r54:d             r10:b             r3.0:b           {$13}
+.text._ZTSN12_GLOBAL__N_118DpasS8Slm64Nt4NameE.asm: 64 dpas {'8x4': 64} slm_send=48 barrier=32
+  first_dpas: dpas.8x4 (16|M0)         r102:d        r102:d            r10:b             r3.0:b           {$6}

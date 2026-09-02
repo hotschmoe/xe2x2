@@ -904,6 +904,36 @@ VERDICT -> 8x2 along N is a decode win vs 1D u64 (47-50 vs
   (pad M=4). Do not freeze 47 us. New hand-tile decode
   floor is ~47-50 us. Next: ngen SLM plus 64 dpas together.
 
+### 2026-09-02aj - K2 SLM A share plus 64 dpas 8x2-N
+
+CONTEXT -> Old SLM (per-k32 barrier, no unroll) lost 372-463.
+  wgn 8x2-N is 47-50 us with 16 N-lanes reloading the same A.
+  ngen M=1 bundles SLM + 64 dpas + wg 8x2. Steal that bundle:
+  lid0 stores A[k64] to SLM, two barriers per k64.
+
+CONFIG -> sycl+l0, standalone dpas_s8_slm64, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Same 8x2-N as wgn.
+  NT=2 U=16 / NT=4 U=8.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_slm64.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_slm64.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4, GRF 128, slm_size 1024,
+  barriers in the unroll (64/32). max_abs=0 both cards both
+  NT. M=4: NT=2 101-140 us (D3hot first 140) / NT=4 111-114
+  vs wgn no-SLM 47-50 vs old SLM 372-463 vs W8A8 45. M=64:
+  422-634 vs wgn 304-611. M=256: 899-1184.
+
+VERDICT -> SLM A-broadcast plus 64 dpas lights and is not
+  a 45 us beat. Faster than old per-k32 SLM, slower than
+  no-SLM wgn at decode. Do not freeze 101 us. Hand floor
+  stays 47-50 us. Next: ngen SLM is pack, not A-broadcast.
+
 
 
 

@@ -31,11 +31,12 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. 8x2 along N (no idle) on 64
-dpas.8x4 is a decode win vs 1D u64 (47-50 vs 53-69 vs
-W8A8 M=1 45) at warm 2800 MHz, both cards. Not a 45 us
-beat (pad M=4). New hand floor ~47-50 us. Next: ngen SLM
-plus 64 dpas as one bundle. Loop every 20m.
+K0-K6 have both-card RESULTS. SLM A-broadcast plus 64
+dpas on 8x2-N lights (slm 1024, barriers) and loses
+decode to no-SLM wgn (101-140 vs 47-50 vs W8A8 45).
+Faster than old per-k32 SLM 372-463. Hand floor stays
+47-50 us. Next: ngen SLM packing, not more A-share.
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
