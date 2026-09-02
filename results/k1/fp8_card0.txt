@@ -1,0 +1,54 @@
+=== clocks before ===
+2026-09-02 06:55:46 UTC
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=1167 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:382948076477 energy2=pkg:270393554809 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:293502329467 energy2=pkg:289751944030 temp2_mC=53000
+=== gpu-run status before ===
+GPU lease:
+  card 0: free
+  card 1: free
+=== dump start ===
+gpu-run: [xe2x2-k1-fp8-c0] acquired card(s) 0 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -v /mnt/vm_8tb/github/xe2x2/results/k1/igc_card0_fp8:/igc -e ZE_AFFINITY_MASK=0 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu -e IGC_ShaderDumpEnable=1 -e IGC_DumpToCustomDir=/igc --entrypoint python3 b70-local/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-s01 /work/kernels/onednn_isa/dump_incumbent.py --op fp8
+CONFIG backend=pytorch-xpu sitting on sycl+l0 torch 2.13.0+xpu xpu True count 1 ZE_AFFINITY_MASK 0
+imported vllm_xpu_kernels._xpu_C
+OPS name
+HAS fp8_gemm_w8a16=True
+HAS int8_gemm_w8a16=False
+HAS int8_gemm_w8a8=False
+HAS nvfp4_gemm_w4a16=False
+HAS fp8_gemm=True
+# shape M=1 N=5120 K=5120
+fp8_gemm_w8a16,m=1,n=5120,k=5120,us=57.537,GBs=455.607,TOPS=0.9112,out=(1, 5120),dtype=torch.bfloat16
+# shape M=1 N=17408 K=5120
+fp8_gemm_w8a16,m=1,n=17408,k=5120,us=248.554,GBs=358.590,TOPS=0.7172,out=(1, 17408),dtype=torch.bfloat16
+# shape M=64 N=5120 K=5120
+fp8_gemm_w8a16,m=64,n=5120,k=5120,us=92.357,GBs=283.838,TOPS=36.3313,out=(64, 5120),dtype=torch.bfloat16
+# shape M=64 N=17408 K=5120
+fp8_gemm_w8a16,m=64,n=17408,k=5120,us=339.238,GBs=262.732,TOPS=33.6298,out=(64, 17408),dtype=torch.bfloat16
+# shape M=256 N=5120 K=5120
+fp8_gemm_w8a16,m=256,n=5120,k=5120,us=318.025,GBs=82.429,TOPS=42.2036,out=(256, 5120),dtype=torch.bfloat16
+DONE
+gpu-run: [xe2x2-k1-fp8-c0] done in 24s (exit 0)
+IGC dump files: 19
+DUMP_RC=0
+=== clocks after ===
+2026-09-02 06:56:11 UTC
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=1583 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:384007736755 energy2=pkg:270953475097 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:294546484558 energy2=pkg:290308856384 temp2_mC=53000
+=== gpu-run status after ===
+GPU lease:
+  card 0: free
+  card 1: free
+=== IGC / ngen dump pointer ===
+IGC_ShaderDumpEnable dir: /mnt/vm_8tb/github/xe2x2/results/k1/igc_card0_fp8
+  19 files, kernel=gemm_zero_fill only; grep dpas/DPAS/s8/decompress: none
+ONEDNN_JIT_DUMP dir: /mnt/vm_8tb/github/xe2x2/results/k1/igc_card0_fp8_jit
+  dnnl_dump_gpu_gemm_kernel.0.bin M=1; .4.bin M=64; iga Xe2 asm *.xe2.asm
+  dpas.8x8 bf16xbf16 (16 at M=1, 256 at M=64); no dpas.s8
+ISA reading: /mnt/vm_8tb/github/xe2x2/results/k1/fp8_card0_isa.md
+verbose log: /mnt/vm_8tb/github/xe2x2/results/k1/fp8_card0_jitdump.txt

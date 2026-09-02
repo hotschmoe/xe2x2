@@ -1,0 +1,4 @@
+# CONFIG backend=host_cpu target=emulate_s8 arm=karatsuba_s4 SKIP reason="(a0+a1) in [-8,22] not subset of s4[-8,7] or u4[0,15]" prior_karatsuba_vs_s8=2.0x_from_k2_1.49x NOT_A_RESULT digits=u4_lo+s4_hi
+arm,m,n,k,terms,us,TOPS,max_abs,ok
+# karatsuba_host_identity n=65536 max_abs=0 sum_not_s4=45056 sum_not_u4=28928 sum_not_s4_or_u4=12800
+karatsuba_s4_skip,1,1,1,3,0.000,0.0000,0,1

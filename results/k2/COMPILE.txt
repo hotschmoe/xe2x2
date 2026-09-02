@@ -1,0 +1,16 @@
+K2 ESIMD DPAS AOT 2026-09-02
+CPU docker only. No --device. No gpu-run.
+image=b70-sglang-xpu-int8-runtime:20260826-mtp6
+icpx=Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)
+target=intel_gpu_bmg_g31
+backend=sycl+l0 (named in source; not a GPU run)
+
+dpas_s8     s8xs8->s32   K=32  COMPILE_OK  kernels/esimd_dpas/bin/dpas_s8
+dpas_s4     s4xs4->s32   K=64  COMPILE_OK  kernels/esimd_dpas/bin/dpas_s4
+dpas_s2xs8  s2xs8->s32   K=32  COMPILE_OK  kernels/esimd_dpas/bin/dpas_s2xs8
+dpas_s2     s2xs2->s32   K=64  COMPILE_OK  kernels/esimd_dpas/bin/dpas_s2
+
+No dpas_argument_type refusal. s2 and s4 accepted as packed uint8
+with explicit xmx::dpas_argument_type::s2 / s4.
+s2xs8 CONFIG prior (paper 2508.06753, not a result): same OPC=4 / K=32
+as s8xs8, not 4x. IGC s2 range [-2,1].

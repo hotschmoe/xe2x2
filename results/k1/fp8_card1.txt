@@ -1,0 +1,22 @@
+gpu-run: [xe2x2-k1-fp8-c1] acquired card(s) 1 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -v /mnt/vm_8tb/github/xe2x2/results/k1/igc_card1_fp8:/igc -e ZE_AFFINITY_MASK=1 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu -e IGC_ShaderDumpEnable=1 -e IGC_DumpToCustomDir=/igc --entrypoint python3 b70-local/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-s01 /work/kernels/onednn_isa/dump_incumbent.py --op fp8
+CONFIG backend=pytorch-xpu sitting on sycl+l0 torch 2.13.0+xpu xpu True count 1 ZE_AFFINITY_MASK 1
+imported vllm_xpu_kernels._xpu_C
+OPS name
+HAS fp8_gemm_w8a16=True
+HAS int8_gemm_w8a16=False
+HAS int8_gemm_w8a8=False
+HAS nvfp4_gemm_w4a16=False
+HAS fp8_gemm=True
+# shape M=1 N=5120 K=5120
+fp8_gemm_w8a16,m=1,n=5120,k=5120,us=56.203,GBs=466.428,TOPS=0.9329,out=(1, 5120),dtype=torch.bfloat16
+# shape M=1 N=17408 K=5120
+fp8_gemm_w8a16,m=1,n=17408,k=5120,us=262.032,GBs=340.146,TOPS=0.6803,out=(1, 17408),dtype=torch.bfloat16
+# shape M=64 N=5120 K=5120
+fp8_gemm_w8a16,m=64,n=5120,k=5120,us=93.976,GBs=278.947,TOPS=35.7053,out=(64, 5120),dtype=torch.bfloat16
+# shape M=64 N=17408 K=5120
+fp8_gemm_w8a16,m=64,n=17408,k=5120,us=339.377,GBs=262.625,TOPS=33.6160,out=(64, 17408),dtype=torch.bfloat16
+# shape M=256 N=5120 K=5120
+fp8_gemm_w8a16,m=256,n=5120,k=5120,us=227.011,GBs=115.476,TOPS=59.1239,out=(256, 5120),dtype=torch.bfloat16
+DONE
+gpu-run: [xe2x2-k1-fp8-c1] done in 27s (exit 0)
+IGC dump files: 19

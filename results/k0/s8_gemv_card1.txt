@@ -1,0 +1,36 @@
+gpu-run: [xe2x2-k0-gemv-c1] acquired card(s) 1 -> bash -lc 
+    source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+    export ZE_AFFINITY_MASK=1
+    export ZES_ENABLE_SYSMAN=1
+    export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k0/cache_card1
+    echo '=== clocks before ==='
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 1
+    echo '=== gemv k=5120 n=5120 ==='
+    /mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/s8_gemv --k 5120 --n 5120 --iters 30 --warmup 8
+    echo '=== gemv k=5120 n=17408 ==='
+    /mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/s8_gemv --k 5120 --n 17408 --iters 20 --warmup 5
+    echo '=== clocks after ==='
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 1
+  
+=== clocks before ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:334431575805 energy2=pkg:245572050598 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:244746792907 energy2=pkg:264184496765 temp2_mC=57000
+=== gemv k=5120 n=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 m=1 k=5120 n=5120 note=GEMV_not_DPAS warmup=8 iters=30
+k,n,iters,us,GBs,TOPS,max_abs,ok
+5120,5120,30,990.049,26.504,0.052956,0,1
+=== gemv k=5120 n=17408 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 m=1 k=5120 n=17408 note=GEMV_not_DPAS warmup=5 iters=20
+k,n,iters,us,GBs,TOPS,max_abs,ok
+5120,17408,20,2235.271,39.907,0.079748,0,1
+=== clocks after ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:334496760375 energy2=pkg:245611077209 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:244812543334 energy2=pkg:264225340087 temp2_mC=51000
+gpu-run: [xe2x2-k0-gemv-c1] done in 3s (exit 0)

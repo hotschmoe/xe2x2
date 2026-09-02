@@ -1,0 +1,11 @@
+gpu-run: [xe2x2-k2-s2-c0] acquired card(s) 0 -> bash -lc 
+source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu ZE_AFFINITY_MASK=0 ZES_ENABLE_SYSMAN=1
+export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k2/cache_card0
+/mnt/vm_8tb/github/xe2x2/kernels/esimd_dpas/bin/dpas_s2 --m 1024 --n 1024 --k 1024 --iters 20 --warmup 5
+
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s2xs2s32 RC=8 K=64 N=16 OPC=8 s2_range=[-2,1] Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,4.469,0.0037,0,1
+timed,1024,1024,1024,49.625,43.2743,0,1
+gpu-run: [xe2x2-k2-s2-c0] done in 2s (exit 0)

@@ -131,6 +131,21 @@ freeze.
 - IPEX-LLM Battlemage quickstart (B-series, not B70-specific):
   https://github.com/intel/ipex-llm/blob/main/docs/mddocs/Quickstart/bmg_quickstart.md
 
+### Campaign literature (fetch, then measure)
+
+Not local evidence. A read-only agent may pull these while GPU
+agents run P0/K0. Notes go in JOURNAL or results/; tok/s stay out
+of FINDINGS.
+
+- XeTLA: https://intel.github.io/xetla
+- ESIMD DPAS: intel/llvm `sycl_ext_intel_esimd` (`xmx::dpas`)
+- arXiv 2508.06753 -- Xe2 int2 x int8 GEMM, VNNI16, XeTLA autotune
+- intel/llvm#21741 -- B70 ESIMD DPAS wrong inside large SYCL builds
+- NVIDIA NVFP4: https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/
+- OCP MX spec v1.0 -- MXFP4 is not NVFP4
+- QServe / QoQ: arXiv 2405.04532 (W4A8, keep dequant on-pipe)
+- oneAPI GPU opt guide, Xe architecture (GRF 128/256, XVE vs XMX)
+
 ### Product
 
 - Arc Pro B70 is BMG-31 / `8086:E223` on this host. Intel's public

@@ -1,0 +1,23 @@
+gpu-run: card 1 busy (held by: xe2x2-k1-int8-c1 pid=905038 since=2026-09-02 07:01:45 cmd: docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -v /mnt/vm_8tb/github/xe2x2/results/k1/igc_card1_int8:/igc -e ZE_AFFINITY_MASK=1 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu -e IGC_ShaderDumpEnable=1 -e IGC_DumpToCustomDir=/igc --entrypoint python3 b70-sglang-xpu-int8-w8a16:20260828-2dd55f3 /work/kernels/onednn_isa/dump_incumbent.py --op int8); waiting up to 900s ...
+gpu-run: [xe2x2-k1-int8a8-c1] acquired card(s) 1 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -v /mnt/vm_8tb/github/xe2x2/results/k1/igc_card1_int8a8:/igc -e ZE_AFFINITY_MASK=1 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu -e IGC_ShaderDumpEnable=1 -e IGC_DumpToCustomDir=/igc --entrypoint python3 b70-sglang-xpu-int8-runtime:20260826-mtp6 /work/kernels/onednn_isa/dump_incumbent.py --op int8a8
+CONFIG backend=pytorch-xpu sitting on sycl+l0 torch 2.13.0+xpu xpu True count 1 ZE_AFFINITY_MASK 1
+imported vllm_xpu_kernels._xpu_C
+OPS name
+HAS fp8_gemm_w8a16=True
+HAS int8_gemm_w8a16=False
+HAS int8_gemm_w8a8=True
+HAS nvfp4_gemm_w4a16=False
+HAS fp8_gemm=True
+# shape M=1 N=5120 K=5120
+int8_gemm_w8a8,m=1,n=5120,k=5120,us=45.542,GBs=575.611,TOPS=1.1512,out=(1, 5120),dtype=torch.float16
+# shape M=1 N=17408 K=5120
+int8_gemm_w8a8,m=1,n=17408,k=5120,us=163.835,GBs=544.015,TOPS=1.0880,out=(1, 17408),dtype=torch.float16
+# shape M=64 N=5120 K=5120
+int8_gemm_w8a8,m=64,n=5120,k=5120,us=61.669,GBs=425.083,TOPS=54.4106,out=(64, 5120),dtype=torch.float16
+# shape M=64 N=17408 K=5120
+int8_gemm_w8a8,m=64,n=17408,k=5120,us=208.501,GBs=427.475,TOPS=54.7167,out=(64, 17408),dtype=torch.float16
+# shape M=256 N=5120 K=5120
+int8_gemm_w8a8,m=256,n=5120,k=5120,us=94.360,GBs=277.814,TOPS=142.2407,out=(256, 5120),dtype=torch.float16
+DONE
+gpu-run: [xe2x2-k1-int8a8-c1] done in 20s (exit 0)
+IGC dump files: 2

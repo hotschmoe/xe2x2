@@ -1,0 +1,20 @@
+gpu-run: [xe2x2-k2-clock-s4-c0] acquired card(s) 0 -> bash /mnt/vm_8tb/github/xe2x2/kernels/esimd_dpas/run_clock_hold.sh 0 s4
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:404544466064 energy2=pkg:281502603210 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:316176215942 energy2=pkg:302128794006 temp2_mC=53000
+=== dpas_s4 long ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=20 iters=80
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,5.684,0.0029,0,1
+timed,1024,1024,1024,69.125,31.0667,0,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1600 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:404621505187 energy2=pkg:281546748046 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:316253422363 energy2=pkg:302174502624 temp2_mC=53000
+wrote /mnt/vm_8tb/github/xe2x2/results/k2/clockhold_s4_card0.txt
+gpu-run: [xe2x2-k2-clock-s4-c0] done in 3s (exit 0)

@@ -1,7 +1,19 @@
 # RESEARCH_TODO.md -- xe2x2 work order
 
-Updated 2026-09-02. Work top to bottom. Do not mix environment refresh,
-kernel changes, and parallelism-map changes in one comparison.
+Updated 2026-09-02. P0 is the only hard gate. After P0, kernel
+workstreams (K0-K6) may run in any order. Do not mix environment
+refresh, kernel changes, and parallelism-map changes in one
+comparison.
+
+Campaign map (open questions, not a locked path):
+`docs/KERNEL_CAMPAIGN.md`.
+
+## Dual-card scheduling
+
+Two B70s. Independent one-card kernel/math jobs run two-wide
+(`gpu-run --card 0` || `gpu-run --card 1`). Two-card collectives
+pause that matrix. Split experiment matrices across cards, then swap
+so every arm has both-card evidence.
 
 ## P0: freeze the host baseline
 
@@ -18,42 +30,71 @@ kernel changes, and parallelism-map changes in one comparison.
 Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
-## P1: kernel microbench floor
+P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
+K0 and K2 have both-card numbers. K1: stock images lack
+int8_gemm_w8a16; the w8a16-tagged sglang image has it as
+ref_matmul (~2027 us). Live INT8 XMX floor is int8_gemm_w8a8
+at 45 us vs fp8 W8A16 56 us (M=1 5120). Loop every 20m.
 
-- One-card copy, GEMM, and attention-shaped kernels on card0, then
-  card1, same binary.
-- Capture IGC / SYCL / Level Zero identity with the numbers.
-- Repeat after a cold lease so the first-run compile is not the score.
+## After P0: kernel workstreams (parallelizable)
 
-Exit gate: a tracked result under results/ that names the kernel, the
-card, the compiler, and the health state.
+Pick a directory, one question per run. Details in each README.
 
-## P2: TP=2
+- K0 `kernels/roofline/` -- copy + GEMM + GEMV roofs
+- K1 `kernels/onednn_isa/` -- dump incumbent Intel ops
+- K2 `kernels/esimd_dpas/` -- hand s8 / s4 / s2 DPAS, light INT2
+- K3 `kernels/precision_compose/` -- INT2/INT4 as INT8 or E2M1
+- K4 `kernels/w8_compare/` -- FP8 W8A16 vs INT8 W8A16 vs W8A8
+- K5 `kernels/epilogue_quant/` -- INT8 without ~160 quant launches
+- K6 `kernels/nvfp4/` -- every NVFP4 spoof / LUT / split
+- K7 `kernels/gdn/` -- GDN hybrid leftover (Qwen3.8 is not plain attn)
 
-- Synthetic all-reduce / all-gather / send-recv across the two cards.
-- Then a tiny sharded matmul or tiny-model TP=2 map.
-- P2P off first. P2P on only as a labeled control after collectives
-  are healthy.
+Launch pairing: `docs/AGENT_LAUNCH.md`. A literature agent may fetch
+`docs/REFERENCES.md` campaign papers with no GPU lease.
+
+Exit per workstream: JOURNAL entry, artifact under results/, promote
+to FINDINGS.md only when both cards (or both ranks) support it.
+Napkin priors (compose loses, INT2 is useless, ...) are CONFIG, not
+RESULT. Measure.
+
+## After a math floor: models
+
+See `docs/MODELS.md`. Do not start a serve to skip K0-K3.
+
+- Dense: Qwen3.8-27B (already on disk: BF16, FP8, W8A8, INT4, NVFP4).
+- MoE body: Qwen3.6-35B-A3B when fetched; Ornith-1.5-35B-A3B is the
+  on-disk stand-in of the same size class.
+- Compact MoE: Gemma 4 26B A4B (fetch when needed).
+- Stretch: Qwen3.8-Flash-Next (NVMe expert/PLE, not a 2xB70 resident).
+
+Quants: INT8 W8A16 / W8A8, integer INT4, NVFP4 spoof. FP8 W8A16 is
+the dense incumbent control.
+
+## P2: TP=2  (`parallel/tp2/`)
+
+Needs P0. Happier if K0 exists so collective GB/s has a roof.
+
+- Synthetic all-reduce / all-gather / send-recv.
+- P2P off first. P2P on only as a labeled control.
+- Push all-reduce, fused RMSNorm+AR, and minimum call count are
+  first-class arms, not footnotes.
+- Tiny sharded matmul only after the synthetic collective is correct.
 
 Exit gate: correctness, matched rank evidence, teardown, post-health.
-Speed is secondary.
 
-## P3: PP=2
+## P3: PP=2  (`parallel/pp2/`)
 
 - Two-stage synthetic activation handoff, one stage per card.
-- Measure bubble, copy path (host vs device), and stage-memory split.
+- Bubble, copy path, stage-memory split.
 - Tiny-model PP=2 only after the synthetic handoff is correct.
 
 Exit gate: same as P2.
 
-## P4: mixed 2x2
+## P4: mixed 2x2  (`parallel/2x2/`)
 
-- Only after P2 and P3 pass on this host with the current UMD.
-- Start with TP=2 inside a two-stage pipeline, then the reverse, as
-  separate experiments.
-
-Exit gate: a written verdict on whether 2x2 is a real map on this PCI
-tree or a paper map that dies in collectives.
+Only after P2 and P3 pass on this host with the current UMD.
+TP=2 inside a two-stage pipeline, then the reverse, as separate
+experiments.
 
 ## Standing bans
 
@@ -62,3 +103,9 @@ tree or a paper map that dies in collectives.
   b70_ai_things as proof that xe2x2 work is clean.
 - Do not promote a serving wrapper from this repo. Hand findings back
   to b70_ai_things.
+- Do not mix a slot-move topology A/B into a kernel matrix.
+- Do not cite sibling-lab tok/s or ISA notes as FINDINGS until this
+  host repeats them.
+- Do not treat XeTLA / oneDNN / an Intel paper as a ceiling.
+- Rank serving-shaped work by us, not TOPS% or BW%.
+- Do not assume TP=2 for every op. Four B70s wait on evidence.

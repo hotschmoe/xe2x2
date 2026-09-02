@@ -1,0 +1,192 @@
+=== clocks before jitdump ===
+2026-09-02 07:03:16 UTC
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=1550 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:401631414062 energy2=pkg:279987503845 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:313258448791 energy2=pkg:300579560913 temp2_mC=55000
+=== gpu-run status ===
+GPU lease:
+  card 0: free
+  card 1: free
+=== ONEDNN_JIT_DUMP start ===
+gpu-run: [xe2x2-k1-fp8-c0] acquired card(s) 0 -> docker run --rm --device /dev/dri -v /dev/dri/by-path:/dev/dri/by-path -v /mnt/vm_8tb/github/xe2x2:/work:ro -v /mnt/vm_8tb/github/xe2x2/results/k1/igc_card0_fp8_jit:/igc -w /igc -e ZE_AFFINITY_MASK=0 -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu -e IGC_ShaderDumpEnable=1 -e IGC_DumpToCustomDir=/igc -e ONEDNN_JIT_DUMP=1 -e ONEDNN_VERBOSE=all -e SYCL_CACHE_PERSISTENT=0 --entrypoint bash b70-local/vllm-openai-xpu:qwen38-fp8-mtp1-serial-fa-split-gdn-r50-s01 -lc set -euo pipefail
+python3 - <<PY
+import os, time, torch
+import vllm_xpu_kernels._xpu_C  # noqa: F401
+print("CONFIG backend=pytorch-xpu sitting on sycl+l0", "torch", torch.__version__, "xpu", torch.xpu.is_available(), "count", torch.xpu.device_count() if torch.xpu.is_available() else 0, "ZE_AFFINITY_MASK", os.environ.get("ZE_AFFINITY_MASK"), flush=True)
+print("HAS fp8_gemm_w8a16", hasattr(torch.ops._xpu_C, "fp8_gemm_w8a16"), flush=True)
+print("CWD", os.getcwd(), flush=True)
+shapes = [(1,5120,5120),(1,17408,5120),(64,5120,5120),(64,17408,5120)]
+for m,n,k in shapes:
+    print(f"# shape M={m} N={n} K={k}", flush=True)
+    a = torch.randn(m, k, dtype=torch.bfloat16, device="xpu")
+    b = torch.randn(k, n, device="cpu").to(torch.float8_e4m3fn).to("xpu").contiguous()
+    s = torch.ones(1, n, dtype=torch.float32, device="xpu")
+    t0 = time.perf_counter()
+    y = torch.ops._xpu_C.fp8_gemm_w8a16(a, b, s, None)
+    torch.xpu.synchronize()
+    us = (time.perf_counter() - t0) * 1e6
+    print(f"fp8_gemm_w8a16_once,m={m},n={n},k={k},us={us:.3f},out={tuple(y.shape)},dtype={y.dtype}", flush=True)
+print("PYTHON_DONE", flush=True)
+PY
+echo "=== dump dir after python ==="
+find /igc -type f | wc -l
+ls -la /igc | head -80
+echo "=== ocloc disasm dnnl bins ==="
+shopt -s nullglob
+for f in /igc/dnnl_dump_*.bin; do
+  echo "--- disasm $(basename "$f") size=$(wc -c < "$f") ---"
+  mkdir -p "${f}.dis"
+  ocloc disasm -file "$f" -dump "${f}.dis" -device bmg-g31 || ocloc disasm -file "$f" -dump "${f}.dis" || echo "ocloc_fail $f"
+done
+echo "DISASM_DONE"
+
+CONFIG backend=pytorch-xpu sitting on sycl+l0 torch 2.13.0+xpu xpu True count 1 ZE_AFFINITY_MASK 0
+HAS fp8_gemm_w8a16 True
+CWD /igc
+# shape M=1 N=5120 K=5120
+onednn_verbose,v1,info,oneDNN v3.13.0 (commit 0e2a5bfeef1bfbffc3137464606540233086ce9b)
+onednn_verbose,v1,info,gpu,runtime:SYCL
+onednn_verbose,v1,info,gpu,engine,sycl gpu device count:1 
+onednn_verbose,v1,info,gpu,engine,0,backend:Level Zero,name:Intel(R) Arc(TM) Pro B70 Graphics,driver_version:1.15.39122,binary_kernels:enabled
+onednn_verbose,v1,info,graph,backend,0:dnnl_backend
+onednn_verbose,v1,info,experimental features are enabled
+onednn_verbose,v1,info,use batch_normalization stats one pass is enabled
+onednn_verbose,v1,info,GPU convolution v2 is disabled
+onednn_verbose,v1,primitive,info,template:operation,engine,primitive,implementation,prop_kind,memory_descriptors,attributes,auxiliary,problem_desc,exec_time
+onednn_verbose,v1,graph,info,template:operation,engine,partition_id,partition_kind,op_names,data_formats,logical_tensors,fpmath_mode,implementation,backend,exec_time
+onednn_verbose,v1,primitive,create:dispatch,gemm,gpu,gemm,jit:xe_hp:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x5120,skipping or dispatching to another implementation,src/gpu/intel/gemm/jit_xe_hp_systolic.cpp:86
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 8 aB16x2 aB16x2 aB wg 4x8 cab4 ks64 af vav hi pt sr br bk0 sn nb 4x8 dm grf256 sys l4,score:35458077.565097
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 4 aB16x2 aB16x2 aB wg 2x16 cab3x2 ks64 af vav hi pt sr br bk0 sn nb 2x16 dm grf256 sys l4,score:39624491.943192
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS N@8N@8N 32 8 av16 am16x2 aB wg 16x1 af rr vav hi pt sr br sb64 bk0 sys ska rr kv afb,score:-inf
+onednn_verbose,v1,info,gpu,gemm,catalog entry:F gemm QHS N@8N@8N 32 8 av16 am16x2 aB wg 16x1 af rr vav hi pt sr br sb64 bk0 sys ska rr kv afb
+onednn_verbose,v1,info,gpu,gemm,kernel:gemm qB[SB] N@16N@16N 32 8 1 0 aV16#16,0{cc} aM16#16,0x2{cc} aB#16,0{cc/ub} wg 16x1 sys af k32 ska vav di sr bf cc kv afb fp pk32 li pt rr sb64 np bm524288 bn131072 bk16777216
+onednn_verbose,v1,primitive,create:cache_miss,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x5120,21.0251
+onednn_verbose,v1,primitive,create_nested:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x5120,301.831
+onednn_verbose,v1,primitive,create:nested_primitive_cache_hit,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,1x5120:5120x5120,301.877
+onednn_verbose,v1,primitive,warning,exec,SYCL queue does not have profiling enabled. Verbose profiling is paused and execution times will not be reported.,src/gpu/intel/sycl/stream.cpp:105
+onednn_verbose,v1,primitive,exec,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,1x5120:5120x5120,0
+fp8_gemm_w8a16_once,m=1,n=5120,k=5120,us=339583.996,out=(1, 5120),dtype=torch.bfloat16
+# shape M=1 N=17408 K=5120
+onednn_verbose,v1,primitive,create:dispatch,gemm,gpu,gemm,jit:xe_hp:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x17408,skipping or dispatching to another implementation,src/gpu/intel/gemm/jit_xe_hp_systolic.cpp:86
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 8 aB16x2 aB16x2 aB wg 4x8 cab4 ks64 af vav hi pt sr br bk0 sn nb 4x8 dm grf256 sys l4,score:87277061.678633
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 4 aB16x2 aB16x2 aB wg 2x16 cab3x2 ks64 af vav hi pt sr br bk0 sn nb 2x16 dm grf256 sys l4,score:122813756.506240
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS N@8N@8N 32 8 av16 am16x2 aB wg 16x1 af rr vav hi pt sr br sb64 bk0 sys ska rr kv afb,score:-inf
+onednn_verbose,v1,primitive,create:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x17408,0.0109863
+onednn_verbose,v1,primitive,create_nested:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,1x5120:5120x17408,0.958984
+onednn_verbose,v1,primitive,create:nested_primitive_cache_hit,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,1x5120:5120x17408,0.998047
+onednn_verbose,v1,primitive,exec,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,1x5120:5120x17408,0
+fp8_gemm_w8a16_once,m=1,n=17408,k=5120,us=1810.111,out=(1, 17408),dtype=torch.bfloat16
+# shape M=64 N=5120 K=5120
+onednn_verbose,v1,primitive,create:dispatch,gemm,gpu,gemm,jit:xe_hp:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x5120,unsupported datatype combination,src/gpu/intel/gemm/jit_xe_hp_systolic.cpp:107
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 8 aB16x2 aB16x2 aB wg 4x8 cab4 ks64 af vav hi pt sr br bk0 sn nb 4x8 dm grf256 sys l4,score:35768776.711337
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 4 aB16x2 aB16x2 aB wg 2x16 cab3x2 ks64 af vav hi pt sr br bk0 sn nb 2x16 dm grf256 sys l4,score:40108615.795992
+onednn_verbose,v1,info,gpu,gemm,catalog entry:F gemm QHS NNN 32 8 aB16x2 aB16x2 aB wg 4x8 cab4 ks64 af vav hi pt sr br bk0 sn nb 4x8 dm grf256 sys l4
+onednn_verbose,v1,info,gpu,gemm,kernel:gemm qB[SB] N@16N@16N 32 8 1 0 aB16x2{cc} aB16x2{cc} aB#16,0{cc/ub} cab4 ks64 wg 4x8 sys af k256 grf256 sn vav di dm sr bf cc nb 4x8 li pt nmk l4 np bm524288 bn131072 bk16777216
+onednn_verbose,v1,primitive,create:cache_miss,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x5120,64.4309
+onednn_verbose,v1,primitive,create_nested:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x5120,0.658936
+onednn_verbose,v1,primitive,create:nested_primitive_cache_hit,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,64x5120:5120x5120,0.683838
+onednn_verbose,v1,primitive,exec:check,primitive,unused primitive execution argument (80),src/common/primitive_exec_types.cpp:137
+onednn_verbose,v1,primitive,exec,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,64x5120:5120x5120,0
+fp8_gemm_w8a16_once,m=64,n=5120,k=5120,us=66459.663,out=(64, 5120),dtype=torch.bfloat16
+# shape M=64 N=17408 K=5120
+onednn_verbose,v1,primitive,create:dispatch,gemm,gpu,gemm,jit:xe_hp:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x17408,unsupported datatype combination,src/gpu/intel/gemm/jit_xe_hp_systolic.cpp:107
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 8 aB16x2 aB16x2 aB wg 4x8 cab4 ks64 af vav hi pt sr br bk0 sn nb 4x8 dm grf256 sys l4,score:88333438.775849
+onednn_verbose,v1,info,gpu,gemm,consider:F gemm QHS NNN 32 4 aB16x2 aB16x2 aB wg 2x16 cab3x2 ks64 af vav hi pt sr br bk0 sn nb 2x16 dm grf256 sys l4,score:124792027.308160
+onednn_verbose,v1,primitive,create:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x17408,0.0078125
+onednn_verbose,v1,primitive,create_nested:kernel_cache_hit,gpu,gemm,jit:gemm:any,undef,src_a:bf16::blocked:ab::f0 src_b:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scales:wei:2:f32,,64x5120:5120x17408,0.779053
+onednn_verbose,v1,primitive,create:nested_primitive_cache_hit,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,64x5120:5120x17408,0.797852
+onednn_verbose,v1,primitive,exec:check,primitive,unused primitive execution argument (80),src/common/primitive_exec_types.cpp:137
+onednn_verbose,v1,primitive,exec,gpu,matmul,jit:gemm:any,undef,src:bf16::blocked:ab::f0 wei:f8_e4m3::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,64x5120:5120x17408,0
+fp8_gemm_w8a16_once,m=64,n=17408,k=5120,us=1816.915,out=(64, 17408),dtype=torch.bfloat16
+PYTHON_DONE
+=== dump dir after python ===
+25
+total 512
+drwxrwxr-x 1 ubuntu ubuntu   1764 Sep  2 07:03 .
+drwxr-xr-x 1 root   root       26 Sep  2 07:03 ..
+-rw-r--r-- 1 root   root      587 Sep  2 07:03 HardwareCaps.txt
+-rw-r--r-- 1 root   root      791 Sep  2 07:03 OCL_asm7af58282034ed085.cl
+-rw-r--r-- 1 root   root     4824 Sep  2 07:03 OCL_asm7af58282034ed085.progbin
+-rw-r--r-- 1 root   root      972 Sep  2 07:03 OCL_asm7af58282034ed085.spv
+-rw-r--r-- 1 root   root     1613 Sep  2 07:03 OCL_asm7af58282034ed085.zeinfo
+-rw-r--r-- 1 root   root    22363 Sep  2 07:03 OCL_asm7af58282034ed085_afterUnification.ll
+-rw-r--r-- 1 root   root    15667 Sep  2 07:03 OCL_asm7af58282034ed085_beforeUnification.ll
+-rw-r--r-- 1 root   root      834 Sep  2 07:03 OCL_asm7af58282034ed085_cmd.txt
+-rw-r--r-- 1 root   root    22738 Sep  2 07:03 OCL_asm7af58282034ed085_codegen.ll
+-rw-r--r-- 1 root   root     2166 Sep  2 07:03 OCL_asm7af58282034ed085_internal_options.txt
+-rw-r--r-- 1 root   root    21948 Sep  2 07:03 OCL_asm7af58282034ed085_optimized.ll
+-rw-r--r-- 1 root   root      238 Sep  2 07:03 OCL_asm7af58282034ed085_options.txt
+-rw-r--r-- 1 root   root    22643 Sep  2 07:03 OCL_asm7af58282034ed085_push_analysis.ll
+-rw-r--r-- 1 root   root    10617 Sep  2 07:03 OCL_asm7af58282034ed085_simd32_entry_0001.asm
+-rw-r--r-- 1 root   root      528 Sep  2 07:03 OCL_asm7af58282034ed085_simd32_entry_0001.dat
+-rw-r--r-- 1 root   root     5893 Sep  2 07:03 OCL_asm7af58282034ed085_simd32_entry_0001.isaasm
+-rw-r--r-- 1 root   root     1543 Sep  2 07:03 OCL_asm7af58282034ed085_simd32_entry_0001.visa.ll
+-rw-r--r-- 1 root   root     5893 Sep  2 07:03 OCL_asm7af58282034ed085_simd32_entry_0001.visaasm
+-rw-r--r-- 1 root   root    28992 Sep  2 07:03 SIPKernelDump.bin
+-rw-r--r-- 1 root   root    26224 Sep  2 07:03 dnnl_dump_gpu_gemm_kernel.0.bin
+-rw-r--r-- 1 root   root    26224 Sep  2 07:03 dnnl_dump_gpu_gemm_kernel.2.bin
+-rw-r--r-- 1 root   root   114720 Sep  2 07:03 dnnl_dump_gpu_gemm_kernel.4.bin
+-rw-r--r-- 1 root   root   114720 Sep  2 07:03 dnnl_dump_gpu_gemm_kernel.5.bin
+-rw-r--r-- 1 root   root      704 Sep  2 07:03 dnnl_dump_gpu_gemm_zero_fill.1.bin
+-rw-r--r-- 1 root   root      704 Sep  2 07:03 dnnl_dump_gpu_gemm_zero_fill.3.bin
+=== ocloc disasm dnnl bins ===
+--- disasm dnnl_dump_gpu_gemm_kernel.0.bin size=26224 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.0.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.0.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.0.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.0.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_kernel.0.bin
+--- disasm dnnl_dump_gpu_gemm_kernel.2.bin size=26224 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.2.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.2.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.2.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.2.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_kernel.2.bin
+--- disasm dnnl_dump_gpu_gemm_kernel.4.bin size=114720 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.4.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.4.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.4.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.4.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_kernel.4.bin
+--- disasm dnnl_dump_gpu_gemm_kernel.5.bin size=114720 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.5.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.5.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_kernel.5.bin -dump /igc/dnnl_dump_gpu_gemm_kernel.5.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_kernel.5.bin
+--- disasm dnnl_dump_gpu_gemm_zero_fill.1.bin size=704 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_zero_fill.1.bin -dump /igc/dnnl_dump_gpu_gemm_zero_fill.1.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_zero_fill.1.bin -dump /igc/dnnl_dump_gpu_gemm_zero_fill.1.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_zero_fill.1.bin
+--- disasm dnnl_dump_gpu_gemm_zero_fill.3.bin size=704 ---
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_zero_fill.3.bin -dump /igc/dnnl_dump_gpu_gemm_zero_fill.3.bin.dis -device bmg-g31
+decodeElf error: Invalid or missing ELF header
+Error while decoding zebin.
+Command was: ocloc disasm -file /igc/dnnl_dump_gpu_gemm_zero_fill.3.bin -dump /igc/dnnl_dump_gpu_gemm_zero_fill.3.bin.dis
+ocloc_fail /igc/dnnl_dump_gpu_gemm_zero_fill.3.bin
+DISASM_DONE
+gpu-run: [xe2x2-k1-fp8-c0] done in 14s (exit 0)
+DUMP_RC=0
+=== clocks after jitdump ===
+2026-09-02 07:03:30 UTC
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=867 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:402251724670 energy2=pkg:280319140136 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:313874115661 energy2=pkg:300912844482 temp2_mC=55000

@@ -1,0 +1,56 @@
+gpu-run: [xe2x2-k0-copy-c1] acquired card(s) 1 -> bash -lc 
+source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+export ZE_AFFINITY_MASK=1
+export ZES_ENABLE_SYSMAN=1
+export SYCL_CACHE_PERSISTENT=1
+export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k0/cache_card1
+echo '=== clocks before ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 1
+echo '=== copy_roof card1 ==='
+/mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/copy_roof --iters 20 --warmup 5 --bytes 4096,65536,1048576,16777216,33554432,67108864,134217728,268435456
+echo COPY_RC=$?
+echo '=== clocks after ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 1
+
+=== clocks before ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:320535700012 energy2=pkg:238382560302 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:230810358215 energy2=pkg:256805752685 temp2_mC=53000
+=== copy_roof card1 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 warmup=5 iters=20
+kind,bytes,iters,us,GBs,ok
+h2d,4096,20,2.185,1.875,1
+d2h,4096,20,1.943,2.108,1
+d2d,4096,20,1.899,2.157,1
+h2d,65536,20,7.664,8.551,1
+d2h,65536,20,9.443,6.940,1
+d2d,65536,20,1.557,42.084,1
+h2d,1048576,20,93.781,11.181,1
+d2h,1048576,20,220.867,4.748,1
+d2d,1048576,20,2.719,385.662,1
+h2d,16777216,20,1209.073,13.876,1
+d2h,16777216,20,3590.159,4.673,1
+d2d,16777216,20,26.938,622.818,1
+h2d,33554432,20,2379.151,14.104,1
+d2h,33554432,20,7218.169,4.649,1
+d2d,33554432,20,58.985,568.869,1
+h2d,67108864,20,4706.646,14.258,1
+d2h,67108864,20,14350.099,4.677,1
+d2d,67108864,20,119.495,561.604,1
+h2d,134217728,20,9956.537,13.480,1
+d2h,134217728,20,28709.760,4.675,1
+d2d,134217728,20,237.182,565.885,1
+h2d,268435456,20,19785.211,13.567,1
+d2h,268435456,20,57631.961,4.658,1
+d2d,268435456,20,487.854,550.237,1
+COPY_RC=0
+=== clocks after ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:320761667297 energy2=pkg:238508906005 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:231230558837 energy2=pkg:257110747436 temp2_mC=57000
+gpu-run: [xe2x2-k0-copy-c1] done in 6s (exit 0)

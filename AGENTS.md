@@ -19,6 +19,15 @@ In scope:
 - Collectives (oneCCL / XCCL vs llama.cpp tensor-split), P2P, PCI
   topology, and the failure modes of the above.
 
+Kernel / math campaign map: `docs/KERNEL_CAMPAIGN.md`. After P0,
+one-card kernel jobs run two-wide (`gpu-run --card 0` || `--card 1`).
+Launch pairing and landmines: `docs/AGENT_LAUNCH.md`.
+New-session orchestrator prompt: `docs/ORCHESTRATOR.md`.
+Intel/oneDNN/XeTLA numbers are floors to beat, not ceilings.
+Serving-shaped kernels rank by wall time (us), not TOPS%.
+TP=1 vs TP=2 is per-op; fusion that drops a collective is a latency
+win. A 3rd/4th B70 is evidence-gated, not current hardware.
+
 Out of scope unless explicitly expanded:
 
 - Production serving and model-shelf promotion (`b70_ai_things`).
@@ -34,6 +43,9 @@ Out of scope unless explicitly expanded:
   the journal.
 - Do not claim speed or stability without matched configuration, coherence,
   identity, health, and teardown evidence.
+- A napkin, guess, or "this should lose" is a CONFIG prior. It is not
+  a RESULT. Measure with code on these cards; surprises belong in
+  FINDINGS.md.
 - Name the backend in every CONFIG (`level_zero`, `sycl+l0`,
   `sycl+opencl`, `opencl`, `pytorch-xpu`, `triton-xpu`, `vulkan`).
 - Community numbers from refs/ or neural.download / xecores.com are

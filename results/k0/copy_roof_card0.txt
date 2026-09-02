@@ -1,0 +1,47 @@
+gpu-run: [xe2x2-k0-copy-c0] acquired card(s) 0 -> bash -lc 
+source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+export ZE_AFFINITY_MASK=0
+export ZES_ENABLE_SYSMAN=1
+export SYCL_CACHE_PERSISTENT=1
+export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k0/cache_card0
+echo '=== clocks before ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+echo '=== copy_roof card0 ==='
+/mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/copy_roof --iters 20 --warmup 5
+echo COPY_RC=$?
+echo '=== clocks after ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+
+=== clocks before ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:318963726379 energy2=pkg:237534864746 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:229325678344 energy2=pkg:256012946838 temp2_mC=53000
+=== copy_roof card0 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 warmup=5 iters=20
+kind,bytes,iters,us,GBs,ok
+h2d,4096,20,4.883,0.839,1
+d2h,4096,20,4.912,0.834,1
+d2d,4096,20,4.833,0.847,1
+h2d,65536,20,8.305,7.891,1
+d2h,65536,20,10.323,6.349,1
+d2d,65536,20,3.386,19.357,1
+h2d,1048576,20,79.219,13.236,1
+d2h,1048576,20,220.091,4.764,1
+d2d,1048576,20,6.318,165.976,1
+h2d,16777216,20,1194.203,14.049,1
+d2h,16777216,20,3589.180,4.674,1
+d2d,16777216,20,26.958,622.340,1
+h2d,268435456,20,18905.227,14.199,1
+d2h,268435456,20,57629.089,4.658,1
+d2d,268435456,20,486.823,551.403,1
+COPY_RC=0
+=== clocks after ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:319201708801 energy2=pkg:237697378479 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:229469354431 energy2=pkg:256099037109 temp2_mC=58000
+gpu-run: [xe2x2-k0-copy-c0] done in 4s (exit 0)

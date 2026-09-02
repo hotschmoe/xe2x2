@@ -1,0 +1,28 @@
+gpu-run: [xe2x2-k3-c0] acquired card(s) 0 -> bash -lc 
+    set +u
+    source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+    set -u
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu ZE_AFFINITY_MASK=0 ZES_ENABLE_SYSMAN=1
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+    /mnt/vm_8tb/github/xe2x2/kernels/precision_compose/bin/compose_e2m1_two_term --m 1024 --n 1024 --k 1024 --iters 20 --warmup 5
+    echo RC=$?
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+  
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=700 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:414716243164 energy2=pkg:286978838806 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:325496949157 energy2=pkg:307029512084 temp2_mC=53000
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 target=emulate_E2M1 hail_mary=1 decode=nibble_to_q_then_split never_bitcast_e2m1_onto_s4 RC=8 N=16 Ks8=32 Ks4=64 Bload=lsc_load_2d_Transformed prior_two_term_vs_s8=1.34x_from_k2_1.49x NOT_A_RESULT warmup=5 iters=20
+arm,m,n,k,terms,us,TOPS,max_abs,ok
+native_s8_e2m1_lut,8,16,64,1,6.276,0.0026,0,1
+e2m1_two_term,8,16,64,2,6.011,0.0027,0,1
+native_s8_e2m1_lut,1024,1024,1024,1,93.682,22.9230,0,1
+e2m1_two_term,1024,1024,1024,2,83.235,25.8004,0,1
+RC=0
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1783 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:414795367126 energy2=pkg:287024294128 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:325576251831 energy2=pkg:307076185302 temp2_mC=54000
+gpu-run: [xe2x2-k3-c0] done in 3s (exit 0)

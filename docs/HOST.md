@@ -63,3 +63,56 @@ Two devices, two 30.3 GiB memories. Natural maps:
 - Mixed 2x2: only after both single-axis maps are healthy.
 
 Do not skip per-card and two-rank collective health to get to mixed 2x2.
+
+Four B70s are an evidence-gated expansion (operator will buy 3rd/4th
+if xe2x2 shows they pay). This board is x16/x8/x16/x8 in four-card
+mode. Do not treat 4x as the live map. See docs/KERNEL_CAMPAIGN.md.
+
+## P0 freeze -- 2026-09-02g
+
+Re-measured on host. Raw dump: `results/p0/identities.txt` plus
+`results/p0/SUMMARY.md`. Do not treat the creation snapshot above as
+stale; this section extends it.
+
+| Layer | Value |
+|-------|-------|
+| Kernel | `7.1.0-070100-generic` #202606141628 |
+| KMD | `xe` |
+| GuC | `xe/bmg_guc_70.bin` 70.58.0 (GT0 and GT1, both cards) |
+| HuC | `xe/bmg_huc.bin` 8.2.10 (GT1, both cards) |
+| DMC | `i915/bmg_dmc.bin` v2.6 (both cards) |
+| Compute Runtime / NEO | `26.22.38646.4` (`intel-opencl-icd`, `intel-ocloc`, `libze-intel-gpu1`) |
+| IGC | `intel-igc-core-2` / `intel-igc-opencl-2` 2.36.3 |
+| Level Zero loader | `libze1` 1.28.2-2 |
+| L0 GPU UMD | `libze_intel_gpu.so.1.15.38646` |
+| SYCL adapter | Unified Runtime over Level-Zero **V2** (live) |
+| AOT name | `intel_gpu_bmg_g31` |
+| Host icpx | Intel oneAPI DPC++ 2026.1.1 (2026.1.1.20260724) at `.../steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi` |
+| OpenCL | Intel OpenCL Graphics, both B70s, driver 26.22.38646.4, 256 CU, 2800 MHz, 30.3 GiB |
+| GT0 clocks | idle D3hot act/cur 400, min 400, max/rp0 2800 MHz, throttle 0 |
+| GT1 clocks | idle act 0 cur 400, max/rp0 1500 MHz (media) |
+| Power cap | 230 W (`power1_cap`), crit 460 W, both xe hwmon |
+| Display | every DP/HDMI connector `disconnected` on both cards |
+| Live serve | none (grafana / prometheus / open-webui only) |
+
+`sycl-ls` with `ONEAPI_DEVICE_SELECTOR=level_zero:gpu` and
+`ZE_AFFINITY_MASK=N`:
+
+- card0 UUID `868023e2-0000-0000-0b00-000000000000` (PCI 0b:00.0)
+- card1 UUID `868023e2-0000-0000-4400-000000000000` (PCI 44:00.0)
+- Aspects include `ext_intel_esimd` and `ext_intel_matrix`
+- OpenCL selector is the labeled control (`Intel OpenCL Graphics`,
+  same NEO 26.22.38646.4)
+
+Health images:
+
+- Per-card: `vllm-xpu-env:int8g-v0251` via `bin/xpu-health --card N`
+- Two-rank: `b70-sglang-xpu-int8-runtime@sha256:adc915d266eaa74f7bea164d97cb7870b04dd7eb4c613952c56f4fbff1584a78`
+  (`:20260826-mtp6`) via `bin/xpu-collective-health --p2p 0`
+
+Both per-card probes HEALTHY. Two-rank compiled XCCL all-reduce
+HEALTHY (`COLLECTIVE_HEALTH_OK world_size=2 shape=4x5120
+compiled_iterations=10 p2p=0`). P2P stays off.
+
+Host note: no system `g++`. Standalone `icpx` AOT needs a container
+g++ or an explicit gcc toolchain. Compile is CPU; run is `gpu-run`.

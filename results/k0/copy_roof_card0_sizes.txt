@@ -1,0 +1,38 @@
+gpu-run: [xe2x2-k0-copy-c0-sizes] acquired card(s) 0 -> bash -lc 
+source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+export ZE_AFFINITY_MASK=0
+export ZES_ENABLE_SYSMAN=1
+export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k0/cache_card0
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+/mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/copy_roof --iters 20 --warmup 5 --bytes 16777216,33554432,67108864,134217728,268435456
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:321656041992 energy2=pkg:238969148742 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:232126413024 energy2=pkg:257579117858 temp2_mC=57000
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 warmup=5 iters=20
+kind,bytes,iters,us,GBs,ok
+h2d,16777216,20,1176.341,14.262,1
+d2h,16777216,20,3588.568,4.675,1
+d2d,16777216,20,26.344,636.858,1
+h2d,33554432,20,2354.508,14.251,1
+d2h,33554432,20,7170.289,4.680,1
+d2d,33554432,20,59.068,568.067,1
+h2d,67108864,20,4714.039,14.236,1
+d2h,67108864,20,14356.268,4.675,1
+d2d,67108864,20,119.599,561.116,1
+h2d,134217728,20,9434.609,14.226,1
+d2h,134217728,20,28707.435,4.675,1
+d2d,134217728,20,236.370,567.830,1
+h2d,268435456,20,19951.748,13.454,1
+d2h,268435456,20,57436.042,4.674,1
+d2d,268435456,20,485.703,552.674,1
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:322072609497 energy2=pkg:239255525817 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:232328364685 energy2=pkg:257686859558 temp2_mC=57000
+gpu-run: [xe2x2-k0-copy-c0-sizes] done in 6s (exit 0)

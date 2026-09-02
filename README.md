@@ -56,6 +56,14 @@ Do not bypass the lease from this repo.
 - [AGENTS.md](AGENTS.md): safety, scope, and GPU lease. This is the
   only agent file.
 - [RESEARCH_TODO.md](RESEARCH_TODO.md): work order, P0 first.
+- [docs/KERNEL_CAMPAIGN.md](docs/KERNEL_CAMPAIGN.md): open kernel,
+  INT2/INT4/NVFP4, and dual-card campaign. Not a locked design.
+- [docs/MODELS.md](docs/MODELS.md): what to serve after the math
+  floor (27B dense, 35B-A3B MoE, Gemma, Flash-Next).
+- [docs/AGENT_LAUNCH.md](docs/AGENT_LAUNCH.md): how not to collide
+  once several agents run.
+- [docs/ORCHESTRATOR.md](docs/ORCHESTRATOR.md): paste-ready prompt
+  for a new session that runs the campaign.
 - [FINDINGS.md](FINDINGS.md): current evidence ledger.
 - [JOURNAL.md](JOURNAL.md): newest experiment window.
 - [docs/HOST.md](docs/HOST.md): measured inventory of this machine.

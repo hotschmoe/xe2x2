@@ -1,0 +1,30 @@
+gpu-run: [xe2x2-k3-c0] acquired card(s) 0 -> bash -lc 
+    set +u
+    source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+    set -u
+    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+    export ZE_AFFINITY_MASK=0
+    export ZES_ENABLE_SYSMAN=1
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+    /mnt/vm_8tb/github/xe2x2/kernels/precision_compose/bin/compose_s8_from_s4 --m 1024 --n 1024 --k 1024 --iters 20 --warmup 5 
+    echo RC=$?
+    bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+  
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:413909186401 energy2=pkg:286557101379 temp2_mC=58000
+hwmon hwmon7 cap_uW=230000000 energy1=card:324682659912 energy2=pkg:306593269653 temp2_mC=53000
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 target=emulate_s8 digits=u4_lo+s4_hi RC=8 N=16 Ks8=32 Ks4=64 Bload=lsc_load_2d_Transformed prior_schoolbook_vs_s8=2.7x_from_k2_1.49x NOT_A_RESULT warmup=5 iters=20
+arm,m,n,k,terms,us,TOPS,max_abs,ok
+native_s8,8,16,64,1,18.760,0.0009,0,1
+schoolbook_s4,8,16,64,4,14.250,0.0011,0,1
+native_s8,1024,1024,1024,1,271.766,7.9020,0,1
+schoolbook_s4,1024,1024,1024,4,207.422,10.3532,0,1
+RC=0
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=700 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:413989049072 energy2=pkg:286602463134 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:324762519897 energy2=pkg:306640000610 temp2_mC=53000
+gpu-run: [xe2x2-k3-c0] done in 3s (exit 0)

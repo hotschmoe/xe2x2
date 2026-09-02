@@ -1,0 +1,36 @@
+gpu-run: [xe2x2-k0-gemm-c0] acquired card(s) 0 -> bash -lc 
+source '/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi/setvars.sh' --force >/dev/null
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+export ZE_AFFINITY_MASK=0
+export ZES_ENABLE_SYSMAN=1
+export SYCL_CACHE_PERSISTENT=1
+export SYCL_CACHE_DIR=/mnt/vm_8tb/github/xe2x2/results/k0/cache_card0
+echo '=== clocks before ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+echo '=== s8_square_gemm card0 ==='
+/mnt/vm_8tb/github/xe2x2/kernels/roofline/bin/s8_square_gemm --n 256,1024,2048 --iters 8 --warmup 2 --check-n 64
+echo GEMM_RC=$?
+echo '=== clocks after ==='
+bash /mnt/vm_8tb/github/xe2x2/scripts/clocks.sh 0
+
+=== clocks before ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:320536526977 energy2=pkg:238382924865 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:230810911743 energy2=pkg:256806074218 temp2_mC=53000
+=== s8_square_gemm card0 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 tile=16 note=XVE_not_DPAS warmup=2 iters=8
+n,iters,us,TOPS,pct_367,max_abs,ok
+64,8,4.245,0.1235,0.0337,0,1
+256,8,42.617,0.7873,0.2145,0,1
+1024,8,2265.078,0.9481,0.2583,0,1
+2048,8,9049.089,1.8985,0.5173,0,1
+GEMM_RC=0
+=== clocks after ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:320580473083 energy2=pkg:238412586608 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:230853886047 energy2=pkg:256837809570 temp2_mC=56000
+gpu-run: [xe2x2-k0-gemm-c0] done in 2s (exit 0)

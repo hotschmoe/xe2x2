@@ -12,6 +12,7 @@ __pycache__/
 # Build / compiler
 build/
 cmake-build-*/
+**/bin/
 *.o
 *.so
 *.a
@@ -48,3 +49,8 @@ core.*
 logs/
 tmp/
 .gpu-lease
+
+# SYCL persistent caches and full IGC/ngen dumps. Keep SUMMARY,
+# *_isa.md, and small timed .txt under results/.
+results/**/cache_*/
+results/**/igc_*/
