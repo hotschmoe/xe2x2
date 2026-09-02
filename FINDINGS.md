@@ -415,6 +415,24 @@ VERDICT -> Matching ngen's dpas *count* is not the 45 us
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/u64_dpas_lines.txt`.
 
+## Prefetch-before-load on 64 dpas is not a 45 us beat (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_pf`, same
+  64x `dpas.8x4` tile as u64 plus `lsc_prefetch_2d` of next
+  k64 A/B (cached/cached). Both cards. Prior: ngen M=1 `ff`.
+
+RESULT -> IGA null-dest `load_block2d.ugm.d8 ... rd:0` plus
+  64x `dpas.8x4`. GRF 128. max_abs=0. M=4 NT=2: 83-208 us vs
+  u64 no-pf 53-69 vs W8A8 M=1 42-46. M=64: 229-677 vs u64
+  314-570. First pair D3hot/2800 was the slow M=4.
+
+VERDICT -> The ff encoding landed. Issuing prefetch *before*
+  the current loads taxes decode vs no-pf. Floor stays 45 us.
+  Do not freeze 229 us M=64 (clocks 229 vs 530). Next steal is
+  ngen overlap (prefetch during dpas), not more pre-load sends.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/pf_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

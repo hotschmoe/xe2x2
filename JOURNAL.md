@@ -756,6 +756,33 @@ VERDICT -> 64 static dpas.8x4 lights and is not the 45 us
   encoding + miss. Next: ngen wg 8x2 / ska / prefetch, not
   another unroll count.
 
+### 2026-09-02ae - K2 lsc_prefetch_2d on 64-dpas
+
+CONTEXT -> ngen M=1 catalog has ff (null-dest UGM prefetch)
+  around 64x dpas.8x4. u64 had the count, no prefetch.
+
+CONFIG -> sycl+l0, standalone dpas_s8_pf, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Same NT=2 U=16 / NT=4
+  U=8 as u64, plus lsc_prefetch_2d cached/cached of next k64.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_pf.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_pf.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4 plus null-dest
+  load_block2d.ugm.d8 rd:0 (ff). max_abs=0. M=4: NT=2 83-208
+  vs u64 53-69 vs W8A8 45. M=64: 229-677 vs u64 314-570.
+  M=256: 602-952. Prefetch-before-load taxes decode.
+
+VERDICT -> ff lights and is not a 45 us beat. Warm NT=2
+  decode is slower than no-pf u64. Promote encoding + miss.
+  Next: overlap prefetch with dpas (ngen order), not more
+  pre-load sends.
+
 
 
 

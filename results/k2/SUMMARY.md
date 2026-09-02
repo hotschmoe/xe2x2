@@ -164,3 +164,18 @@ grf_count 128. max_abs=0.
 NT=4 c0 started D3hot/2800 (slow M=4). Warm NT=2 is 53-69
 us at M=4, closer than k64, not a 45 us beat. Floor stays
 45 us.
+
+## lsc_prefetch_2d on 64 dpas (2026-09-02ae)
+
+Same 64x dpas.8x4 as u64 plus next-k64 `lsc_prefetch_2d`.
+ocloc: null-dest `load_block2d.ugm.d8 rd:0` (ngen ff).
+grf_count 128. max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | u64 NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 208 | 83 | 123 | 335 | 53-69 |
+| 64 x 5120 | 677 | 521 | 229 | 530 | 436-570 |
+| 256 x 5120 | 688 | 952 | 857 | 602 | 594-1198 |
+
+Prefetch-before-load is slower at decode than no-pf u64.
+Floor stays 45 us.
