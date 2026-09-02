@@ -512,3 +512,18 @@ IGA 64x dpas.8x8, grf 128, no SLM.
 
 ~1.3x vs 8x2-N. New M=64 hand floor 75 us, ~1.63x
 W8A8. Next: 384 dpas unroll at M=256.
+
+## 4-acc + wg 4x8 k128 M=256 (2026-09-02bd)
+
+32 rows/thread, wg 4x8, k128, 256 dpas.8x8, no A-db.
+spin=512. cosine=1.0 max_abs=0. timed act=2767
+cur=2800 throttle=1. IGA 256x dpas.8x8 {Atomic},
+grf 128, no SLM.
+
+| shape | card | event_us | pipe_host_us | 8-row 4x8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 126.890 | 128.390 | 229.544 | 76.1 |
+| 256 x 5120 | 1 | 127.891 | 128.568 | 227.723 | 74.9 |
+
+~1.8x vs 8-row 4x8. New M=256 hand floor 128 us,
+~1.7x W8A8. Next: 384 unroll or 4-acc on M=64 4x8.

@@ -1539,6 +1539,38 @@ VERDICT -> wg 4x8 is a real ~1.3x vs 8x2-N A-db
   Next: 384 dpas unroll at M=256, or stop M=64
   geometry chasing.
 
+### 2026-09-02bd - K2 4-acc + wg 4x8 k128 M=256
+
+CONTEXT -> wg 4x8 8-row k128 is 228 us at M=256 vs
+  W8A8 75. ngen is 384x dpas.8x8. Steal 4x RC=8
+  (32 rows/thread) on that geometry: 256 dpas,
+  B reuse across M-tiles, no A-db.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=8, 4 M-tiles, wg 4x8 NxM, k128, no SLM.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48m4.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48m4.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 256x dpas.8x8 {Atomic}, store_block2d
+  d16, grf_count 128, no slm_size. cosine=1.0
+  max_abs=0. timed act=2767 cur=2800 throttle=1.
+  M=256: event 126.89/127.89 us, pipe_host
+  128.39/128.57 vs 4x8 8-row 228 vs W8A8 75.
+
+VERDICT -> 4-acc on wg 4x8 is a real ~1.8x vs 8-row
+  at M=256. New hand floor 128 us (~1.7x W8A8).
+  256 dpas not 384. Next: 384 unroll, or 4-acc on
+  the M=64 4x8 tile.
+
+
 
 
 

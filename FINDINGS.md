@@ -829,6 +829,25 @@ Evidence: `results/k2/sc8db48_m64_n2_s512_card0.txt`,
   `results/k2/sc8db48_m64_n2_s512_card1.txt`,
   `results/k2/sc8db48_dpas_lines.txt`.
 
+## 4-acc + wg 4x8 is the M=256 hand floor at 128 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8w48m4`.
+  4x RC=8 (32 rows/thread), wg 4x8, k128, 256x
+  `dpas.8x8`, no A-db. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 256x `dpas.8x8` `{Atomic}`, `grf_count`
+  128, no SLM. cosine=1.0 max_abs=0. timed act=2767
+  cur=2800 throttle=1. M=256 pipe_host 128.4/128.6
+  vs 4x8 8-row 228 vs W8A8 75.
+
+VERDICT -> 4-acc on the 4x8 geometry is a real ~1.8x
+  vs 8-row at M=256. New floor 128 us, ~1.7x oneDNN.
+  256 dpas landed; 384 still open.
+
+Evidence: `results/k2/sc8w48m4_m256_n2_s512_card0.txt`,
+  `results/k2/sc8w48m4_m256_n2_s512_card1.txt`,
+  `results/k2/sc8w48m4_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -968,7 +987,7 @@ Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 wg 4x8 A-db 75 vs 46 us; 8x2-N A-db 97-100) and at M=256
-(wg 4x8 228 vs k128 8x2-N 440 vs K4 W8A8 75).
+(4-acc wg 4x8 128 vs 8-row 4x8 228 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
 ~10 us over GEMM-only 34. Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
