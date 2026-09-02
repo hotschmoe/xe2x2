@@ -475,6 +475,25 @@ VERDICT -> Real next-A loads in GRF are not the 45 us
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/ska_dpas_lines.txt`.
 
+## ngen wg 8x2 2D launch is not a 45 us beat (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_wg`. Same
+  64x `dpas.8x4` as u64. `nd_range<2>` local {8,2}=(N,M),
+  no SLM, no extra ff. Both cards. Prior: ngen M=1 is wg 8x2.
+
+RESULT -> IGA 64x `dpas.8x4`, GRF 128, no barrier. max_abs=0.
+  M=4 NT=2: 69-225 us vs 1D u64 53-69 vs W8A8 M=1 42-46.
+  Warm 69 us was card1 after NT=4 at 1550 MHz. M=4 NT=4:
+  122-316. M=64: 468-963 vs u64 314-570. Half the WG idles
+  at M=4 (m_blocks=1 padded to 2).
+
+VERDICT -> Relabeling the 16-thread WG as 8x2 (N,M) is not
+  the 45 us kernel. 1D u64 still owns the hand-tile decode
+  floor. Do not freeze 69 us. Floor stays 45 us. Next is
+  8x2 along N (no idle) or SLM+64 dpas as one ngen bundle.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/wg_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

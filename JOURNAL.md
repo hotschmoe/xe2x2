@@ -845,6 +845,36 @@ VERDICT -> A double-buffer lights and is not a 45 us beat.
   Do not freeze 79 us. Floor stays 45 us. Next: ngen wg 8x2
   2D launch, not another K-pipe micro.
 
+### 2026-09-02ah - K2 ngen wg 8x2 2D launch
+
+CONTEXT -> u64 1D local=16 is still the decode floor (53-69).
+  ngen M=1 is wg 8x2. Steal launch only: nd_range<2> local
+  {8,2}=(N,M), same 64 dpas tile, no SLM, no ff.
+
+CONFIG -> sycl+l0, standalone dpas_s8_wg, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. NT=2 U=16 / NT=4 U=8.
+  M=4 has m_blocks=1 so half the WG idles.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_wg.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_wg.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4 rW:b rA:b, GRF 128, no barrier,
+  no ngen ff (null rd:0 is store+EOT). max_abs=0 both cards
+  both NT. M=4: NT=2 69-225 (warm 69 at 1550 MHz after NT=4;
+  D3hot first 225) / NT=4 122-316. M=64: 468-963 vs u64
+  314-570. M=256: 891-1161 vs 75.
+
+VERDICT -> 8x2 2D launch lights and is not a 45 us beat.
+  Warm NT=2 (69 us) ties the slow end of 1D u64, does not
+  beat it. Idle M-lanes at M=4 are a decode tax. Do not
+  freeze 69 us. Floor stays 45 us. Next: 8x2 along N only
+  (no idle) or ngen SLM plus 64 dpas together.
+
 
 
 

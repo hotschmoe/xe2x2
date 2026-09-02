@@ -1,0 +1,18 @@
+K2 dpas_s8_wg ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 nd_range<2> local 8x2
+  - name:            _ZTSN12_GLOBAL__N_115DpasS8WgNt4NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      work_group_walk_order_dimensions: [ 0, 0, 0 ]
+  - name:            _ZTSN12_GLOBAL__N_115DpasS8WgNt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+      work_group_walk_order_dimensions: [ 0, 0, 0 ]
+.text._ZTSN12_GLOBAL__N_115DpasS8WgNt2NameE.asm: 64 dpas {'8x4': 64} ff=3 barrier=0
+  first_dpas: dpas.8x4 (16|M0)         r110:d        r110:d            r12:b             r5.0:b           {$5}
+.text._ZTSN12_GLOBAL__N_115DpasS8WgNt4NameE.asm: 64 dpas {'8x4': 64} ff=5 barrier=0
+  first_dpas: dpas.8x4 (16|M0)         r110:d        r110:d            r12:b             r5.0:b           {$7}
+null rd:0 hits are C store_block2d + EOT, not ngen ff prefetch.
+No SLM, no barrier. GRF 128. rW:b rA:b. Same 64 dpas as u64; launch is 2D 8x2.

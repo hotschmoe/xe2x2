@@ -31,11 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. A double-buffer on 64
-dpas.8x4 lights (ff=0, extra A d8 34/18 mixed with dpas)
-and still loses decode to no-pf u64 (79-81 vs 53-69 vs
-W8A8 45) at warm 2600-2800 MHz. Next: ngen wg 8x2 2D
-launch, not another K-pipe. Loop every 20m.
+K0-K6 have both-card RESULTS. ngen wg 8x2 2D launch on
+64 dpas.8x4 lights (no SLM, no barrier) and does not beat
+1D u64 at decode (warm 69 vs 53-69 vs W8A8 45); M=4 idles
+half the WG. Next: 8x2 along N only (no idle) or ngen SLM
+plus 64 dpas as one bundle. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

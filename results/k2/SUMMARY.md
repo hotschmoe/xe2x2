@@ -211,3 +211,18 @@ ff=0, A d8 34/18 + B d8v 64. max_abs=0. Warm 2600-2800 MHz.
 
 Warm NT=2 is 79-81 us, still above u64 53-69 and W8A8 42-46.
 Floor stays 45 us.
+
+## ngen wg 8x2 2D launch (2026-09-02ah)
+
+Same 64x dpas.8x4 as u64. nd_range<2> local {8,2}=(N,M),
+no SLM. ocloc: 64x `dpas.8x4`, GRF 128, no barrier. max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | u64 NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 225 | 69 | 122 | 316 | 53-69 |
+| 64 x 5120 | 963 | 646 | 468 | 626 | 436-570 |
+| 256 x 5120 | 929 | 999 | 1161 | 891 | 594-1198 |
+
+NT=2 c0 and NT=4 c1 started D3hot (slow M=4). Warm NT=2 is
+69 us, ties the slow end of 1D u64, not a 45 us beat.
+Floor stays 45 us.
