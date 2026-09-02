@@ -628,6 +628,28 @@ Evidence: `results/k2/sc_n2_s4000_card0.txt`,
   `results/k2/w8a8_m1hold_card1.txt`,
   `results/k2/sc_dpas_lines.txt`.
 
+## Scale-to-f16 RC=4 loses W8A8 at M=64 (K2)
+
+CONFIG -> backend `sycl+l0`, same `dpas_s8_sc` 8x2-N
+  64x `dpas.8x4` as the M=1 beat. Spin=4000, NT=2,
+  both cards. Control: same-day `int8_gemm_w8a8`
+  M=64 46.17/46.45 us.
+
+RESULT -> cosine=1.0 max_abs=0. timed cur=2800,
+  act 2683-2750, throttle=1. M=64 5120: event
+  246.88/244.83 us, pipe_host 247.16/242.53 vs
+  W8A8 46.17/46.45. ~7.4x this tile's M=1, not 16x
+  (occupancy: 10 vs 160 WGs).
+
+VERDICT -> The M=1 us beat does not carry to
+  prefill on this RC=4 tile. Rank us. Next steal
+  is ngen M=64 RC=8/GRF256/SLM, not more spin.
+
+Evidence: `results/k2/sc_m64_n2_s4000_card0.txt`,
+  `results/k2/sc_m64_n2_s4000_card1.txt`,
+  `results/k2/w8a8_hold_card0.txt`,
+  `results/k2/w8a8_hold_card1.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.
@@ -703,7 +725,8 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 (34 vs 44 us). Remaining hypotheses: decode cannot
+scale-to-f16 (34 vs 44 us) and still true at M=64 on this RC=4
+tile (245 vs 46 us). Remaining hypotheses: decode cannot
 use INT2, PP=2 cannot win decode, we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
 evidence-gated. Model shelf after the math floor: docs/MODELS.md.

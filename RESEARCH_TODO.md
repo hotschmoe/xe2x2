@@ -31,12 +31,14 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. Held-2800 scale-to-f16
-decode (2026-09-02ap) is 33 us event / 34 us pipe host
-vs same-session W8A8 M=1 44 us (M=64 heat then M=1).
-cosine=1 max_abs=0 both cards. Raw s32 was 36 us. ngen
-d32 flag+barrier still loses. Next: M=64 GRF256/SLM, or
-fuse K5 producer into this GEMM. Loop every 20m.
+K0-K6 have both-card RESULTS. Held-clock scale-to-f16
+M=1 (2026-09-02ap) beats W8A8 34 vs 44 us. Same RC=4
+tile at M=64 (2026-09-02aq) is 243-247 us pipe vs
+W8A8 46 us, both cards, cur=2800 act~2.7 GHz
+throttle=1, cosine=1. Occupancy cut the 16x napkin
+to ~7.4x M=1; still 5.3x the incumbent. Next: ngen
+M=64 RC=8/GRF256/SLM on the f16 contract, or fuse
+K5 into the M=1 GEMM. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

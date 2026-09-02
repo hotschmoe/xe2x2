@@ -1113,6 +1113,43 @@ VERDICT -> Scale-to-f16 on the wgn tile is a real us
   Do not quote tok/s. Pad M=1 still does RC=4 work.
   Next: M=64 GRF256/SLM, or fuse K5 producer into this.
 
+### 2026-09-02aq - K2 scale-to-f16 M=64 at held clock
+
+CONTEXT -> ap beat W8A8 at decode M=1 (34 vs 44 pipe).
+  Same RC=4 wgn tile at prefill M=64 is 16 M-blocks.
+  Napkin: 16x the M=1 pad work (~528 us) vs W8A8
+  M=64 46-49. Occupancy may cut that; ngen M=64 is
+  RC=8 GRF256 64x dpas.8x8, not this tile.
+
+CONFIG -> backend sycl+l0, standalone dpas_s8_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31, gpu-run
+  --card N. NT=2 spin=4000 warmup=20 iters=20.
+  Fill s8 [-64,64], a_s=b_s=0.02, out f16.
+  Control: same-day int8_gemm_w8a8 M=64 from
+  results/k2/w8a8_hold_card{0,1}.txt (46.17/46.45).
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc_m64.sh 0 2 4000
+  gpu-run --card 1 kernels/esimd_dpas/run_sc_m64.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0 both cards. timed
+  cur=2800, act 2683-2750, throttle=1 (sysfs during
+  the 4000-spin and 20+20 timed). M=64 5120:
+  event 246.88/244.83 us, pipe_host 247.16/242.53,
+  median 246.77/242.14, min-max 239.8-255.7 /
+  235.4-273.8. W8A8 M=64 same-day hold 46.17/46.45.
+  ~5.3x the incumbent. ~7.4x this tile's M=1 33 us,
+  not 16x (M=1 is 10 WGs; M=64 is 160 WGs).
+
+VERDICT -> RC=4 scale-to-f16 does not beat W8A8 at
+  M=64 (245 vs 46 us), both cards, clocks explained.
+  Occupancy helped vs the 528 us napkin. Do not
+  quote TOPS% (throttle=1, act ~2.7 GHz). Next steal
+  is ngen M=64 RC=8/GRF256/SLM on this contract, or
+  fuse K5 into the M=1 GEMM that already wins.
+
 
 
 

@@ -360,3 +360,17 @@ cosine=1.0. timed act/cur=2800. ocloc store_block2d.d16.
 W8A8 control is M=64 heat then M=1, same image, pipelined
 host. K4 first-shape 42.1/46.1 still stands as the older
 floor. Cold first-shape this session was 79/85.
+
+## scale-to-f16 M=64 (2026-09-02aq)
+
+Same binary, spin=4000, warmup 20 iters 20, NT=2.
+cosine=1.0 max_abs=0. timed cur=2800, act 2683-2750,
+throttle=1. W8A8 M=64 from same-day hold sweep.
+
+| shape | card | event_us | pipe_host_us | W8A8 M=64 hold |
+|---|---|---:|---:|---:|
+| 64 x 5120 | 0 | 246.880 | 247.161 | 46.167 |
+| 64 x 5120 | 1 | 244.833 | 242.533 | 46.450 |
+
+~5.3x W8A8, ~7.4x this tile M=1 (not 16x). RC=4 wgn
+is not the M=64 kernel. Next: ngen RC=8/GRF256/SLM.
