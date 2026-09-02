@@ -56,11 +56,13 @@ s4 M=64 N=17408 4x8 A-db is 94.7 us both
 cards (bt), ~2.81x N=5120. s4 M=64 K=17408 is
 106.0 us both cards (bv), ~3.15x K-linear.
 s4 M=256 N=17408 4-acc is 140.0 us both cards
-(bx), ~2.88x N=5120. s4 M=256 K=17408 is 149.2
-us card1 (by), ~3.07x K-linear, pending sibling.
-Qwen FFN s4 map is otherwise closed. Next: split.
-card0: sibling s4 M=256 K=17408. card1: s8
-M=64 N=17408 (INT8 vs s4 94.7). Loop every 20m.
+(bx), ~2.88x N=5120. s4 M=256 K=17408 is 149.0
+us both cards (bz), ~3.07x K-linear. Qwen FFN
+s4 map is closed. s8 M=64 N=17408 is 338 us
+card1 (ca), ~4.51x N=5120 vs s4 94.7, pending
+sibling. Next: split. card0: sibling s8 M=64
+N=17408. card1: s8 M=64 K=17408. Loop every
+20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

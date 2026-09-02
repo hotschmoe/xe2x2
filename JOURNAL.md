@@ -2212,6 +2212,63 @@ VERDICT -> Prefill-256 wide-K is a real 149.2 us
   freeze until card0. Rank us. Next: sibling
   M=256 K=17408 vs s8 M=64 N=17408 (INT8).
 
+### 2026-09-02bz - K2 s4 M=256 K=17408 sibling card0
+
+CONTEXT -> card1 s4 4-acc K=17408 was 149.2 us
+  at M=256 2800, numeric closed. Sibling swap to
+  close the prefill-256 wide-K floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_w48m4, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 0.
+  Same NT=2 U=8 pack=2 spin=512 as by.
+  Fill s4 [-8,7] scales 0.02 out f16. M=256
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_w48m4_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=256 card0: event 147.490 us, pipe_host 148.768
+  vs card1 149.164 vs K=5120 48.6 vs N=17408 140.0.
+  Spread ~0.3%.
+
+VERDICT -> Sibling matches. New s4 M=256 wide-K
+  floor 149.0 us at 2800 both cards. ~3.07x
+  K=5120. Qwen FFN s4 map is closed. Rank us.
+
+### 2026-09-02ca - K2 s8 M=64 N=17408 4x8 A-db card1
+
+CONTEXT -> s8 4x8 A-db is 75 us at M=64 N=5120.
+  s4 same tile N=17408 is 94.7 us (~2.81x).
+  Napkin N-linear 75*17408/5120 ~255 us. INT8
+  vs s4 at FFN-up prefill. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db48,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=512.
+  Fill s8 [-64,64] scales 0.02 out f16. M=64
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8db48_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card1: event 337.609 us, pipe_host 338.151
+  vs N=5120 75 vs s4 94.7 vs napkin 255.
+  Ratio 338/75 ~4.51x, worse than N-linear.
+  s4 94.7 is ~3.57x this s8.
+
+VERDICT -> INT8 4x8 A-db loses hard at wide N:
+  4.51x N=5120 vs s4's 2.81x. One-card. Do not
+  freeze 338 us until card0. Rank us. Next:
+  sibling s8 N=17408 vs s8 M=64 K=17408.
+
 
 
 

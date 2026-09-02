@@ -740,6 +740,20 @@ throttle=0.
 |---|---|---:|---:|---:|---:|
 | 256 x 5120 x 17408 | 1 | 149.302 | 149.164 | 48.6 | 165 |
 
-~3.07x K=5120, near linear. Slower than wide-N
-140.0 at same B bytes. One-card. Next: sibling
-vs s8 M=64 N=17408.
+~3.07x K=5120. Sibling card0 pipe 148.768 (bz).
+New M=256 wide-K floor 149.0 us both cards.
+Qwen FFN s4 map closed.
+
+## s8 4x8 A-db M=64 N=17408 card1 (2026-09-02ca)
+
+Same s8 4x8 A-db tile, N=17408 K=5120. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | N=5120 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 | 1 | 337.609 | 338.151 | 75 | 94.7 | 255 |
+
+~4.51x N=5120, worse than linear. s4 94.7 is
+~3.57x this s8. One-card. Next: sibling vs
+s8 M=64 K=17408.
