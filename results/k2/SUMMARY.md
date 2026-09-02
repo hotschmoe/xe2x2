@@ -18,7 +18,11 @@ immediate):
 - s2xs8: `llvm.genx.dpas2.v128i32.v128i32.v32i32.v64i32`
 - s2xs2: `llvm.genx.dpas2.v128i32.v128i32.v64i32.v32i32`
 
-Need `ocloc` / IGC shader dump for `dpas.s4.s4` vs `dpas.s8.s8`.
+ocloc disasm of the AOT zebin (2026-09-02r): IGA prints s8 as
+`:b`, s4 as `:s4`, s2 as `:s2`. Inner loop is always `dpas.8x8
+(16|M0)` acc `:d`. s2xs8 is `rW:s2 rA:b`. Runtime
+IGC_ShaderDumpEnable did not dump the user kernel (AOT). See
+`results/k2/igc_isa.md`.
 
 ## Numeric + us at 1024^3
 

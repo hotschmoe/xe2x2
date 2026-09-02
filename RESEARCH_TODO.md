@@ -31,10 +31,11 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K4 have both-card numbers. Live kernel ranking at Qwen3.8
-shapes: int8_gemm_w8a8 GEMM-only (42-46 us M=1 5120) then
-fp8_gemm_w8a16 (70 us, bf16 DPAS + E4M3 unpack). Next: K5
-quant launches, K6 NVFP4. Loop every 20m. Pushed 8caea59.
+K0-K6 have first both-card RESULTS. K2 IGA: `dpas.8x8` typed
+`:b/:s4/:s2`. K5 naive fused quant 830 us at M=1 5120 (launch
+win, not a serving epilogue). K6 nibble LUT to s8 DPAS closed;
+unpack tax ~12%. Next: bandwidth K5 epilogue, in-register K6
+LUT, beat 45 us W8A8. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

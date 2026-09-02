@@ -1,0 +1,34 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:443423033813 energy2=pkg:301681832397 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:354404039733 energy2=pkg:322196439453 temp2_mC=54000
+=== dpas_s4 igc dump (tiny tile) ===
+CONFIG backend=sycl+l0 card=1 arm=s4 IGC_DumpToCustomDir=/mnt/vm_8tb/github/xe2x2/results/k2/igc_card1_s4
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=1 iters=1
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,26.771,0.0006,0,1
+timed,8,16,64,26.355,0.0006,0,1
+=== dump files ===
+/mnt/vm_8tb/github/xe2x2/results/k2/igc_card1_s4/HardwareCaps.txt
+/mnt/vm_8tb/github/xe2x2/results/k2/igc_card1_s4/SIPKernelDump.bin
+=== dpas / DPAS / s8 / s4 / s2 hits ===
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=550 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:443440387451 energy2=pkg:301691727294 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:354421987548 energy2=pkg:322207141113 temp2_mC=53000
+=== AOT skip / ForceDumpAll ===
+Runtime IGC_ShaderDumpEnable=1 dumped HardwareCaps.txt + SIPKernelDump.bin only.
+IGC_ForceDumpAll=1 + IGC_ShaderDumpEnableAll=1 on card 1 still 2 files, no visa/GEN.
+=== ocloc of unbundled sycl-spir64_gen ===
+Copied bin/dpas_s4 to /tmp (root-owned). clang-offload-bundler --type=o
+--targets=sycl-spir64_gen --unbundle -> ZEBIN ELF (arch 0xcd).
+ocloc disasm -device bmg-g31 (ocloc 26.22.1). Then ocloc compile
+-spirv_input of embedded .spv with IGC_ShaderDumpEnable=1 (CPU IGC 2.36.3).
+VISA: dpas.s4.s4.8.8 (M1, 16) V127.0 V127.0 V63.0 V62(0,0)
+GEN:  dpas.8x8 (16|M0) r24:d r24:d r15:s4 r11.0:s4
+tiny check/timed 8x16x64 max_abs=0 us=26.771/26.355
+dump files after ocloc land: 10 (see results/k2/igc_card1_s4/)

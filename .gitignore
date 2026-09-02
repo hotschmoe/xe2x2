@@ -54,3 +54,4 @@ tmp/
 # *_isa.md, and small timed .txt under results/.
 results/**/cache_*/
 results/**/igc_*/
+results/**/ocloc_aot/

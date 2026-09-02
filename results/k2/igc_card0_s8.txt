@@ -1,0 +1,38 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2233 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:443436417236 energy2=pkg:301689463134 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:354417847473 energy2=pkg:322204636108 temp2_mC=53000
+=== dpas_s8 igc dump (tiny tile) ===
+CONFIG backend=sycl+l0 card=0 arm=s8 IGC_DumpToCustomDir=/mnt/vm_8tb/github/xe2x2/results/k2/igc_card0_s8
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=8 K=32 N=16 Bload=lsc_load_2d_Transformed warmup=1 iters=1
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,32,26.771,0.0003,0,1
+timed,8,16,32,26.354,0.0003,0,1
+=== dump files ===
+/mnt/vm_8tb/github/xe2x2/results/k2/igc_card0_s8/HardwareCaps.txt
+/mnt/vm_8tb/github/xe2x2/results/k2/igc_card0_s8/SIPKernelDump.bin
+=== dpas / DPAS / s8 / s4 / s2 hits ===
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=550 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:443454328430 energy2=pkg:301699688415 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:354435458251 energy2=pkg:322214917419 temp2_mC=53000
+=== fallback AOT skip -> ocloc (CPU, no extra GPU) ===
+CONFIG backend=sycl+l0 card=0 arm=s8
+runtime IGC dump: HardwareCaps.txt + SIPKernelDump.bin only (AOT skip)
+unbundle: clang-offload-bundler --type=o --targets=sycl-spir64_gen
+ocloc disasm -device bmg-g31 of zebin
+ocloc compile -spirv_input -options '-vc-codegen' -device bmg-g31 + IGC_ShaderDumpEnable=1 IGC_ForceDumpAll=1
+tiny max_abs check=0 timed=0 us=26.354
+GEN: dpas.8x8 (16|M0) r24:d r24:d r15:b r11.0:b {Compacted,$3}
+VISA: dpas.s8.s8.8.8 (M1, 16) V120.0 V120.0 V60.0 V59(0,0)
+LLVM: llvm.genx.dpas2.v128i32.v128i32.v128i32.v64i32(..., i32 8, i32 8, i32 8, i32 8, i32 1, i32 1)
+dump files after fallback: 28
+=== dpas hits (post-fallback) ===
+ocloc_disasm/.text._ZTSN12_GLOBAL__N_110DpasS8NameE.asm:75:        dpas.8x8 (16|M0)         r24:d         r24:d             r15:b             r11.0:b          {Compacted,$3}
+ocloc_recompile/...DpasS8NameE.visaasm:231:    dpas.s8.s8.8.8 (M1, 16) V120.0 V120.0 V60.0 V59(0,0)
+ocloc_recompile/...DpasS8NameE.asm:286:        dpas.8x8 (16|M0)         r24:d         r24:d             r15:b             r11.0:b          {Compacted,$3} // $39
+

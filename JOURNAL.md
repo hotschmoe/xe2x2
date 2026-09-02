@@ -457,3 +457,72 @@ RESULT -> INT8 W8A8 GEMM-only faster at every M. M=1 5120:
 VERDICT -> Kernel ranking is INT8 W8A8, then FP8 W8A16 emulate.
   K5 must add quant launches before claiming a serve win. Promote
   the GEMM table.
+
+### 2026-09-02r - K2 ocloc/IGA encodings
+
+CONTEXT -> Clock-held DPAS already both-card. Runtime
+  IGC_ShaderDumpEnable on AOT binaries dumped only SIP/caps.
+
+CONFIG -> CPU ocloc disasm of unbundled sycl-spir64_gen zebin
+  from the four standalone AOT bins. Tiny GPU tiles on card0
+  (s8, s2xs8) and card1 (s4, s2) for numeric, backend sycl+l0.
+
+COMMAND ->
+  ```
+  clang-offload-bundler --type=o --targets=sycl-spir64_gen --unbundle
+  ocloc disasm -file device.elf -device bmg-g31
+  gpu-run --card N kernels/esimd_dpas/run_igc_dump.sh N ARM
+  ```
+
+RESULT -> IGA inner loop is `dpas.8x8 (16|M0)` acc `:d`.
+  s8 `rW:b rA:b`; s4 `rW:s4 rA:s4`; s2 `rW:s2 rA:s2`;
+  s2xs8 `rW:s2 rA:b`. Tiny tiles max_abs=0. has_dpas true,
+  GRF 128.
+
+VERDICT -> Promote encodings. s8 vs s4 is the operand type on
+  the same opcode. Runtime IGC dumps of AOT ESIMD are the wrong
+  tool; disasm the zebin.
+
+### 2026-09-02s - K5 naive RMSNorm-epilogue both cards
+
+CONTEXT -> W8A8 serving mixed ~160 quant launches into the
+  kernel ranking. Unmix: 2-launch vs fused producer epilogue.
+
+CONFIG -> sycl+l0, standalone rmsnorm_epilogue, one WI/row,
+  gamma=1 eps=1e-6, symmetric s8 qmax=127, gpu-run --card N.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/epilogue_quant/run_k5.sh 0
+  gpu-run --card 1 kernels/epilogue_quant/run_k5.sh 1
+  ```
+
+RESULT -> M=1 5120: fused 830 us both cards vs two-launch
+  1361/1252 us. M=1 17408: 2820 vs 3769 us. max_abs<=1 (f16
+  vs float host). Fusion ~30-40% by dropping a launch.
+
+VERDICT -> Launch fusion is real and closed enough. 830 us is
+  not a serving epilogue next to 45 us W8A8 GEMM. Promote the
+  launch-count result, not the us as a floor.
+
+### 2026-09-02t - K6 nibble LUT spoof both cards
+
+CONTEXT -> One NVFP4 spoof arm. Never bitcast E2M1 onto s4.
+  K3 already measured two-term s4; this is nibble LUT to s8.
+
+CONFIG -> sycl+l0, standalone nibble_lut_s8, packed E2M1 in
+  HBM, LUT to s8, then K2 s8 DPAS. 1024^3, gpu-run --card N.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6.sh 0
+  gpu-run --card 1 kernels/nvfp4/run_k6.sh 1
+  ```
+
+RESULT -> max_abs=0 both cards. Host LUT DPAS 271 us (card0
+  550 MHz) / 75 us (card1). Device unpack+DPAS 305 / 84 us.
+  Unpack tax ~12% at this tile.
+
+VERDICT -> Nibble LUT spoof is numerically closed. Promote.
+  Absolute us is clock. In-register fused LUT still open.
+

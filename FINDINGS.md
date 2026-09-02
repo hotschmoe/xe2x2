@@ -125,6 +125,25 @@ VERDICT -> INT2 silicon exists on these B70s and is usable from
 
 Evidence: `results/k2/SUMMARY.md`.
 
+## ESIMD DPAS encodings are dpas.8x8 with typed operands (K2)
+
+CONFIG -> same standalone AOT binaries. Runtime
+  `IGC_ShaderDumpEnable` on both cards dumped only SIP/caps
+  (AOT zebin already in the ELF). Encoding from `ocloc disasm`
+  of unbundled `sycl-spir64_gen` zebin, IGA Xe2. Backend
+  `sycl+l0`.
+
+RESULT -> Inner loop is `dpas.8x8 (16|M0)` acc `:d` on every arm.
+  s8: `rW:b rA:b`. s4: `rW:s4 rA:s4`. s2: `rW:s2 rA:s2`.
+  s2xs8: `rW:s2 rA:b` (literature mix). IGA prints s8 as `:b`,
+  not `:s8`. `has_dpas: true`, GRF 128. B is `load_block2d.ugm.d8v`.
+
+VERDICT -> s4/s2 are operand types on the same `dpas.8x8`, not a
+  different opcode. s2xs8 matches the paper GEN dump. Do not wait
+  on runtime IGC dumps of AOT ESIMD; disasm the zebin.
+
+Evidence: `results/k2/igc_isa.md`.
+
 ## Incumbent oneDNN floors (K1)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`, synthetic, gpu-run
@@ -163,10 +182,7 @@ VERDICT -> Xe2 has no native FP8 XMX in this op. The 56 us M=1
   that returns faster than 56 us without that unpack is a beat.
   Confirmed on the timed image; JIT dump is card0.
 
-Evidence: `results/k1/fp8_card0_isa.md`,
-  `results/k1/igc_card0_fp8_jit/*.xe2.asm`.
-
-Evidence: `results/k1/SUMMARY.md`.
+Evidence: `results/k1/SUMMARY.md`, `results/k1/fp8_card0_isa.md`.
 
 ## Compose-of-s8 did not lose (K3)
 
@@ -205,6 +221,43 @@ VERDICT -> Unmixed, GEMM-only INT8 W8A8 is the faster kernel at
 
 Evidence: `results/k4/SUMMARY.md`.
 
+## Naive RMSNorm-epilogue fusion drops one launch (K5)
+
+CONFIG -> backend `sycl+l0`, standalone icpx 2026.1.1 AOT
+  `intel_gpu_bmg_g31`, one WI per row. RMSNorm gamma=1 eps=1e-6,
+  symmetric s8 qmax=127, per-row absmax. Both cards.
+
+RESULT -> Fused (1 launch) vs rmsnorm-then-quant (2 launches).
+  M=1 K=5120: 830 us fused vs 1252-1361 us two-launch, max_abs=1.
+  M=1 K=17408: 2820 vs 3769 us. M=64 matches across cards.
+  Fusion is ~30-40% faster by dropping a launch. Absolute us is
+  still hundreds to thousands on this naive loop.
+
+VERDICT -> Fusion removes N=1 launch and is closed to max_abs<=1
+  vs the two-kernel path. It is not a serving epilogue: 830 us
+  already dwarfs the 45 us W8A8 GEMM. A bandwidth-capable
+  producer epilogue is the next K5 arm, not this us as a floor
+  to cite in a serve.
+
+Evidence: `results/k5/SUMMARY.md`.
+
+## NVFP4 nibble LUT to s8 DPAS is numerically closed (K6)
+
+CONFIG -> backend `sycl+l0`, standalone ESIMD, same s8 DPAS tile
+  as K2. Packed E2M1 nibbles in HBM, LUT to s8 `{0,+-1,+-2,+-3,
+  +-4,+-6,+-8,+-12}`. Never bitcast onto s4. Both cards, 1024^3.
+
+RESULT -> Host LUT + s8 DPAS and device unpack + s8 DPAS both
+  max_abs=0. Unpack tax ~12% of the s8 DPAS (33/271 us card0 at
+  550 MHz; 9/75 us card1). Absolute us follows clocks.
+
+VERDICT -> The nibble-LUT spoof is a real arm, not a bitcast.
+  Two-launch unpack is a small tax at this tile. In-register
+  fused LUT (4-bit B, one launch) is still open. Do not quote a
+  single us without the clock column.
+
+Evidence: `results/k6/SUMMARY.md`.
+
 Open campaign (questions, not findings): docs/KERNEL_CAMPAIGN.md.
 Sibling-lab claims to reproduce before they can enter this file.
 Now local (K2): s4 DPAS exists but was 1.49x s8 at 1024^3 / ~583 MHz,
@@ -214,6 +267,8 @@ not 2x; INT2 DPAS exists (s2xs2 and s2xs8 closed). Remaining:
 - Xe2 has no native FP8 XMX -- reproduced: fp8_gemm_w8a16 is
   E4M3 unpack + bf16 dpas.8x8 (K1 JIT dump).
 - NVFP4 E2M1 x2 is exact int8; +-12 overflows s4; bitcast is wrong.
+  Local: nibble LUT -> s8 DPAS closed (K6); two-term s4 compose
+  closed (K3). In-register fused LUT still open.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.
