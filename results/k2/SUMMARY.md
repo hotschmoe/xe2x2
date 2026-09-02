@@ -801,7 +801,23 @@ floor).
 |---|---|---:|---:|---:|---:|---:|
 | 256 x 5120 x 17408 | 1 | 477.453 | 476.927 | 128 | 149.0 | 435 |
 
-~3.73x K=5120, near linear. s4 149.0 is
-~3.20x this s8. Slightly slower than wide-N
-469.8 at the same B bytes. One-card. Next:
-sibling vs s8 decode N=17408.
+~3.73x K=5120, near linear. Sibling card0
+pipe 477.797 (ch). New M=256 wide-K floor
+477.4 us both cards, throttle=1. s4 149.0 is
+~3.20x this s8. Qwen FFN s8 prefill map
+closed.
+
+## s8 decode N=17408 card1 (2026-09-02ci)
+
+Same s8 RC=4 8x2-N tile, N=17408 K=5120.
+spin=4000. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | N=5120 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 17408 | 1 | 142.516 | 142.052 | 34 | 29.5 | 116 |
+| 4 x 17408 | 1 | 140.685 | 142.333 | 34 | 29.5 | 116 |
+
+~4.18x N=5120, worse than linear. s4 29.5 is
+~4.82x this s8 (s4 was 1.80x). One-card.
+Next: sibling vs s8 decode K=17408.

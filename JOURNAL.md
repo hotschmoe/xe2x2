@@ -2450,3 +2450,65 @@ VERDICT -> Prefill-256 wide-K is a real 476.9 us
   one-card. Do not freeze until card0. Rank us.
   Next: sibling s8 M=256 K=17408 vs s8 decode
   N=17408.
+
+### 2026-09-02ch - K2 s8 M=256 K=17408 sibling card0
+
+CONTEXT -> card1 s8 4-acc K=17408 was 476.9 us at
+  M=256 cur=2800 throttle=1, numeric closed.
+  Sibling swap to close the INT8 prefill-256
+  wide-K floor.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=8 spin=512 as cg.
+  Fill s8 [-64,64] scales 0.02 out f16. M=256
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48m4_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2733
+  cur=2800 throttle=1 (same flag as card1 and
+  the N=5120 128 us floor).
+  M=256 card0: event 479.161 us, pipe_host 477.797
+  vs card1 476.927 vs K=5120 128 vs N=17408 469.8
+  vs s4 149.0 vs napkin 435. Spread ~0.2%.
+
+VERDICT -> Sibling matches. New s8 M=256 wide-K
+  floor 477.4 us at cur=2800 both cards,
+  throttle=1. ~3.73x K=5120, near linear. s4
+  149.0 is ~3.20x this tile. Qwen FFN s8 prefill
+  map is closed. Rank us.
+
+### 2026-09-02ci - K2 s8 decode N=17408 card1
+
+CONTEXT -> s8 RC=4 8x2-N is 34 us at M=1 N=5120.
+  s4 same tile N=17408 is 29.5 us (~1.80x, not
+  3.4x). Napkin N-linear 34*17408/5120 ~116 us.
+  INT8 vs s4 at FFN-up decode. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=4000.
+  Fill s8 [-64,64] scales 0.02 out f16. M=1 and
+  M=4, N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_sc_wide.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 142.516 us, pipe_host 142.052
+  vs N=5120 34 vs s4 29.5 vs napkin 116.
+  Ratio 142.1/34 ~4.18x, worse than N-linear.
+  M=4 tracks (pipe 142.333). s4 29.5 is ~4.82x
+  this s8.
+
+VERDICT -> INT8 decode loses hard at wide N:
+  4.18x N=5120 vs s4's 1.80x. One-card. Do not
+  freeze 142.1 us until card0. Rank us. Next:
+  sibling s8 decode N=17408 vs s8 decode K=17408.

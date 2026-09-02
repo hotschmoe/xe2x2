@@ -64,10 +64,13 @@ s8 M=64 K=17408 is 374.7 us both cards (cd),
 ~5.00x K-linear vs s4 106.0. s8 M=256 N=17408
 is 469.8 us both cards (cf), ~3.67x N=5120 vs
 s4 140.0, throttle=1. s8 M=256 K=17408 is
-476.9 us card1 (cg), ~3.73x K-linear vs s4
-149.0, throttle=1, pending sibling.
-Next: split. card0: sibling s8 M=256 K=17408.
-card1: s8 decode N=17408. Loop every 20m.
+477.4 us both cards (ch), ~3.73x K-linear vs
+s4 149.0, throttle=1. Qwen FFN s8 prefill map
+is closed. s8 decode N=17408 is 142.1 us
+card1 (ci), ~4.18x N=5120 vs s4 29.5, pending
+sibling.
+Next: split. card0: sibling s8 decode N=17408.
+card1: s8 decode K=17408. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
