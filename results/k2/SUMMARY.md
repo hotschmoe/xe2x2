@@ -590,5 +590,23 @@ timed act=cur=2800 throttle=0. IGA 64x dpas.8x8
 | 64 x 5120 | 1 | 131.818 | 132.944 | 115.965 | 136 | 75.605 |
 
 ~1.15x slower than 8-thread 4x2. Occupancy was
-not the leftover. Stop M=64 4-acc. Floor 75 us.
-Next: s4 on the M=64 4x8 A-db tile.
+not the leftover. Stop M=64 4-acc. INT8 floor
+75 us. Next: s4 on the M=64 4x8 A-db tile.
+
+## s4 wg 4x8 A-db M=64 (2026-09-02bi)
+
+Packed s4 A/B, k64 A-db, wg 4x8, 32 dpas.8x8
+:s4/:s4, f16 scales 0.02, fill [-8,7]. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0. IGA 32x dpas.8x8 rW:s4 rA:s4, grf
+128, no SLM.
+
+| shape | card | event_us | pipe_host_us | s8 4x8 A-db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 33.010 | 33.608 | 75.486 | 46.167 |
+| 64 x 5120 | 1 | 33.042 | 33.735 | 75.605 | 46.450 |
+
+~2.24x vs s8 75 us. Under W8A8 46 us in wall
+time (different dtype). New s4 hand floor 33.6
+us at 2800. Next: s4 M=256 4-acc and s4 M=1
+decode, split per card.

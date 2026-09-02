@@ -61,7 +61,9 @@ s4/s2 from K-packed uint8). Host s32 oracle is in the binary.
 
 Measured 2026-09-02k on both cards (gpu-run, 1024^3): all four
 numeric-closed. us at matched ~583 MHz: s8 374, s4 250, s2xs8 278,
-s2xs2 223 (card1; card0 faster when clocks were higher). Details:
+s2xs2 223 (card1; card0 faster when clocks were higher). Serving
+shape 2026-09-02bi: s4 on the M=64 4x8 A-db tile is 33.6 us at
+2800 vs s8 75 vs W8A8 46 (`dpas_s4_db48`). Details:
 `results/k2/SUMMARY.md`. Do not quote TOPS% of 367 until clocks hold.
 
 ocloc/IGA (2026-09-02r): `dpas.8x8 (16|M0)` acc `:d`; s8 `:b/:b`,

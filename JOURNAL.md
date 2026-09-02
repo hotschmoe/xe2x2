@@ -1711,6 +1711,43 @@ VERDICT -> 32-thread 4x2x4 no SLM is a real loss
   leftover. Stop M=64 4-acc chasing. Floor stays
   75 us. Next: s4 on the M=64 4x8 A-db tile.
 
+### 2026-09-02bi - K2 s4 on M=64 4x8 A-db
+
+CONTEXT -> s8 wg 4x8 A-db is 75 us at M=64 vs
+  W8A8 46. s4 was 1.49x s8 at 1024^3 / ~583 MHz,
+  not 2x. New dtype on the winning tile: packed
+  s4 A/B, one dpas per k64, wg 4x8 A-db. Both-card
+  this fire.
+
+CONFIG -> sycl+l0, standalone dpas_s4_db48, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=16 (32 s4 dpas), wg 4x8 NxM, k64 A-db,
+  no SLM, pack=2 along K. grf_size<256>. spin=512
+  warmup=10 iters=20. Fill s4 [-8,7] scales 0.02
+  out f16. M=64 5120. Never E2M1 bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_db48.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_db48.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 32x dpas.8x8 rW:s4 rA:s4,
+  store_block2d d16, grf_count 128, no slm_size.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64: event 33.010/33.042 us, pipe_host
+  33.608/33.735 vs s8 4x8 A-db 75 vs W8A8 46.
+
+VERDICT -> s4 on this tile is a real ~2.24x vs
+  s8 75 us and under W8A8 46 us in wall time.
+  New s4 hand floor 33.6 us at 2800. Different
+  dtype than W8A8; INT8 s8 floor stays 75. The
+  1.49x at 1024^3 was not this shape. Rank us.
+  Do not quote tok/s. Next: split s4 M=256 4-acc
+  and s4 M=1 decode, one arm per card.
+
 
 
 

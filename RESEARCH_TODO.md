@@ -33,19 +33,20 @@ server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
 K0-K6 have both-card RESULTS. Held-clock scale-to-f16
-M=1 (ap) beats W8A8 34 vs 44 us. M=64 hand floor is
-wg 4x8 A-db 75 us (bc), ~1.63x W8A8 46. M=256 hand
-floor is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
+M=1 (ap) beats W8A8 34 vs 44 us. M=64 INT8 hand floor
+is wg 4x8 A-db 75 us (bc), ~1.63x W8A8 46. s4 on that
+same tile is 33.6 us (bi), ~2.24x s8 and under W8A8 46
+at 2800 both cards, numeric closed. M=256 hand floor
+is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
 8-row 4x8 was 228 (bb). 384-count 6-acc is 210 us
 (be), a loss. GRF256 still zebin 128.
 Decode quant: producer+GEMM (ba) is 44 us.
 k32 A-db on 4-acc M=256 is 135 us (bf), a tax.
 4-acc wg 4x2 M-on-Y is 115 us (bg) vs 8x2-N 120;
 4x2x4 no SLM is 133 us (bh), a loss. Stop M=64
-4-acc. Floor stays 75. Next: s4 on the M=64 4x8
-A-db tile (new dtype: both-card this fire). After
-that, split distinct one-card arms per card.
-Loop every 20m.
+4-acc s8. Next: split distinct one-card arms.
+card0: s4 on M=256 4-acc wg 4x8. card1: s4 on
+M=1 8x2-N RC=4 scale-to-f16. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

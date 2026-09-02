@@ -928,11 +928,39 @@ RESULT -> IGA 64x `dpas.8x8` (33 `{Atomic}`),
 
 VERDICT -> 32-thread ngen 4x2x4 without SLM is a
   ~1.15x loss vs 8-thread 4x2. Occupancy was not
-  the leftover. Stop M=64 4-acc. Floor stays 75 us.
+  the leftover. Stop M=64 4-acc. INT8 hand floor
+  stays 75 us.
 
 Evidence: `results/k2/sc8m424_m64_n2_s512_card0.txt`,
   `results/k2/sc8m424_m64_n2_s512_card1.txt`,
   `results/k2/sc8m424_dpas_lines.txt`.
+
+## s4 on the 4x8 A-db tile is 33.6 us at M=64 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s4_db48`.
+  Packed s4 A/B (2/byte along K), Transformed B,
+  RC=8, 32x `dpas.8x8` `:s4/:s4`, wg 4x8, k64 A-db,
+  f16 scales 0.02, fill [-8,7]. Both cards, NT=2,
+  spin=512. Prior: s8 same tile 75 us; s4 1.49x
+  s8 at 1024^3 / ~583 MHz.
+
+RESULT -> IGA 32x `dpas.8x8` rW:s4 rA:s4,
+  `store_block2d.d16`, `grf_count` 128, no SLM.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=64 pipe_host 33.61/33.74 vs
+  s8 4x8 A-db 75.49/75.61 vs W8A8 46.17/46.45.
+
+VERDICT -> Native s4 on the winning s8 schedule
+  is a real ~2.24x vs that s8 tile and under the
+  W8A8 46 us wall time at M=64 5120. New s4 hand
+  floor 33.6 us at 2800. This is not an INT8
+  kernel; s8 floor stays 75 us. Do not freeze
+  the 1.49x 1024^3 ratio as the serving-shape
+  story. Rank us. Do not quote tok/s.
+
+Evidence: `results/k2/s4db48_m64_n2_s512_card0.txt`,
+  `results/k2/s4db48_m64_n2_s512_card1.txt`,
+  `results/k2/s4db48_dpas_lines.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
@@ -1048,10 +1076,12 @@ Evidence: `results/k6/SUMMARY.md`.
 
 Open campaign (questions, not findings): docs/KERNEL_CAMPAIGN.md.
 Sibling-lab claims to reproduce before they can enter this file.
-Now local (K2): s4 DPAS exists but was 1.49x s8 at 1024^3 / ~583 MHz,
-not 2x; INT2 DPAS exists (s2xs2 and s2xs8 closed). Remaining:
+Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
+~2.24x s8 at M=64 4x8 A-db / 2800 (33.6 vs 75 us). INT2 DPAS
+exists (s2xs2 and s2xs8 closed). Remaining:
 
-- ESIMD `dpas<s4,s4>` ~2x s8 MAC rate -- 1.49x at this tile; 2x still open.
+- ESIMD `dpas<s4,s4>` ~2x s8 MAC rate -- 1.49x at 1024^3; ~2.24x
+  wall time at M=64 4x8 A-db held 2800. Tile-dependent.
 - Xe2 has no native FP8 XMX -- reproduced: fp8_gemm_w8a16 is
   E4M3 unpack + bf16 dpas.8x8 (K1 JIT dump).
 - NVFP4 E2M1 x2 is exact int8; +-12 overflows s4; bitcast is wrong.
@@ -1071,10 +1101,12 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
-wg 4x8 A-db 75 vs 46 us; 8x2-N A-db 97-100;
-  4-acc wg 4x2 115 vs 4x2x4 133 vs 8x2-N 120)
-  and at M=256
+scale-to-f16 s8 (34 vs 44 us). s4xs4 on the M=64 4x8 A-db
+tile is 33.6 us, under W8A8 46 in wall time (different dtype,
+not a W8A8 replacement). It is still true for INT8 s8 at M=64
+(best hand wg 4x8 A-db
+75 vs 46 us; 8x2-N A-db 97-100; 4-acc wg 4x2 115 vs 4x2x4
+133 vs 8x2-N 120) and at M=256 s8
 (4-acc wg 4x8 128 vs 8-row 4x8 228 vs 6-acc 384-count
   210 vs A-db 4-acc 135 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
