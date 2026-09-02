@@ -1640,6 +1640,43 @@ VERDICT -> k32 A-db on 4-acc is a real small tax
   transfer to this M=256 tile. Next: 4-acc on
   M=64 wg 4x2.
 
+### 2026-09-02bg - K2 4-acc wg 4x2 M on Y M=64
+
+CONTEXT -> sc8m4 4-acc wg 8x2-along-N is 120 us vs
+  wg 4x8 A-db 75 vs W8A8 46. M-on-Y won at M=256
+  4-acc and at M=64 8-row. Steal wg 4 along N x 2
+  along M on the 4-acc tile. 32 rows * 2 = 64, no
+  idle. Same 64 dpas, k64 A-db, no SLM.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8m42, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=4, 4 M-tiles, wg 4x2 NxM, k64 A-db, no SLM.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16. M=64 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8m42.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8m42.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8 (33x {Atomic}),
+  store_block2d d16, grf_count 128, no slm_size.
+  IGC spill 1792 B (NT=2). cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=64: event 114.71/115.12 us, pipe_host
+  115.33/115.97 vs sc8m4 120 vs 4x8 A-db 75 vs
+  W8A8 46.
+
+VERDICT -> M-on-Y is a real small win vs 8x2-N
+  (~115 vs 120, ~1.04x). Floor stays 8-row 4x8
+  A-db 75 us (~1.53x this arm, ~1.63x W8A8).
+  8-thread WG is not the 75 us kernel. Next:
+  4-acc wg 4x2x4 no SLM (32 threads), or stop
+  M=64 4-acc chasing.
+
+
 
 
 

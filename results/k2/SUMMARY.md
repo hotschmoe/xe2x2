@@ -561,3 +561,18 @@ no spill.
 ~1.05x slower than 4-acc no A-db. Floor stays
 128 us. A-db does not transfer from M=64.
 Next: 4-acc on M=64 wg 4x2.
+
+## 4-acc wg 4x2 M-on-Y M=64 (2026-09-02bg)
+
+Same 4-acc k64 A-db 64 dpas as sc8m4, wg 4 along
+N x 2 along M. spin=512. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0. IGA 64x dpas.8x8
+(33 Atomic), grf 128, no SLM, spill 1792 B.
+
+| shape | card | event_us | pipe_host_us | 8x2-N | 4x8 A-db | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 114.708 | 115.326 | 119.8 | 75.486 | 46.167 |
+| 64 x 5120 | 1 | 115.115 | 115.965 | 119.7 | 75.605 | 46.450 |
+
+~1.04x vs 8x2-N. Floor stays 75 us. Next: 4-acc
+wg 4x2x4 no SLM (32 threads), or stop M=64 4-acc.

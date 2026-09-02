@@ -39,7 +39,9 @@ floor is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
 (be), a loss. GRF256 still zebin 128.
 Decode quant: producer+GEMM (ba) is 44 us.
 k32 A-db on 4-acc M=256 is 135 us (bf), a tax.
-Next: 4-acc on M=64 wg 4x2.
+4-acc wg 4x2 M-on-Y is 115 us (bg) vs 8x2-N 120;
+M=64 floor stays 75. Next: 4-acc wg 4x2x4 no SLM
+(32 threads), or stop M=64 4-acc chasing.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
