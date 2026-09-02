@@ -1989,6 +1989,61 @@ VERDICT -> Down-proj K=17408 is a real 53.4 us,
   card0. Rank us. Next: sibling K=17408 vs s4
   M=64 N=17408.
 
+### 2026-09-02br - K2 s4 decode K=17408 sibling card0
+
+CONTEXT -> card1 s4 RC=4 K=17408 was 53.4 us at
+  M=1 2800, numeric closed. Sibling swap to
+  close the down-proj floor.
+
+CONFIG -> sycl+l0, standalone dpas_s4_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 0.
+  Same NT=2 U=16 pack=2 spin=4000 as bq.
+  Fill s4 [-8,7] scales 0.02 out f16. M=1 and
+  M=4, N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s4_sc_k17408.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 53.073 us, pipe_host 53.468
+  vs card1 53.367 vs K=5120 16.5 vs N=17408 29.5.
+  M=4 pipe 53.381 vs card1 53.303. Spread ~0.2%.
+
+VERDICT -> Sibling matches. New s4 down-proj
+  floor 53.4 us at 2800 both cards. ~3.24x
+  K=5120, near linear. Rank us.
+
+### 2026-09-02bs - K2 s4 M=64 N=17408 4x8 A-db card1
+
+CONTEXT -> s4 4x8 A-db is 33.6 us at M=64
+  N=5120. M=1 N=17408 was 1.80x not 3.4x.
+  Napkin N-linear 33.6*17408/5120 ~114 us.
+  Steal wide N on the M=64 floor tile. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s4_db48, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card 1.
+  NT=2 U=16 pack=2 spin=512. Fill s4 [-8,7]
+  scales 0.02 out f16. M=64 N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s4_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card1: event 94.297 us, pipe_host 94.560
+  vs N=5120 33.6 vs napkin 114. Ratio 94.6/33.6
+  ~2.81x, closer to N-linear than M=1's 1.80x.
+
+VERDICT -> Prefill wide-N is a real 94.6 us at
+  2800, ~2.81x N=5120. One-card. Do not freeze
+  until card0. Rank us. Next: sibling M=64
+  N=17408 vs s4 M=64 K=17408.
+
 
 
 

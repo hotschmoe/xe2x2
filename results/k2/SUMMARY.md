@@ -687,6 +687,19 @@ throttle=0.
 | 1 x 5120 x 17408 | 1 | 52.922 | 53.367 | 16.5 | 56 |
 | 4 x 5120 x 17408 | 1 | 52.984 | 53.303 | 16.3 | 56 |
 
-~3.24x K=5120, near K-linear. Slower than
-wide-N 29.5 at same B bytes. One-card. Next:
-sibling K=17408 vs M=64 N=17408.
+~3.24x K=5120, near K-linear. Sibling card0
+pipe 53.468 (br). New down-proj floor 53.4 us
+both cards.
+
+## s4 4x8 A-db M=64 N=17408 card1 (2026-09-02bs)
+
+Same 4x8 A-db tile, N=17408 K=5120. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | N=5120 | napkin |
+|---|---|---:|---:|---:|---:|
+| 64 x 17408 | 1 | 94.297 | 94.560 | 33.6 | 114 |
+
+~2.81x N=5120, closer to linear than M=1's
+1.80x. One-card. Next: sibling vs M=64 K=17408.
