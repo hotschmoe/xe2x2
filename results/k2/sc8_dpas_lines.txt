@@ -1,0 +1,16 @@
+K2 dpas_s8_sc8 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 RC=8 f16 scale
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8Sc8Nt4NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8Sc8Nt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+.text._ZTSN12_GLOBAL__N_116DpasS8Sc8Nt2NameE.asm: dpas.8x8=64 dpas.8x4=0 d16=2
+  first_dpas: dpas.8x8 (16|M0)         r98:d         r98:d             r16:b             r5.0:b           {Atomic,Compacted,$4.dst}
+  store: send.ugm (1|M0)          null     r63  r59:4  0x0            0x02000207           {I@1,$12} // wr:1+4, rd:0; store_block2d.ugm.d16.a64
+.text._ZTSN12_GLOBAL__N_116DpasS8Sc8Nt4NameE.asm: dpas.8x8=64 dpas.8x4=0 d16=4
+  first_dpas: dpas.8x8 (16|M0)         r58:d         r58:d             r15:b             r5.0:b           {Compacted,$7}
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$9} // wr:1+4, rd:0; store_block2d.ugm.d16.a64

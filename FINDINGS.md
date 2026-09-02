@@ -650,6 +650,31 @@ Evidence: `results/k2/sc_m64_n2_s4000_card0.txt`,
   `results/k2/w8a8_hold_card0.txt`,
   `results/k2/w8a8_hold_card1.txt`.
 
+## RC=8 dpas.8x8 halves M=64 vs RC=4, not 46 us (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8`.
+  RC=8, 64x `dpas.8x8`, 8x2 along N, f16 scales 0.02.
+  `grf_size<256>` requested. Both cards, NT=2, spin=512.
+
+RESULT -> IGA 64x `dpas.8x8` `:b/:b`, `store_block2d.d16`,
+  zebin `grf_count` 128. cosine=1.0 max_abs=0. timed
+  cur=2800 act~2770 throttle=1. M=64 pipe_host
+  119.6/121.0 vs RC=4 247/243 vs W8A8 46.17/46.45.
+
+VERDICT -> RC=8 is a real 2x vs this tile's RC=4
+  (half the M-blocks). It is not the ngen M=64 kernel.
+  GRF256 request still does not change the zebin.
+  Next: ngen wg 4x2x4 / SLM pack.
+
+Evidence: `results/k2/sc8_m64_n2_s512_card0.txt`,
+  `results/k2/sc8_m64_n2_s512_card1.txt`,
+  `results/k2/sc8_dpas_lines.txt`.
+
+Evidence: `results/k2/sc_m64_n2_s4000_card0.txt`,
+  `results/k2/sc_m64_n2_s4000_card1.txt`,
+  `results/k2/w8a8_hold_card0.txt`,
+  `results/k2/w8a8_hold_card1.txt`.
+
 ## ngen d32 flag broadcast is not the 36 us kernel (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_d32`.

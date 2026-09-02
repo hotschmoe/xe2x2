@@ -1150,6 +1150,34 @@ VERDICT -> RC=4 scale-to-f16 does not beat W8A8 at
   is ngen M=64 RC=8/GRF256/SLM on this contract, or
   fuse K5 into the M=1 GEMM that already wins.
 
+### 2026-09-02ar - K2 RC=8 dpas.8x8 f16 at M=64
+
+CONTEXT -> RC=4 scale-to-f16 M=64 is 245 vs W8A8 46.
+  ngen M=64 is 64x dpas.8x8 RC=8 grf256. Steal RC=8
+  + 64 unroll on the f16 contract. Request GRF256.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8, icpx 2026.1.1
+  AOT intel_gpu_bmg_g31, gpu-run --card N. NT=2 U=16
+  (64 dpas). intelex::grf_size<256>. spin=512 warmup=10
+  iters=20. Fill [-64,64] scales 0.02 out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8 rW:b rA:b, store_block2d
+  d16, grf_count 128 (request refused). cosine=1.0
+  max_abs=0. timed cur=2800 act~2767-2783 throttle=1.
+  M=64: event 120.73/119.90 us, pipe_host 119.63/121.01
+  vs RC=4 245 vs W8A8 46.17/46.45.
+
+VERDICT -> RC=8 lights and is ~2x RC=4 (half the
+  M-blocks), not a 46 us beat. GRF256 still refused.
+  Next: ngen wg 4x2x4 / SLM pack, not another RC.
+
 
 
 

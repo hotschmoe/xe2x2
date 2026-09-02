@@ -32,13 +32,11 @@ server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
 K0-K6 have both-card RESULTS. Held-clock scale-to-f16
-M=1 (2026-09-02ap) beats W8A8 34 vs 44 us. Same RC=4
-tile at M=64 (2026-09-02aq) is 243-247 us pipe vs
-W8A8 46 us, both cards, cur=2800 act~2.7 GHz
-throttle=1, cosine=1. Occupancy cut the 16x napkin
-to ~7.4x M=1; still 5.3x the incumbent. Next: ngen
-M=64 RC=8/GRF256/SLM on the f16 contract, or fuse
-K5 into the M=1 GEMM. Loop every 20m.
+M=1 (ap) beats W8A8 34 vs 44 us. M=64 RC=4 (aq) is
+245 vs 46. RC=8 dpas.8x8 (ar) is 120 vs 46, ~2x RC=4,
+GRF256 still zebin 128. cosine=1 both cards. Next:
+ngen wg 4x2x4 / SLM pack, or fuse K5 into the M=1
+GEMM. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

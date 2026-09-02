@@ -374,3 +374,17 @@ throttle=1. W8A8 M=64 from same-day hold sweep.
 
 ~5.3x W8A8, ~7.4x this tile M=1 (not 16x). RC=4 wgn
 is not the M=64 kernel. Next: ngen RC=8/GRF256/SLM.
+
+## RC=8 dpas.8x8 f16 M=64 (2026-09-02ar)
+
+Same f16 scale contract. 64x dpas.8x8, 8x2 along N.
+grf_size<256> requested; zebin grf_count 128. spin=512.
+cosine=1.0 max_abs=0. timed cur=2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | RC=4 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 120.729 | 119.626 | 246.880 | 46.167 |
+| 64 x 5120 | 1 | 119.901 | 121.007 | 244.833 | 46.450 |
+
+~2x RC=4 (half M-blocks). Still ~2.6x W8A8. GRF256
+refused. Next: ngen wg / SLM pack.
