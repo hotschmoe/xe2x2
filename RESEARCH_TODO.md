@@ -31,11 +31,9 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. Untuned 8x16 DPAS loses to 45 us
-W8A8 at Qwen M=64/256 (274-1064 vs 46-76 us). K6 simd in-register
-LUT is 304-406 us (~7x scalar 2316), still clock-bound vs
-two-launch unpack. Next: a real GEMM schedule (block/prefetch/
-GRF) to beat 45 us. Loop every 20m.
+K0-K6 have both-card RESULTS. 8x16 DPAS and A-reuse NT=2/4 both
+lose to 45 us W8A8 at M=64 (269-474 vs 46-49 us). Next: dump
+int8_gemm_w8a8 ngen ISA, then SLM/GRF256/prefetch. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

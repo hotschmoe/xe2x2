@@ -312,6 +312,23 @@ VERDICT -> This tile is not the incumbent. Do not call the
 
 Evidence: `results/k2/SUMMARY.md`.
 
+## A-reuse NT=2/4 does not close the W8A8 gap (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_block`. Load A
+  once per K-chunk, dpas across NT=2 (8x32) or NT=4 (8x64) B
+  panels. Transformed LSC B. Both cards. Prior: wider N wins
+  by cutting A traffic.
+
+RESULT -> max_abs=0. M=64 5120: NT=2 269-352 us, NT=4 318-474 us
+  vs 8x16 274-373 us vs oneDNN 46-49 us. M=256: NT=4 694-876 us
+  vs 8x16 892-1064 vs oneDNN 75 us.
+
+VERDICT -> The napkin is weak here. A-reuse is not the 6x.
+  oneDNN still owns the floor. Next levers: SLM pack, GRF 256,
+  prefetch, or steal the W8A8 ngen schedule (K1 dump).
+
+Evidence: `results/k2/SUMMARY.md`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

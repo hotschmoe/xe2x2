@@ -83,3 +83,17 @@ oneDNN W8A8 GEMM-only: M=1 42-46 us, M=64 46-49, M=256 74-76.
 
 This tile does not beat 45 us W8A8. Clocks swing padded M=8.
 M=64/256 lose by ~6-12x. Need a real schedule, not 8x16.
+
+## Blocked NT=2/4 A-reuse (2026-09-02y)
+
+Same s8 DPAS, A loaded once per K-chunk and reused across NT
+N-tiles. max_abs=0. oneDNN W8A8 M=64/256: 46-49 / 74-76 us.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | 8x16 s8 |
+|---|---:|---:|---:|---:|---|
+| 8 x 5120 | 233 | 102 | 120 | 315 | 56-230 |
+| 64 x 5120 | 269 | 352 | 318 | 474 | 274-373 |
+| 256 x 5120 | 856 | 943 | 694 | 876 | 892-1064 |
+
+A-reuse is closed and is not a 6x win. NT=4 can help M=256
+slightly (694 vs 892) and can lose at M=64. Floor stays 45 us.

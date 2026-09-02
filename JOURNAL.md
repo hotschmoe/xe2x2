@@ -614,5 +614,28 @@ VERDICT -> simd LUT is a us win vs scalar in-register. Not a
   matched-clock beat of two-launch unpack. Promote the ratio,
   not a single us.
 
+### 2026-09-02y - blocked s8 NT=2/4 A-reuse vs 45 us
+
+CONTEXT -> 8x16 tile lost 6-12x to W8A8 at M=64/256. Prior:
+  reuse A across more N so A loads drop.
+
+CONFIG -> sycl+l0, dpas_s8_block NT=2 (8x32) and NT=4 (8x64),
+  gpu-run --card N, M=8/64/256 x 5120 x 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 run_block.sh 0 2
+  gpu-run --card 1 run_block.sh 1 4
+  # swap
+  ```
+
+RESULT -> max_abs=0. M=64: NT=2 269-352 us, NT=4 318-474 vs
+  8x16 274-373 vs W8A8 46-49. M=256: NT=4 694-876 vs 8x16
+  892-1064 vs W8A8 75.
+
+VERDICT -> A-reuse does not close the gap. Promote the miss.
+  Floor stays 45 us. Next: SLM/GRF256/prefetch or W8A8 ngen dump.
+
+
 
 

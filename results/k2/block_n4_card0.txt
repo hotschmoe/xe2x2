@@ -1,0 +1,29 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=767 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:588369837829 energy2=pkg:376074939147 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:500238794921 energy2=pkg:398975570373 temp2_mC=55000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_block nt=4
+oneDNN W8A8 floor M=1/64/256 5120: 42-46 / 46-49 / 74-76 us
+=== nt=4 m=8 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=8 K=32 execN=16 NT=4 tileN=64 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,m,n,k,us,TOPS,max_abs,ok
+check,4,8,64,32,6.906,0.0047,0,1
+timed,4,8,5120,5120,119.568,3.5079,0,1
+=== nt=4 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=8 K=32 execN=16 NT=4 tileN=64 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,m,n,k,us,TOPS,max_abs,ok
+check,4,8,64,32,10.823,0.0030,0,1
+timed,4,64,5120,5120,318.396,10.5386,0,1
+=== nt=4 m=256 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=8 K=32 execN=16 NT=4 tileN=64 Bload=lsc_load_2d_Transformed warmup=5 iters=20
+phase,nt,m,n,k,us,TOPS,max_abs,ok
+check,4,8,64,32,15.521,0.0021,0,1
+timed,4,256,5120,5120,693.703,19.3480,0,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=983 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:589772537292 energy2=pkg:376873877319 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:501643447143 energy2=pkg:399798714172 temp2_mC=54000
