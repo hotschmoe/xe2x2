@@ -750,8 +750,8 @@ and health repeats a bullet, it stays a hypothesis.
 
 Napkin math: compose-of-s8 loses is now measured false on the K3
 tile. "we cannot beat oneDNN" is false at decode M=1 5120
-scale-to-f16 (34 vs 44 us) and still true at M=64 on this RC=4
-tile (245 vs 46 us). Remaining hypotheses: decode cannot
+scale-to-f16 (34 vs 44 us) and still true at M=64 (RC=8
+120 vs W8A8 46 us). Remaining hypotheses: decode cannot
 use INT2, PP=2 cannot win decode, we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
 evidence-gated. Model shelf after the math floor: docs/MODELS.md.
