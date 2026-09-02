@@ -1508,6 +1508,38 @@ VERDICT -> wg 4x8 (M on Y) is a real ~1.9x vs
   Next: steal 4x8 on the M=64 A-db tile, or 384
   dpas unroll.
 
+### 2026-09-02bc - K2 wg 4x8 on M=64 A-db
+
+CONTEXT -> sc8db 8x2-along-N A-db is 97-100 us vs
+  W8A8 46. wg 4x8 (M on Y) was ~1.9x at M=256.
+  Steal that geometry on the M=64 A-db tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8db48, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=16 (64 dpas), wg 4x8 NxM, k64 A-db, no SLM.
+  grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16. M=64 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8db48.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8db48.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x8, store_block2d.d16,
+  grf_count 128, no slm_size. cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=64: event 74.00/74.35 us, pipe_host 75.49/75.61
+  vs sc8db 97-100 vs W8A8 46.17/46.45.
+
+VERDICT -> wg 4x8 is a real ~1.3x vs 8x2-N A-db
+  at M=64, new hand floor 75 us (~1.63x W8A8).
+  Throttle=0 at 2800. Geometry is the M=64 steal.
+  Next: 384 dpas unroll at M=256, or stop M=64
+  geometry chasing.
+
+
 
 
 

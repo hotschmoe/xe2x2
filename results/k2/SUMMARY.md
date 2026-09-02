@@ -498,3 +498,17 @@ no SLM.
 
 ~1.9x vs 8x2-along-N. Still ~3x W8A8. Geometry beat
 k128. Next: 4x8 on M=64 A-db, or 384 dpas unroll.
+
+## wg 4x8 A-db M=64 (2026-09-02bc)
+
+sc8db A-db tile, wg 4 along N x 8 along M. spin=512.
+cosine=1.0 max_abs=0. timed act=cur=2800 throttle=0.
+IGA 64x dpas.8x8, grf 128, no SLM.
+
+| shape | card | event_us | pipe_host_us | 8x2-N A-db | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 74.000 | 75.486 | 96.641 | 46.167 |
+| 64 x 5120 | 1 | 74.354 | 75.605 | 100.435 | 46.450 |
+
+~1.3x vs 8x2-N. New M=64 hand floor 75 us, ~1.63x
+W8A8. Next: 384 dpas unroll at M=256.
