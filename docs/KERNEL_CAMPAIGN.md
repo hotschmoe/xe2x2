@@ -73,14 +73,15 @@ in every CONFIG (`sycl+l0` default).
 Two B70s. One-card kernel and math work runs two-wide.
 
 - Independent one-card jobs: `gpu-run --card 0` and `gpu-run --card 1`
-  at the same time, same binary when the question is "does card1 match
-  card0", different arms when the question is a matrix.
+  at the same time. Default is **different arms** (the matrix). Same
+  binary on both cards only when `docs/AGENT_LAUNCH.md` both-card
+  rule says so (new dtype/ISA/numeric, new floor, clock mismatch).
 - Never mix a two-card collective with a one-card job. Either two
-  independent one-card runs, or one two-card run.
+  independent one-card runs, or one two-card run owned by one agent.
 - Per-card compile caches. Do not race one IGC cache directory across
   two cards.
 - Pairing suggestion, not a law: even workstream ids on card0, odd on
-  card1, then swap once so every arm has both-card evidence.
+  card1. Swap a one-card winner onto the sibling later, not every fire.
 - Collectives, P2P, TP=2, PP=2 take both cards and pause the one-card
   matrix.
 

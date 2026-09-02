@@ -43,10 +43,12 @@ measured on these two cards.
 - **TP=1 vs TP=2 is per-op.** Some ops replicate. Some shard.
   Joining neighbors in TP=2 is for *deleting a collective*. P2P/AR
   is latency on this cross-die Gen3 box. Count collectives/token.
-- **Two cards, two-wide.** Independent one-card jobs:
-  `gpu-run --card 0` || `gpu-run --card 1`, then swap. A collective
-  / TP=2 / PP=2 job takes both cards and pauses the kernel matrix.
-  One GPU agent per card. Never two agents on one DRM node.
+- **Two cards, split the matrix.** Independent one-card jobs:
+  `gpu-run --card 0` || `--card 1` on **different arms**. Same
+  binary on both only per `docs/AGENT_LAUNCH.md` both-card rule
+  (new dtype/ISA/numeric, new floor, clock mismatch). A collective
+  / TP=2 / PP=2 job takes both cards, one agent, pause the kernel
+  matrix. One GPU agent per card. Never two agents on one DRM node.
 - **P0 is the only hard GPU gate.** Identities, per-card health,
   two-rank collective health with P2P off, no live serve, JOURNAL.
   After that, K-workstreams are parallelizable.
@@ -99,8 +101,10 @@ health around them. Push all-reduce and min call count are arms.
 Do not start vLLM/sglang to answer a kernel question.
 
 **Done for a workstream:** artifact under `results/`, JOURNAL
-entry, both cards (or both ranks) if it is a kernel/math claim,
-FINDINGS.md only when durable. Preserve dirty worktrees.
+entry. FINDINGS for a new floor after the sibling card has run
+it (or both-card was required). Schedule steals on a matched
+family may JOURNAL from one held-clock card. Preserve dirty
+worktrees.
 
 ## Models (after the math floor, not instead of it)
 

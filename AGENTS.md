@@ -20,8 +20,10 @@ In scope:
   topology, and the failure modes of the above.
 
 Kernel / math campaign map: `docs/KERNEL_CAMPAIGN.md`. After P0,
-one-card kernel jobs run two-wide (`gpu-run --card 0` || `--card 1`).
-Launch pairing and landmines: `docs/AGENT_LAUNCH.md`.
+one-card jobs split across cards (`gpu-run --card 0` || `--card 1`,
+different arms). Same arm on both cards only per the both-card
+rule in `docs/AGENT_LAUNCH.md`. Two-card jobs: one agent, pause
+the one-card matrix. Launch pairing and landmines: that file.
 New-session orchestrator prompt: `docs/ORCHESTRATOR.md`.
 Intel/oneDNN/XeTLA numbers are floors to beat, not ceilings.
 Serving-shaped kernels rank by wall time (us), not TOPS%.

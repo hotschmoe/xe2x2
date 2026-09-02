@@ -10,10 +10,11 @@ Campaign map (open questions, not a locked path):
 
 ## Dual-card scheduling
 
-Two B70s. Independent one-card kernel/math jobs run two-wide
-(`gpu-run --card 0` || `gpu-run --card 1`). Two-card collectives
-pause that matrix. Split experiment matrices across cards, then swap
-so every arm has both-card evidence.
+Two B70s. Independent one-card jobs: different arms on
+`gpu-run --card 0` || `--card 1`. Same arm on both cards only
+for new dtype/ISA/numeric, a new floor, or clock mismatch
+(`docs/AGENT_LAUNCH.md`). Two-card collectives: one agent,
+pause the one-card matrix.
 
 ## P0: freeze the host baseline
 
@@ -40,8 +41,10 @@ floor is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
 Decode quant: producer+GEMM (ba) is 44 us.
 k32 A-db on 4-acc M=256 is 135 us (bf), a tax.
 4-acc wg 4x2 M-on-Y is 115 us (bg) vs 8x2-N 120;
-M=64 floor stays 75. Next: 4-acc wg 4x2x4 no SLM
-(32 threads), or stop M=64 4-acc chasing.
+4x2x4 no SLM is 133 us (bh), a loss. Stop M=64
+4-acc. Floor stays 75. Next: s4 on the M=64 4x8
+A-db tile (new dtype: both-card this fire). After
+that, split distinct one-card arms per card.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
@@ -60,8 +63,11 @@ Pick a directory, one question per run. Details in each README.
 Launch pairing: `docs/AGENT_LAUNCH.md`. A literature agent may fetch
 `docs/REFERENCES.md` campaign papers with no GPU lease.
 
-Exit per workstream: JOURNAL entry, artifact under results/, promote
-to FINDINGS.md only when both cards (or both ranks) support it.
+Exit per workstream: JOURNAL entry, artifact under results/. Promote
+a new floor to FINDINGS.md after the sibling card has run it, or
+immediately when the both-card rule already required two cards.
+Schedule steals on an already-matched family may JOURNAL from one
+held-clock card.
 Napkin priors (compose loses, INT2 is useless, ...) are CONFIG, not
 RESULT. Measure.
 

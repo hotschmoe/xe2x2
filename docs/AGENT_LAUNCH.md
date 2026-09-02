@@ -9,13 +9,19 @@ Latency (us) ranks above TOPS% for serving-shaped work.
 
 - One GPU-touching agent per card, or one agent that owns both cards
   for a two-card job. Never two agents on the same DRM node.
-- One-card math: pair as `gpu-run --card 0` || `gpu-run --card 1`.
+- Default one-card math: **different arms** on card0 and card1 at
+  the same time (`gpu-run --card 0` || `--card 1`). Same binary on
+  both cards only when the both-card rule below says so.
 - A TP=2 / PP=2 / collective agent takes both cards. All one-card
-  kernel agents pause.
+  kernel agents pause. Only one agent is in charge of that job.
+- Compile is CPU docker (`compile_extra.sh`). Two TUs may compile
+  in one docker call (args are a list). Do not race one IGC cache
+  dir across two compiles of the same stem.
 - Read-only literature / ISA-reading agents do not need the lease.
   Run those in parallel with P0 or K-work.
 - Append JOURNAL.md at the bottom. New date letter (2026-09-02e,
-  then f, ...). Do not rewrite someone else's entry.
+  then f, ...). Two parallel one-card arms get two letters. Do not
+  rewrite someone else's entry.
 - One question per experiment directory. Do not "also fix serving."
 - Preserve a dirty worktree. Do not revert sibling agent files.
 - Do not start a vLLM/sglang serve to answer a kernel question.
@@ -24,9 +30,39 @@ Latency (us) ranks above TOPS% for serving-shaped work.
 - Score TP=1 vs TP=2 per op. Fusion that removes a collective is a
   latency win. Not every op wants TP=2.
 
+## Both-card rule (when to run the same arm twice)
+
+Held-clock s8 W8A8 tiles on this host have matched within ~1% us
+and have the same numeric on both cards. Dual-running every steal
+is extra GPU time, not extra silicon.
+
+Run **one card** (held 2800, named clock, `gpu-run --card N`) when:
+
+- The tile family already has both-card held-clock evidence (the
+  s8 scale-to-f16 8x2-N / 4x8 family does).
+- The question is a schedule steal (WG map, unroll, A-db, k-block).
+- Cosine/max_abs close and throttle=0 / clocks held.
+
+Run **both cards** (same binary, card0 || card1) when:
+
+- New dtype, ISA encoding, or numeric contract (s4, s2, NVFP4 LUT,
+  first fuse, first producer, first scale-to-f16 of a family).
+- First floor we might promote to FINDINGS.md (new us champion).
+- Clocks disagreed last time, throttle=1, D3hot, or us spread >5%.
+- Numeric not closed (max_abs or cosine off).
+- Health, copy roof, or anything that previously disagreed.
+
+Swap the winner of a one-card steal onto the other card later, not
+every fire. Promote a new floor to FINDINGS only after the sibling
+card has run it once, or after both-card was required above.
+
+Two-card fabric (TP=2 / PP=2 / collectives / P2P): one agent owns
+both cards. No sibling one-card GPU agent until that job teardown
+and re-health.
+
 ## First GPU agents (suggested pairing, not a law)
 
-After P0 health is green:
+After P0 health is green, split the **matrix**, do not clone:
 
 | Pair | card0 | card1 |
 |---|---|---|
@@ -35,7 +71,7 @@ After P0 health is green:
 | 3 | K2 `dpas<s2,s8>` mix (see hail mary) | K2 `dpas<s2,s2>` |
 | 4 | K1 dump `fp8_gemm_w8a16` | K1 dump `int8_gemm_w8a16` |
 
-Then swap cards so every arm has both-card evidence.
+Same-arm both-card only under the both-card rule, then swap.
 
 A literature agent can run at any time: fetch the papers in
 `docs/REFERENCES.md` (campaign literature) into notes, no GPU.
