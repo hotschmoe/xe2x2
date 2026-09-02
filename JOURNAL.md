@@ -815,6 +815,36 @@ VERDICT -> ngen-order ff lights and is not a 45 us beat.
   Do not freeze 100 us. Floor stays 45 us. Next: ngen wg
   8x2 / ska double-buffer loads, not another ff placement.
 
+### 2026-09-02ag - K2 A double-buffer software pipeline
+
+CONTEXT -> ov-ff still lost decode to no-pf u64. ngen M=1
+  catalog has ska. Steal a real A ping-pong: prologue load
+  A[k=0], issue A[k+64] before dpas of current A.
+
+CONFIG -> sycl+l0, standalone dpas_s8_ska, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Same NT=2 U=16 /
+  NT=4 U=8 as u64. No extra ff. No SLM.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_ska.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_ska.sh 1 4
+  # swap NT
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 64x dpas.8x4 rW:b rA:b, GRF 128, ff=0.
+  A d8 loads 34/18 (prologue + next-k) vs B d8v 64. max_abs=0
+  both cards both NT. Warm clocks 2600-2800. M=4: NT=2 79-81
+  us / NT=4 92-98 vs u64 NT=2 53-69 vs W8A8 45. M=64: 271-650
+  vs u64 314-570. M=256: 965-1100 vs 75. Inner IGA mixes A
+  loads with dpas.
+
+VERDICT -> A double-buffer lights and is not a 45 us beat.
+  Warm NT=2 decode (79-81 us) still loses to no-pf u64 53-69.
+  Do not freeze 79 us. Floor stays 45 us. Next: ngen wg 8x2
+  2D launch, not another K-pipe micro.
+
 
 
 

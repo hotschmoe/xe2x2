@@ -1,0 +1,30 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2600 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:989766776245 energy2=pkg:582401548950 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:903631931701 energy2=pkg:611369138671 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_ska nt=2 rc=4 pipe=A-double-buffer
+oneDNN W8A8 floor M=1/64/256 5120: 42-46 / 46-49 / 74-76 us
+u64 no-pf floor M=4 NT=2 53-69 us; ov-ff NT=2 100-264 us
+=== ska nt=2 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 pipe=A-double-buffer Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,2,16,4,32,1024,11.167,0.0235,0,1
+timed,2,16,4,5120,5120,81.281,2.5801,0,1
+=== ska nt=2 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 pipe=A-double-buffer Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,2,16,4,32,1024,18.412,0.0142,0,1
+timed,2,16,64,5120,5120,631.963,5.3096,0,1
+=== ska nt=2 m=256 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=2 tileN=32 unroll=16 dpas=64 innerK=1024 pipe=A-double-buffer Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,2,16,4,32,1024,10.604,0.0247,0,1
+timed,2,16,256,5120,5120,1084.078,12.3808,0,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:991258115539 energy2=pkg:583251965026 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:905122161682 energy2=pkg:612244961669 temp2_mC=54000

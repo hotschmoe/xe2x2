@@ -1,0 +1,22 @@
+K2 dpas_s8_ska ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8SkaNt4NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+  - name:            _ZTSN12_GLOBAL__N_116DpasS8SkaNt2NameE
+      grf_count:       128
+      has_dpas:        true
+      simd_size:       1
+.text._ZTSN12_GLOBAL__N_116DpasS8SkaNt2NameE.asm: 64 dpas {'8x4': 64} block2d=98 d8=34 d8v=64 ff=0
+  first_order: load@53 -> dpas@147
+  load: send.ugm (1|M0)          r87      r9  null:0  0x0            0x02200003           {I@2,$3} // wr:1+0, rd:2; load_block2d.ugm.d8.a64
+  dpas: dpas.8x4 (16|M0)         r122:d        r122:d            r12:b             r87.0:b          {$3}
+  near_first_dpas: AorB Bv dpas Bv
+.text._ZTSN12_GLOBAL__N_116DpasS8SkaNt4NameE.asm: 64 dpas {'8x4': 64} block2d=82 d8=18 d8v=64 ff=0
+  first_order: load@53 -> dpas@145
+  load: send.ugm (1|M0)          r33      r8  null:0  0x0            0x02200003           {I@2,$3} // wr:1+0, rd:2; load_block2d.ugm.d8.a64
+  dpas: dpas.8x4 (16|M0)         r72:d         r72:d             r11:b             r33.0:b          {$3}
+  near_first_dpas: AorB dpas Bv dpas Bv
+NT=2 A(d8)=34 vs u64 ~32: prologue + pipelined next-k A, no ff.
+Inner mixes A loads with dpas (A Bv dpas Bv dpas A dpas). GRF 128. rW:b rA:b.

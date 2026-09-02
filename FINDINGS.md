@@ -455,6 +455,26 @@ VERDICT -> Moving ff after the first dpas (and prologue
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/ov_dpas_lines.txt`.
 
+## A double-buffer on 64 dpas is not a 45 us beat (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_ska`. Same
+  64x `dpas.8x4` as u64. Prologue load A[k=0], then load
+  A[k+64] before dpas of current A (software pipeline, no
+  ff). Both cards. Prior: ff overlap lost to no-pf u64.
+
+RESULT -> IGA 64x `dpas.8x4`, GRF 128, ff=0. Extra A d8
+  loads (34/18) mixed with dpas. max_abs=0. Warm 2600-2800
+  MHz. M=4 NT=2: 79-81 us vs u64 no-pf 53-69 vs ov-ff
+  100-264 vs W8A8 M=1 42-46. M=64: 271-650 vs u64 314-570.
+  M=256: 965-1100 vs W8A8 74-76.
+
+VERDICT -> Real next-A loads in GRF are not the 45 us
+  kernel. Warm decode still loses to no-pf u64. Do not
+  freeze 79 us. Floor stays 45 us. Remaining steal is ngen
+  wg 8x2 2D launch, not another K-pipe.
+
+Evidence: `results/k2/SUMMARY.md`, `results/k2/ska_dpas_lines.txt`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

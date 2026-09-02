@@ -196,3 +196,18 @@ max_abs=0.
 
 NT=4 c1 started D3hot/2800 (slow M=4). Warm NT=2 is 100 us,
 still above u64 53-69 and W8A8 42-46. Floor stays 45 us.
+
+## A double-buffer software pipeline (2026-09-02ag)
+
+Same 64x dpas.8x4 as u64. Prologue A[k=0], issue A[k+64]
+before current dpas. No ff. ocloc: 64x `dpas.8x4`, GRF 128,
+ff=0, A d8 34/18 + B d8v 64. max_abs=0. Warm 2600-2800 MHz.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | u64 NT=2 |
+|---|---:|---:|---:|---:|---|
+| 4 x 5120 | 81 | 79 | 92 | 98 | 53-69 |
+| 64 x 5120 | 632 | 650 | 271 | 316 | 436-570 |
+| 256 x 5120 | 1084 | 1017 | 965 | 1100 | 594-1198 |
+
+Warm NT=2 is 79-81 us, still above u64 53-69 and W8A8 42-46.
+Floor stays 45 us.
