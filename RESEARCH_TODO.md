@@ -31,12 +31,12 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. SLM A-broadcast plus 64
-dpas on 8x2-N lights (slm 1024, barriers) and loses
-decode to no-SLM wgn (101-140 vs 47-50 vs W8A8 45).
-Faster than old per-k32 SLM 372-463. Hand floor stays
-47-50 us. Next: ngen SLM packing, not more A-share.
-Loop every 20m.
+K0-K6 have both-card RESULTS. ngen M=1 SLM is d32
+store/load/fence, not A-pack. M=1 zero-pad to RC=4 is
+closed; warm NT=2 is 49 us vs W8A8 42-46 vs wgn M=4
+47-50 (card0 D3hot 97). Pad is not 4x cheaper. Hand
+floor stays 47-50 us. Next: ngen d32 ska remainder,
+not more A-pack. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

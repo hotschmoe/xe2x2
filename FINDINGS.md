@@ -532,6 +532,27 @@ VERDICT -> The ngen bundle is not "broadcast A in SLM."
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/slm64_dpas_lines.txt`.
 
+## ngen M=1 SLM is d32, not A-pack; M=1 pad is not 45 us (K2)
+
+CONFIG -> CPU IGA of ngen M=1 W8A8 bin (both cards,
+  md5-identical). GPU: backend `sycl+l0`, `dpas_s8_dec`,
+  same 8x2-along-N 64x `dpas.8x4` as wgn, M=1 zero-padded
+  to RC=4. Both cards.
+
+RESULT -> ngen SLM is `store/load/fence.slm.d32` (14 ops),
+  not `load_block2d` A pack. GPU max_abs=0. Within-run M=1
+  us tracks M=4. Warm card1 NT=2 D0/2800: M=1 49 us vs
+  W8A8 42-46 vs wgn M=4 47-50. D3hot card0: M=1 97 us.
+
+VERDICT -> The packing napkin was a misread of ngen SLM.
+  Pad M=1 does not unlock a 4x cheaper kernel. Do not
+  freeze 49 us (clocks). Hand floor stays 47-50 us. W8A8
+  45 us remains the M=1 incumbent. Next steal is d32 ska
+  remainder, not more A-pack.
+
+Evidence: `results/k1/igc_card0_int8a8_jit/dnnl_dump_gpu_gemm_kernel.0.bin.xe2.asm`,
+  `results/k2/SUMMARY.md`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

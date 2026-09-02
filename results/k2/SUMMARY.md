@@ -258,3 +258,18 @@ max_abs=0.
 NT=2 c1 started D3hot (140). Decode loses to no-SLM wgn.
 Faster than old per-k32 SLM 372-463. Hand floor stays
 47-50 us.
+
+## M=1 pad to RC=4 (2026-09-02ak)
+
+Same 8x2-along-N 64 dpas as wgn. M=1 zero-padded to 4
+rows. ngen M=1 SLM is d32 store/load/fence, not A pack.
+max_abs=0.
+
+| shape | nt2 c0 | nt2 c1 | nt4 c0 | nt4 c1 | W8A8 |
+|---|---:|---:|---:|---:|---|
+| 1 x 5120 | 97 | 49 | 113 | 75 | 42-46 |
+| 4 x 5120 | 131 | 81 | 177 | 119 | 42-46 (M=1) |
+| 64 x 5120 | 1039 | 637 | 578 | 347 | 46-49 |
+
+Warm card1 NT=2 M=1 is 49 us (D0/2800). card0 D3hot 97.
+M=1 tracks M=4 in-run. Not a 45 us beat. Do not freeze 49.

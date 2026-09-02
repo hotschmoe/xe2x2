@@ -934,6 +934,36 @@ VERDICT -> SLM A-broadcast plus 64 dpas lights and is not
   no-SLM wgn at decode. Do not freeze 101 us. Hand floor
   stays 47-50 us. Next: ngen SLM is pack, not A-broadcast.
 
+### 2026-09-02ak - K2 M=1 pad to RC=4 plus ngen SLM read
+
+CONTEXT -> ngen M=1 catalog has 14 SLM ops. IGA of the
+  M=1 bin is store/load/fence.slm.d32, not A-tile pack.
+  wgn floor 47-50 was pad M=4 vs W8A8 M=1 42-46. Measure
+  M=1 zero-padded to RC=4 on the wgn 8x2-N tile.
+
+CONFIG -> sycl+l0, standalone dpas_s8_dec, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card N. Same 8x2-N 64 dpas
+  as wgn. Host oracle on real M rows.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_dec.sh 0 2
+  gpu-run --card 1 kernels/esimd_dpas/run_dec.sh 1 4
+  # swap NT
+  # CPU: grep send.slm dnnl_dump_gpu_gemm_kernel.0.bin.xe2.asm
+  ```
+
+RESULT -> ngen M=1 SLM is 14x d32 store/load/fence, not
+  block2d A pack. max_abs=0 both cards. Within-run M=1 us
+  tracks M=4 (same RC=4 work). Warm D0/2800 card1 NT=2:
+  M=1 49 us / M=4 81 vs W8A8 M=1 42-46 vs wgn M=4 47-50.
+  D3hot card0 NT=2: M=1 97 / M=4 131. NT=4 M=1 75-113.
+
+VERDICT -> Zero-pad M=1 is closed and is not a 45 us beat.
+  It is not 1/4 of M=4. Do not freeze 49 us (clocks 49 vs
+  97). Hand floor stays 47-50 us. ngen SLM steal is d32
+  ska remainder, not A-pack.
+
 
 
 

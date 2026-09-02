@@ -1,0 +1,30 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1187631206359 energy2=pkg:684695251220 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1102461551147 energy2=pkg:716802680786 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=dpas_s8_dec nt=4 rc=4 wg=8x2_alongN padM=RC
+oneDNN W8A8 floor M=1/64/256 5120: 42-46 / 46-49 / 74-76 us
+wgn no-pad M=4 NT=2 floor 47-50 us
+=== dec nt=4 m=1 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,3.068,0.0855,0,1
+timed,4,8,1,5120,5120,74.615,0.7027,0,1
+=== dec nt=4 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,5.396,0.0486,0,1
+timed,4,8,4,5120,5120,119.266,1.7584,0,1
+=== dec nt=4 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8s32 RC=4 K64=64 execN=16 NT=4 tileN=64 unroll=8 dpas=64 innerK=512 wg=8x2_alongN padM=RC Bload=Transformed warmup=5 iters=20
+phase,nt,unroll,m,n,k,us,TOPS,max_abs,ok
+check,4,8,4,64,512,8.526,0.0307,0,1
+timed,4,8,64,5120,5120,346.646,9.6797,0,1
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=1217 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:1187959952026 energy2=pkg:684867343872 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:1102819903564 energy2=pkg:717012178344 temp2_mC=52000
