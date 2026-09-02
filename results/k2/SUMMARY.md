@@ -544,3 +544,20 @@ Atomic), grf 128, no SLM, spill 768 B NT=2.
 W8A8. Floor stays 4-acc 128 us (~1.7x). 384
 count is not the 75 us kernel. Next: A-db on
 4-acc M=256, or 4-acc M=64 wg 4x2.
+
+## k32 A-db on 4-acc M=256 (2026-09-02bf)
+
+Same 4-acc wg 4x8 k128 256 dpas plus k32 A
+ping-pong. spin=512. cosine=1.0 max_abs=0.
+timed act=2783 cur=2800 throttle=1. IGA 256x
+dpas.8x8 (192 Atomic), grf 128, no SLM, NT=2
+no spill.
+
+| shape | card | event_us | pipe_host_us | 4-acc | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 135.516 | 135.131 | 128.390 | 76.1 |
+| 256 x 5120 | 1 | 135.859 | 134.881 | 128.568 | 74.9 |
+
+~1.05x slower than 4-acc no A-db. Floor stays
+128 us. A-db does not transfer from M=64.
+Next: 4-acc on M=64 wg 4x2.

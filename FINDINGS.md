@@ -872,6 +872,26 @@ Evidence: `results/k2/sc8w48m6_m256_n2_s512_card0.txt`,
   `results/k2/sc8w48m6_m256_n2_s512_card1.txt`,
   `results/k2/sc8w48m6_dpas_lines.txt`.
 
+## k32 A-db on 4-acc is a tax at M=256 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc8w48m4db`.
+  Same 4-acc wg 4x8 k128 256x `dpas.8x8` plus ska-style
+  k32 A ping-pong. Both cards, NT=2, spin=512.
+  Prior: A-db won at M=64.
+
+RESULT -> IGA 256x `dpas.8x8` (192 `{Atomic}`),
+  `grf_count` 128, no SLM, NT=2 no spill.
+  cosine=1.0 max_abs=0. timed act=2783 cur=2800
+  throttle=1. M=256 pipe_host 135.1/134.9 vs
+  4-acc no A-db 128 vs W8A8 75.
+
+VERDICT -> A-db is shape-dependent. On 4-acc M=256
+  it is a ~1.05x tax, not a beat. Floor stays 128 us.
+
+Evidence: `results/k2/sc8w48m4db_m256_n2_s512_card0.txt`,
+  `results/k2/sc8w48m4db_m256_n2_s512_card1.txt`,
+  `results/k2/sc8w48m4db_dpas_lines.txt`.
+
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_fuse`.
@@ -1012,7 +1032,7 @@ tile. "we cannot beat oneDNN" is false at decode M=1 5120
 scale-to-f16 (34 vs 44 us) and still true at M=64 (best hand
 wg 4x8 A-db 75 vs 46 us; 8x2-N A-db 97-100) and at M=256
 (4-acc wg 4x8 128 vs 8-row 4x8 228 vs 6-acc 384-count
-  210 vs K4 W8A8 75).
+  210 vs A-db 4-acc 135 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
 ~10 us over GEMM-only 34. Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,

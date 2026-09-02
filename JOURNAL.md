@@ -1606,6 +1606,41 @@ VERDICT -> 384-count via 6-acc is a real loss vs
   kernel. Next: A-db on 4-acc M=256, or 4-acc on
   M=64 wg 4x2 (4x8 would idle).
 
+### 2026-09-02bf - K2 k32 A-db on 4-acc M=256
+
+CONTEXT -> 4-acc wg 4x8 k128 is 128 us at M=256 vs
+  W8A8 75. A-db won at M=64 (75 vs 97). 384-count
+  6-acc lost (210). Steal ska-style k32 A ping-pong
+  on the 4-acc tile: prologue A[k=0], issue A[k+32]
+  before dpas. Keep 256 dpas. Not full k128 A-db.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4db, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31, gpu-run --card N.
+  NT=2 U=8, 4 M-tiles, wg 4x8 NxM, k128, k32 A-db,
+  no SLM. grf_size<256>. spin=512 warmup=10 iters=20.
+  Fill [-64,64] scales 0.02 out f16. M=256 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48m4db.sh 0 2 512
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48m4db.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: 256x dpas.8x8 (192x {Atomic}),
+  store_block2d d16, grf_count 128, no slm_size.
+  NT=2 no spill (NT=4 4608 B). cosine=1.0 max_abs=0.
+  timed act=2783 cur=2800 throttle=1.
+  M=256: event 135.52/135.86 us, pipe_host
+  135.13/134.88 vs 4-acc no A-db 128 vs W8A8 75.
+
+VERDICT -> k32 A-db on 4-acc is a real small tax
+  (~135 vs 128, ~1.05x). Floor stays 128 us
+  (~1.7x W8A8). A-db that won at M=64 does not
+  transfer to this M=256 tile. Next: 4-acc on
+  M=64 wg 4x2.
+
+
 
 
 

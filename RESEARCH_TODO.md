@@ -37,8 +37,9 @@ wg 4x8 A-db 75 us (bc), ~1.63x W8A8 46. M=256 hand
 floor is 4-acc wg 4x8 128 us (bd), ~1.7x W8A8 75;
 8-row 4x8 was 228 (bb). 384-count 6-acc is 210 us
 (be), a loss. GRF256 still zebin 128.
-Decode quant: producer+GEMM (ba) is 44 us. Next:
-A-db on 4-acc M=256, or 4-acc on M=64 wg 4x2.
+Decode quant: producer+GEMM (ba) is 44 us.
+k32 A-db on 4-acc M=256 is 135 us (bf), a tax.
+Next: 4-acc on M=64 wg 4x2.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
