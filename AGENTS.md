@@ -1,6 +1,7 @@
 # AGENTS.md -- standing rules for xe2x2
 
-Keep this file short. Evidence lives under results/ and docs/.
+Keep this file short. Evidence lives in JOURNAL.md, FINDINGS.md, results/,
+and docs/.
 
 ## Charter
 
@@ -23,6 +24,9 @@ Out of scope unless explicitly expanded:
 
 - ASCII only in repository files and terminal output.
 - Record experiments as CONFIG -> COMMAND -> RESULT -> VERDICT.
+- Append new JOURNAL.md entries at the bottom.
+- Promote a durable result into FINDINGS.md. Do not leave it only in
+  the journal.
 - Do not claim speed or stability without matched configuration, coherence,
   identity, health, and teardown evidence.
 - Preserve user changes in a dirty worktree.

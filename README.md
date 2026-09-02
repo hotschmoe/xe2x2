@@ -38,6 +38,7 @@ kernels/     device kernels, microbenchmarks, IGC/SYCL/L0 traces
 parallel/    TP=2, PP=2, and 2x2 experiment protocols
 results/     small tracked evidence (large artifacts stay gitignored)
 docs/        host, topology, and standing notes
+scripts/     xe2x2 harnesses; GPU lease stays in b70_ai_things
 ```
 
 ## Standing rules
@@ -49,7 +50,15 @@ Do not bypass the lease from this repo.
 
 ## Start here
 
+- [AGENTS.md](AGENTS.md): safety, scope, and GPU lease.
+- [RESEARCH_TODO.md](RESEARCH_TODO.md): work order, P0 first.
+- [FINDINGS.md](FINDINGS.md): current evidence ledger.
+- [JOURNAL.md](JOURNAL.md): newest experiment window.
+- [docs/HOST.md](docs/HOST.md): measured inventory of this machine.
+
+Work order:
+
 1. Record host identity (kernel, KMD, UMD, L0, oneCCL, PyTorch) before
-   changing anything. See `docs/HOST.md`.
+   changing anything.
 2. Per-card health, then two-rank collective health, then TP=2 / PP=2.
 3. Log every run as CONFIG -> COMMAND -> RESULT -> VERDICT.
