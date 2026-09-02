@@ -2386,3 +2386,67 @@ VERDICT -> Prefill-256 wide-N is a real 467.9 us
   at cur=2800, ~3.66x N=5120. Throttle=1, one-card.
   Do not freeze until card0. Rank us. Next:
   sibling s8 M=256 N=17408 vs s8 M=256 K=17408.
+
+### 2026-09-02cf - K2 s8 M=256 N=17408 sibling card0
+
+CONTEXT -> card1 s8 4-acc N=17408 was 467.9 us at
+  M=256 cur=2800 throttle=1, numeric closed.
+  Sibling swap to close the INT8 prefill-256
+  wide-N floor.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=8 spin=512 as ce.
+  Fill s8 [-64,64] scales 0.02 out f16. M=256
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_sc8w48m4_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2700
+  cur=2800 throttle=1 (same flag as card1 and
+  the N=5120 128 us floor).
+  M=256 card0: event 472.594 us, pipe_host 471.658
+  vs card1 467.880 vs N=5120 128 vs s4 140.0 vs
+  napkin 435. Spread ~0.8%.
+
+VERDICT -> Sibling matches. New s8 M=256 wide-N
+  floor 469.8 us at cur=2800 both cards,
+  throttle=1. ~3.67x N=5120, near linear. s4
+  140.0 is ~3.36x this tile. Rank us.
+
+### 2026-09-02cg - K2 s8 M=256 K=17408 4-acc card1
+
+CONTEXT -> s8 4-acc is 128 us at M=256 K=5120.
+  s4 same tile K=17408 is 149.0 us (~3.07x).
+  Napkin K-linear 128*17408/5120 ~435 us. INT8
+  vs s4 at FFN-down prefill-256. One-card.
+
+CONFIG -> sycl+l0, standalone dpas_s8_sc8w48m4,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=8 spin=512.
+  Fill s8 [-64,64] scales 0.02 out f16. M=256
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_sc8w48m4_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2750
+  cur=2800 throttle=1 (same flag as this tile's
+  128 us floor).
+  M=256 card1: event 477.453 us, pipe_host 476.927
+  vs K=5120 128 vs N=17408 469.8 vs s4 149.0 vs
+  napkin 435. Ratio 476.9/128 ~3.73x, near
+  K-linear. s4 149.0 is ~3.20x this s8.
+
+VERDICT -> Prefill-256 wide-K is a real 476.9 us
+  at cur=2800, ~3.73x K=5120, slightly slower
+  than wide-N 469.8 at the same B bytes. Gap
+  shrinks vs M=64 (374.7 vs 338.9). Throttle=1,
+  one-card. Do not freeze until card0. Rank us.
+  Next: sibling s8 M=256 K=17408 vs s8 decode
+  N=17408.
