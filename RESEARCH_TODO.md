@@ -31,9 +31,9 @@ Exit gate: identities recorded, both health layers green, no live
 server, JOURNAL entry written.
 
 P0 passed 2026-09-02g (`results/p0/SUMMARY.md`, docs/HOST.md freeze).
-K0-K6 have both-card RESULTS. ESIMD RC=4 is dpas.8x4 and still
-loses to 45 us (M=4 pad 77-168 us). grf_size<256> left zebin at
-128. Next: SLM pack / wg 8x2 like the W8A8 ngen M=1 kernel.
+K0-K6 have both-card RESULTS. RC=4 + SLM A share lost (M=4
+372-463 us vs no-SLM 77-168 vs W8A8 45). Next: unroll k64 /
+64 dpas.8x4 like the ngen M=1 kernel, not another SLM micro.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)

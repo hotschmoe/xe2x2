@@ -361,6 +361,22 @@ VERDICT -> RC=4 compiles and matches the stolen encoding. It is
 
 Evidence: `results/k2/SUMMARY.md`, `results/k2/rc4_dpas_line.txt`.
 
+## SLM A share plus per-K barrier loses at decode (K2)
+
+CONFIG -> backend `sycl+l0`, `dpas_s8_slm`, RC=4, WG=16, A 4x32
+  in SLM, Transformed B. Both cards. Prior: W8A8 M=1 wg 8x2 + SLM
+  is why it is 45 us.
+
+RESULT -> max_abs=0. M=4 5120: 372-463 us vs RC=4 no-SLM 77-168
+  vs W8A8 M=1 42-46. M=64/256 also slower than the no-SLM RC=4
+  tile.
+
+VERDICT -> Copying "use SLM" without the rest of the ngen
+  schedule (k64, unrolled 64 dpas, wg 8x2 layout) is a miss.
+  Barrier-per-K-chunk A broadcast is not the 45 us kernel.
+
+Evidence: `results/k2/SUMMARY.md`.
+
 ## Vectorized in-register nibble LUT is ~6-8x the scalar arm (K6)
 
 CONFIG -> same VNNI4 in-register spoof, simd nibble decode +

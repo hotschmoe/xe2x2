@@ -681,6 +681,27 @@ RESULT -> RC=4 IGA is dpas.8x4, max_abs=0. M=4 5120: 77-168 us
 VERDICT -> RC=4 lights, does not beat 45 us. GRF256 request
   did not take. Promote the encoding + the miss.
 
+### 2026-09-02ab - SLM A share WG=16 RC=4
+
+CONTEXT -> W8A8 M=1 is dpas.8x4 wg 8x2 + SLM. Try sharing A
+  in SLM across 16 threads (N=256 per WG).
+
+CONFIG -> sycl+l0, dpas_s8_slm, RC=4, slm_block_store/load A,
+  barrier per K-chunk, gpu-run --card N.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_slm.sh 0
+  gpu-run --card 1 kernels/esimd_dpas/run_slm.sh 1
+  ```
+
+RESULT -> max_abs=0. M=4 5120: 372-463 us vs RC=4 no-SLM 77-168
+  vs W8A8 45. M=64: 525-1083. M=256: 1296-1373.
+
+VERDICT -> SLM A + per-K barrier loses. Promote the miss.
+  Floor stays 45 us. Need the ngen unroll/k64, not just SLM.
+
+
 
 
 

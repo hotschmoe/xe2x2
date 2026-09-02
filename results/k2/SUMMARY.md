@@ -116,3 +116,18 @@ RC=4 lights and is not a 45 us beat. Prefill is worse than RC=8.
 `intelex::grf_size<256>` compiled. `-ftarget-register-alloc-mode=pvc:large`
 on dpas_s8 also compiled. Both AOT zebins still `grf_count: 128`.
 Not a 256-GRF RESULT. Do not quote those us as a GRF A/B.
+
+## SLM A share WG=16 RC=4 (2026-09-02ab)
+
+oneDNN M=1 is wg 8x2 + SLM. This arm: 16 threads share one A
+4x32 in SLM, each does N=16 (WG N=256). max_abs=0. Barrier
+per K-chunk.
+
+| shape | card0 us | card1 us | RC=4 no SLM |
+|---|---:|---:|---|
+| 4 x 5120 | 463 | 372 | 77-168 |
+| 64 x 5120 | 525 | 1083 | 614-894 |
+| 256 x 5120 | 1373 | 1296 | 1028-1069 |
+
+SLM A + barrier is slower than per-thread A at decode. Floor
+stays 45 us.
