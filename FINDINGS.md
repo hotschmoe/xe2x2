@@ -1216,23 +1216,45 @@ VERDICT -> New s8 M=256 wide-K floor 477.4 us at
 Evidence: `results/k2/sc8w48m4_m256_k17408_n2_s512_card0.txt`,
   `results/k2/sc8w48m4_m256_k17408_n2_s512_card1.txt`.
 
-## s8 decode N=17408 is 142.1 us on card1, pending sibling (K2)
+## s8 decode N=17408 is 141.6 us at 2800 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc`.
   Same RC=4 8x2-N INT8 tile, M=1 N=17408 K=5120.
-  Card1 only, NT=2, spin=4000. Prior: N-linear
+  Both cards, NT=2, spin=4000. Prior: N-linear
   ~116 us; s4 29.5.
 
 RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
-  throttle=0. M=1 pipe_host 142.05 vs N=5120 34
-  vs s4 29.5 vs napkin 116. M=4 tracks (142.33).
+  throttle=0. M=1 pipe_host 141.22/142.05 vs
+  N=5120 34 vs s4 29.5 vs napkin 116. M=4
+  tracks. Spread ~0.6%.
 
-VERDICT -> INT8 decode wide-N is ~4.18x N=5120,
-  worse than linear. s4 29.5 is ~4.82x this tile
-  (s4 was 1.80x N=5120). One-card. Do not freeze
-  142.1 us as a floor until card0 runs it.
+VERDICT -> New s8 decode wide-N floor 141.6 us
+  at 2800 both cards. ~4.16x N=5120, worse than
+  linear. s4 29.5 is ~4.80x this tile (s4 was
+  1.80x N=5120). Rank us.
 
-Evidence: `results/k2/sc_n17408_n2_s4000_card1.txt`.
+Evidence: `results/k2/sc_n17408_n2_s4000_card0.txt`,
+  `results/k2/sc_n17408_n2_s4000_card1.txt`.
+
+## s8 decode K=17408 is 261.5 us on card1, pending sibling (K2)
+
+CONFIG -> backend `sycl+l0`, standalone `dpas_s8_sc`.
+  Same RC=4 8x2-N INT8 tile, M=1 N=5120 K=17408.
+  Card1 only, NT=2, spin=4000. Prior: K-linear
+  ~116 us; s4 53.4.
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=1 pipe_host 261.51 vs K=5120 34
+  vs N=17408 141.6 vs s4 53.4 vs napkin 116.
+  M=4 tracks (261.44).
+
+VERDICT -> INT8 decode wide-K is ~7.69x K=5120,
+  much worse than linear. s4 53.4 is ~4.90x
+  this tile (s4 was 3.24x). One-card. Do not
+  freeze 261.5 us as a floor until card0 runs
+  it.
+
+Evidence: `results/k2/sc_k17408_n2_s4000_card1.txt`.
 
 ## Scalar RMSNorm-quant inside the GEMM is not a 34 us fuse (K5)
 
@@ -1393,10 +1415,11 @@ than wide-N 338.9). s8 M=256 N=17408 is
 140.0; throttle=1 like the 128 us floor).
 s8 M=256 K=17408 is 477.4 us both cards
 (~3.73x K=5120 vs s4 149.0). Qwen FFN s8
-prefill map is closed. One-card pending
-sibling: s8 decode N=17408 is 142.1 us
-(~4.18x N=5120 vs s4 29.5; worse than
-linear).
+prefill map is closed. s8 decode N=17408 is
+141.6 us both cards (~4.16x N=5120 vs s4
+29.5; worse than linear). One-card pending
+sibling: s8 decode K=17408 is 261.5 us
+(~7.69x K=5120 vs s4 53.4).
 It is
 still true for INT8 s8 at M=64
 (best hand wg 4x8 A-db

@@ -818,6 +818,23 @@ act=cur=2800 throttle=0.
 | 1 x 17408 | 1 | 142.516 | 142.052 | 34 | 29.5 | 116 |
 | 4 x 17408 | 1 | 140.685 | 142.333 | 34 | 29.5 | 116 |
 
-~4.18x N=5120, worse than linear. s4 29.5 is
-~4.82x this s8 (s4 was 1.80x). One-card.
-Next: sibling vs s8 decode K=17408.
+~4.18x N=5120, worse than linear. Sibling
+card0 pipe 141.222 (cj). New decode wide-N
+floor 141.6 us both cards. s4 29.5 is
+~4.80x this s8 (s4 was 1.80x).
+
+## s8 decode K=17408 card1 (2026-09-02ck)
+
+Same s8 RC=4 8x2-N tile, N=5120 K=17408.
+spin=4000. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | K=5120 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 1 | 261.716 | 261.510 | 34 | 53.4 | 116 |
+| 4 x 5120 x 17408 | 1 | 260.594 | 261.442 | 34 | 53.4 | 116 |
+
+~7.69x K=5120, much worse than linear. s4
+53.4 is ~4.90x this s8 (s4 was 3.24x).
+One-card. Next: sibling vs oneDNN W8A8
+M=1 N=17408.
