@@ -2660,6 +2660,29 @@ VERDICT -> v-conv T=64 C=6144 is
 Evidence: `results/k7/esimd_conv1d_t64_c6144_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t64_c6144_s4000_card1.txt`.
 
+## ESIMD conv1d T=64 C=10240 is 10.5-10.7 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. C=10240
+  T=64 K=4 f16 (packed qkv).
+  Both cards. spin=4000. Prior:
+  C=2048 10.1, C=6144 10.2-10.4,
+  napkin 5x ~50.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 10.667/10.535. Spread
+  ~1.3%.
+
+VERDICT -> Packed-qkv conv T=64
+  C=10240 is 10.5-10.7 us
+  pipe_host both cards at 2800,
+  wash vs C=2048 10.1 not 5x.
+  Occupancy. Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t64_c10240_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t64_c10240_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4042,10 +4065,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   cards at 2800 (2026-09-03fx/ga),
   wash vs C=2048 10.1 not 3x.
   Occupancy. ESIMD conv T=64
-  C=10240 is 10.5 us card1 at
-  2800 (2026-09-03gb), wash vs
-  10.1 not 5x. One-card. Do not
-  freeze 10.5 until sibling.
+  C=10240 is 10.5-10.7 us both
+  cards at 2800 (2026-09-03gb/gc),
+  wash vs C=2048 10.1 not 5x.
+  Occupancy. ESIMD conv T=256
+  C=10240 is 40.7 us card1 at
+  2800 (2026-09-03gd), ~1.07x
+  C=6144 38.0 not 5x. One-card.
+  Do not freeze 40.7 until
+  sibling.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

@@ -418,12 +418,16 @@ C=6144 is 10.2-10.4 us both
 cards (2026-09-03fx/ga) at 2800,
 wash vs C=2048 10.1 not 3x.
 ESIMD conv T=64 C=10240 is
-10.5 us card1 (2026-09-03gb) at
-2800, wash vs 10.1 not 5x.
-Occupancy. Next: split. card0:
-sibling conv T=64 C=10240.
-card1: ESIMD conv T=256 C=10240.
-Loop every 5m.
+10.5-10.7 us both cards
+(2026-09-03gb/gc) at 2800, wash
+vs C=2048 10.1 not 5x.
+Occupancy. ESIMD conv T=256
+C=10240 is 40.7 us card1
+(2026-09-03gd) at 2800, ~1.07x
+C=6144 38.0 not 5x. Next: split.
+card0: sibling conv T=256
+C=10240. card1: chunk/WY delta
+T=256. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -434,13 +438,12 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling conv T=64 C=10240
-   (card1 10.5 wash vs 10.1).
-2. ESIMD conv T=256 C=10240
-   (packed qkv width, T=256 38.0).
+1. sibling conv T=256 C=10240
+   (card1 40.7 vs C=6144 38.0).
+2. chunk/WY delta T=256
+   (fused T=256 is 1100 leftover).
 Park: P2/P3, GRF256
-retry (still zebin 128), chunk/WY
-delta (fused T=256 is 1100), mixer
+retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
 

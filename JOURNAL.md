@@ -8563,6 +8563,67 @@ VERDICT -> ESIMD conv T=64 C=10240
   pipe_host. Next: sibling vs
   conv T=256 C=10240.
 
+### 2026-09-03gc - K7 ESIMD conv1d T=64 C=10240 sibling card0
+
+CONTEXT -> card1 conv T=64 C=10240
+  was 10.5 us pipe_host at 2800.
+  Wash vs C=2048 10.1. Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. C=10240 T=64 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t64_c10240.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 10.128 pipe_host 10.667 vs
+  card1 10.535. Spread ~1.3%.
+  253 GB/s.
+
+VERDICT -> Sibling matches. ESIMD
+  conv T=64 C=10240 is 10.5-10.7 us
+  pipe_host both cards at 2800.
+  Wash vs C=2048 10.1 not 5x.
+  Occupancy. Rank pipe_host.
+
+### 2026-09-03gd - K7 ESIMD conv1d T=256 C=10240 card1
+
+CONTEXT -> C=2048 T=256 is 37.7.
+  C=6144 T=256 is 38.0. Packed
+  qkv width. Napkin 5x ~189 if
+  C-linear. T=64 C=10240 10.5.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 1. C=10240 T=256 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t256_c10240.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 40.393 pipe_host 40.742.
+  259 GB/s. vs C=6144 38.0
+  (~1.07x) vs napkin 189.
+
+VERDICT -> ESIMD conv T=256
+  C=10240 is 40.7 us pipe_host
+  card1 at 2800, ~1.07x C=6144
+  38.0 not 5x. Small packed-width
+  tax, occupancy still. One-card.
+  Do not freeze 40.7 until
+  sibling. Rank pipe_host. Next:
+  sibling vs chunk/WY delta.
+
+
 
 
 
