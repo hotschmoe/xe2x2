@@ -143,9 +143,12 @@ A-db M=64 is 331.6 us both cards
 closed-form LUT 4x8 A-db M=256 is 1083
 us both cards (2026-09-03ap), ~3.27x
 M=64, ~1.11x merge 1203. closed-form
-LUT 4x8 A-db M=64 N=17408 is 877 us
-card1 (2026-09-03aq), ~2.64x square
-vs s8 338.9, throttle=1. One-card.
+LUT 4x8 A-db M=64 N=17408 is 880 us
+both cards (2026-09-03ar), ~2.65x
+square vs s8 338.9, throttle=1.
+closed-form LUT 4x8 A-db M=64 K=17408
+is 1123 us card1 (2026-09-03as),
+K-linear ~3.39x vs s8 374.7. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -158,8 +161,8 @@ lights at ~37 us after M=64 heat
 (clocks not held 2800). MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nibble_lut_scf_db48
-M=64 N=17408 (throttle=1 last). card1:
-nibble_lut_scf_db48 M=64 K=17408.
+M=64 K=17408. card1: nibble_lut_scf_db48
+M=256 N=17408.
 Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)

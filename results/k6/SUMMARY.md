@@ -402,18 +402,32 @@ throttle=0.
 New M=256 floor 1083 us both cards.
 ~3.27x M=64. ~1.11x merge 1203.
 
-## closed-form LUT 4x8 A-db M=64 N=17408 card1 (2026-09-03aq)
+## closed-form LUT 4x8 A-db M=64 N=17408 (2026-09-03aq/ar)
 
 Same `nibble_lut_scf_db48`, M=64 N=17408
 K=5120. cosine=1.0 max_abs=0. timed
-act=2783 cur=2800 throttle=1.
+act=2767/2783 cur=2800 throttle=1.
 
 | shape | card | pipe_host_us | square | merge | s8 | napkin |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 | 0 | 882.536 | 331.6 | 1032 | 338.9 | 872 |
 | 64 x 17408 | 1 | 877.318 | 331.6 | 1032 | 338.9 | 872 |
 
-~2.64x square. ~1.18x merge. Napkin held.
-Throttle=1. One-card. Do not freeze 877 us.
+New wide-N floor 880 us both cards.
+~2.65x square. ~1.17x merge. Throttle=1.
+
+## closed-form LUT 4x8 A-db M=64 K=17408 card1 (2026-09-03as)
+
+Same `nibble_lut_scf_db48`, M=64 N=5120
+K=17408. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | square | merge | s8 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 1 | 1123.392 | 331.6 | 1333 | 374.7 | 1127 |
+
+K-linear ~3.39x. ~1.19x merge. Napkin
+held. One-card. Do not freeze 1123 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

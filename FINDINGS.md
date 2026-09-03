@@ -731,27 +731,51 @@ VERDICT -> New 4x8 A-db closed-form LUT
 Evidence: `results/k6/lutscfdb48_m256_n2_s512_card0.txt`,
   `results/k6/lutscfdb48_m256_n2_s512_card1.txt`.
 
-## Closed-form LUT 4x8 A-db N=17408 is 877 us at M=64 (K6)
+## Closed-form LUT 4x8 A-db N=17408 is 880 us at M=64 (K6)
 
 CONFIG -> backend `sycl+l0`, same
   `nibble_lut_scf_db48`. M=64 N=17408
-  K=5120. Card1 only, NT=2, spin=512.
+  K=5120. Both cards, NT=2, spin=512.
   Never bitcast. Prior: 331.6*1032/392.4
   ~872 us.
 
 RESULT -> cosine=1.0 max_abs=0. timed
-  act=2783 cur=2800 throttle=1. M=64
-  pipe_host 877.318 vs 5120 331.6 vs
-  merge 1032 vs s8 338.9 vs s4 94.7 vs
-  compose 326.9 vs napkin 872.
+  act=2767/2783 cur=2800 throttle=1.
+  M=64 pipe_host 882.54/877.32 vs 5120
+  331.6 vs merge 1032 vs s8 338.9 vs s4
+  94.7 vs compose 326.9 vs napkin 872.
+  Spread ~0.6%.
 
-VERDICT -> Wide-N closed-form LUT is
-  ~2.64x square, ~1.18x merge 1032,
-  ~2.59x s8 338.9. Napkin held.
-  Throttle=1. One-card. Do not freeze
-  877 us until card0.
+VERDICT -> New 4x8 A-db closed-form LUT
+  wide-N floor 880 us at ~2770/2800 both
+  cards, throttle=1. ~2.65x square,
+  ~1.17x merge 1032, ~2.60x s8 338.9.
+  Napkin held. Rank us.
 
-Evidence: `results/k6/lutscfdb48_m64_n17408_n2_s512_card1.txt`.
+Evidence: `results/k6/lutscfdb48_m64_n17408_n2_s512_card0.txt`,
+  `results/k6/lutscfdb48_m64_n17408_n2_s512_card1.txt`.
+
+## Closed-form LUT 4x8 A-db K=17408 is 1123 us at M=64 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `nibble_lut_scf_db48`. M=64 N=5120
+  K=17408. Card1 only, NT=2, spin=512.
+  Never bitcast. Prior: 331.6*1333/392.4
+  ~1127 us.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  1123.392 vs 5120 331.6 vs N=17408 880
+  vs merge 1333 vs s8 374.7 vs s4 106.0
+  vs compose 403.4 vs napkin 1127.
+
+VERDICT -> Wide-K closed-form LUT is
+  K-linear ~3.39x, ~1.19x merge 1333,
+  ~3.00x s8 374.7. Napkin held.
+  One-card. Do not freeze 1123 us until
+  card0.
+
+Evidence: `results/k6/lutscfdb48_m64_k17408_n2_s512_card1.txt`.
 
 ## E2M1 two-term 4x8 A-db N=17408 is 326.9 us at M=64 (K3/K6)
 
@@ -2148,9 +2172,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   closed-form LUT 4x8 A-db M=256 is 1083
   us both cards (~3.27x M=64, ~1.11x
   merge 1203). closed-form LUT 4x8 A-db
-  M=64 N=17408 is 877 us card1 (~2.64x
-  square vs s8 338.9, throttle=1).
-  Do not freeze 877 us.
+  M=64 N=17408 is 880 us both cards
+  (~2.65x square vs s8 338.9,
+  throttle=1). closed-form LUT 4x8 A-db
+  M=64 K=17408 is 1123 us card1 (K-linear
+  ~3.39x vs s8 374.7). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

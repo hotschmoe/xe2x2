@@ -4199,3 +4199,67 @@ VERDICT -> Wide-N closed-form LUT is 877
   338.9. Throttle=1. One-card. Do not
   freeze until card0. Rank us. Next:
   sibling scf N=17408 vs scf M=64 K=17408.
+
+### 2026-09-03ar - K6 closed-form LUT 4x8 A-db N=17408 sibling card0
+
+CONTEXT -> card1 closed-form 4x8 N=17408
+  was 877 us at 2783/2800, throttle=1,
+  numeric closed. Sibling swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_scf_db48_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2767 cur=2800 throttle=1.
+  M=64 card0: event 883.708 us, pipe_host
+  882.536 vs card1 877.318 vs 5120 331.6
+  vs merge 1032 vs s8 338.9 vs s4 94.7.
+  Spread ~0.6%. min/max 879.7-900.1.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  closed-form LUT wide-N floor 880 us at
+  ~2770/2800 both cards, throttle=1.
+  ~2.65x square, ~1.17x merge 1032,
+  ~2.60x s8 338.9. Rank us.
+
+### 2026-09-03as - K6 closed-form LUT 4x8 A-db M=64 K=17408 card1
+
+CONTEXT -> scf N=17408 is 880 us (~2.65x).
+  merge LUT K=17408 is 1333 (~3.40x). s8
+  374.7. s4 106.0. compose 403.4. Napkin
+  331.6*1333/392.4 ~1127. FFN-down
+  prefill. One-card. Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=64 N=5120
+  K=17408. Packed E2M1 B.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_scf_db48_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 1123.245 us, pipe_host
+  1123.392 vs 5120 331.6 vs N=17408 880
+  vs merge 1333 vs s8 374.7 vs s4 106.0
+  vs compose 403.4 vs napkin 1127.
+  Ratio 1123.4/331.6 ~3.39x, K-linear.
+  min/max 1121.7-1129.7.
+
+VERDICT -> Wide-K closed-form LUT is 1123
+  us at 2800, K-linear, napkin held,
+  ~1.19x merge 1333, ~3.00x s8 374.7.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling scf K=17408 vs
+  scf M=256 N=17408.
