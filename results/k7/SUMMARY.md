@@ -980,5 +980,59 @@ cur=2800 throttle=1. ~5.2x seq
 T=256. Do not freeze 1557 as
 2800.
 
-K7 next: mixer-slmht T=256 vs
-skip-hi T=256.
+## ESIMD mixer-slmht T=256 card0 (2026-09-03ii)
+
+backend sycl+l0, standalone
+gdn_mixer_slmht. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+470.656 event 470.435. act
+2800-2783 cur=2800 throttle=0.
+~3.31x packed 1557, ~1.58x seq
+298. First fuse. Sibling before
+promote.
+
+## ESIMD skip-hi T=256 card1 (2026-09-03ij)
+
+backend sycl+l0, standalone
+gdn_delta_skiphi. T=256 blk=16
+skip_frac=0.5 even_t_b=0 spin=0.
+cosine=1 max_abs=3.1e-5
+cosine_o=1 max_abs_o=1.2e-4
+ok=1. pipe_host 329.899 event
+329.021. 47.8 GB/s. act=cur=2800
+throttle=0. ~1.27x slmht 260.
+Stop skip-hi vs slmht leftover.
+
+K7 next: sibling mixer-slmht
+T=256 vs mixer-slmht T=64.
+
+## ESIMD mixer-slmht T=64 card0 (2026-09-03ik)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=64 C=10240
+nv=48 blk=16 spin=4000. cosine=1
+max_abs=3.1e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+117.467 event 117.503. act=2683
+cur=2800 throttle=1. ~3.36x
+packed 395, ~1.53x seq 77,
+T-linear vs 471. Do not freeze
+117 as 2800. Sibling before
+citing the map.
+
+## ESIMD mixer-slmht T=256 sibling card1 (2026-09-03il)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+470.966 event 471.367 vs card0
+470.656. Spread ~0.07%.
+act=cur=2800 throttle=0. 471 us
+both at 2800. Promote.
+
+K7 next: sibling mixer-slmht
+T=64 vs mixer-slmht T=128.

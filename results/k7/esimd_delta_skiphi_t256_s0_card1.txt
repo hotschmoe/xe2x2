@@ -1,0 +1,20 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:5701649303527 energy2=pkg:3146696896545 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:5637247730712 energy2=pkg:3245553731262 temp2_mC=56000
+CONFIG backend=sycl+l0 card=1 arm=gdn_delta_skiphi spin=0 T=256 blk=16 nv=48 skip_frac=0.5 even_t_b=0
+slmht leftover 260. gated b skip vold+rank1. napkin ~180 if skip is real.
+=== esimd delta skip-hi T=256 spin=0 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=gdn_delta_skiphi dtype=f16 T=256 nv=48 dv=128 dk=128 VL=16 blk=16 skip_frac=0.5 even_t_b=0 warmup=50 iters=40 card=1 spin=0 heat=none
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,t,nv,dv,dk,event_us,wait_host_us,pipe_host_us,GBs,cosine,max_abs,cosine_o,max_abs_o,ok,median_us,min_us,max_us
+timed,256,48,128,128,329.021,349.490,329.899,47.83,1.000000,3.0518e-05,1.000000,0.00012207,1,328.385,324.584,349.167
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:5701736538757 energy2=pkg:3146749375183 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:5637333022094 energy2=pkg:3245605972045 temp2_mC=52000
