@@ -5114,3 +5114,71 @@ VERDICT -> Wide-K W8A8 M=256 is 228 us
   Numeric closed. One-card. Do not freeze
   until card0. Rank us. Next: sibling
   W8A8 M=256 K=17408 vs W8A8 M=64 N=17408.
+
+### 2026-09-03bt - K1/K4 oneDNN W8A8 M=256 K=17408 sibling card0
+
+CONTEXT -> card1 W8A8 M=256 K=17408 was
+  228 us at act~2490/2800, throttle=1.
+  Sibling swap. GEMM-only.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 0.
+  spin=512 of M=256 then us_bench.
+  N=5120 K=17408. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/w8_compare/run_w8_m256_k17408_hold.sh 0 512
+  ```
+
+RESULT -> out f16 [256,5120]. timed
+  act=2517-2567 cur=2800 throttle=0 then
+  1. us_bench 223.594 vs card1 228.094 vs
+  square 75 vs N-wide 248 vs w4a16 377 vs
+  s8 477.4 vs s4 149.0 vs napkin 265.
+  Spread ~2.0%. cosine=1.000 max_abs=0.125.
+  399 GB/s.
+
+VERDICT -> Sibling matches. New W8A8
+  M=256 wide-K floor 226 us both cards,
+  cur=2800, act 2483-2567, throttle=1.
+  ~3.01x square, under K-linear (255),
+  beats w4a16 377 and s8 477.4, loses to
+  s4 149.0. Qwen FFN W8A8 M=256 map is
+  closed. Numeric closed. Rank us.
+
+### 2026-09-03bu - K1/K4 oneDNN W8A8 M=64 N=17408 card1
+
+CONTEXT -> W8A8 M=64 square is 46 us.
+  W8A8 M=1 N=17408 is 158.1. w4a16 142.
+  s8 338.9. s4 94.7. Napkin
+  46*17408/5120 ~156. FFN-up prefill.
+  GEMM-only. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 1.
+  spin=512 of M=64 then us_bench.
+  N=17408 K=5120. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/w8_compare/run_w8_m64_wide_hold.sh 1 512
+  ```
+
+RESULT -> out f16 [64,17408]. timed
+  act=2783 cur=2800 throttle=1. us_bench
+  201.221 vs square 46 vs M=1 N=17408
+  158.1 vs w4a16 142 vs s8 338.9 vs s4
+  94.7 vs napkin 156. Ratio 201.2/46
+  ~4.37x. Superlinear vs 156. cosine=
+  1.000 max_abs=0.062. 443 GB/s.
+
+VERDICT -> Wide-N W8A8 M=64 is 201 us at
+  2783/2800 card1, ~4.37x square (napkin
+  156 missed). Loses to w4a16 142 (~1.42x)
+  and s4 94.7, beats s8 338.9. Crossover:
+  w4a16 wins M=1 and M=64 FFN-up; W8A8
+  wins M=256 FFN-up. Throttle=1. Numeric
+  closed. One-card. Do not freeze until
+  card0. Rank us. Next: sibling W8A8
+  M=64 N=17408 vs W8A8 M=64 K=17408.

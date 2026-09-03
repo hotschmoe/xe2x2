@@ -24,7 +24,7 @@ trap cleanup EXIT
   echo "=== clocks start ==="
   bash "$ROOT/scripts/clocks.sh" "$CARD"
   echo "CONFIG backend=pytorch-xpu on sycl+l0 card=$CARD op=int8_gemm_w8a8 spin=$SPIN time=M64 n=5120 k=17408"
-  echo "W8A8 M=64 square 46. w4a16 K=17408 130. s8 374.7. s4 106.0. Napkin 46*155.3/44 ~162."
+  echo "W8A8 M=64 square 46. N-wide 201. w4a16 K=17408 130. s8 374.7. s4 106.0. Napkin 46*155.3/44 ~162."
   docker run --rm --device /dev/dri \
     -v /dev/dri/by-path:/dev/dri/by-path \
     -v "$ROOT:/work:ro" \

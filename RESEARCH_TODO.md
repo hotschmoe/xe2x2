@@ -192,8 +192,12 @@ is closed. oneDNN W8A8 M=256 N=17408
 is 248 us both cards (2026-09-03br),
 ~3.31x square, beats w4a16 394,
 throttle=1. oneDNN W8A8 M=256 K=17408
-is 228 us card1 (2026-09-03bs), ~3.04x
-square, under K-linear, beats w4a16 377,
+is 226 us both cards (2026-09-03bt),
+~3.01x square, under K-linear, beats
+w4a16 377, throttle=1. Qwen FFN W8A8
+M=256 map is closed. oneDNN W8A8 M=64
+N=17408 is 201 us card1 (2026-09-03bu),
+~4.37x square, loses to w4a16 142,
 throttle=1. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
@@ -207,9 +211,9 @@ lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling oneDNN W8A8
-M=256 K=17408 (throttle=1 last). card1:
-held-clock oneDNN W8A8 M=64 N=17408
-(runner kernels/w8_compare/run_w8_m64_wide_hold.sh).
+M=64 N=17408 (throttle=1 last; loses to
+w4a16 142). card1: held-clock oneDNN
+W8A8 M=64 K=17408.
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -219,9 +223,9 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling W8A8 M=256 K=17408, then
-   W8A8 M=64 FFN N/K (vs w4a16 142/130).
-   A=s8 vs A=bf16 labeled.
+1. Freeze W8A8 M=64 FFN: sibling N=17408
+   (card1 201 us, loses to w4a16 142),
+   then K=17408. A=s8 vs A=bf16 labeled.
 2. K2 s2 decode tile at 5120 (INT2 silicon
    is lit, not serving-shaped yet).
 3. K2 s2xs8 serving-shaped (literature mix).
