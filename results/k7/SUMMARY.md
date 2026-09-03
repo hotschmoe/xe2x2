@@ -1082,5 +1082,30 @@ max_abs_o=9.8e-4 ok=1. pipe_host
 act=cur=2800 throttle=0. 232 us
 both, card1 at 2800.
 
+## ESIMD mixer-slmht T=16 card0 (2026-09-03iq)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=16 C=10240
+nv=48 blk=16 spin=4000. cosine=1
+max_abs=3.1e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+31.295 event 31.188. act=2733
+cur=2800 throttle=1. Napkin 29.
+~1.92x T=32 60, ~1.42x slmht
+22. Do not freeze 31 as 2800.
+Sibling before citing the map.
+
+## ESIMD mixer-slmht T=32 sibling card1 (2026-09-03ir)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=32 C=10240
+nv=48 blk=16 spin=4000. cosine=1
+max_abs=3.1e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+59.233 event 59.713 vs card0
+59.779. Spread ~0.9%. act=2717
+cur=2800 throttle=1. 59-60 us
+both. Do not freeze 60 as 2800.
+
 K7 next: sibling mixer-slmht
-T=32 vs mixer-slmht T=16.
+T=16 vs conv T=16 C=10240.

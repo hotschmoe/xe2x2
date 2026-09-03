@@ -3799,28 +3799,52 @@ VERDICT -> Mixer-slmht T=128 is
 Evidence: `results/k7/esimd_mixer_slmht_t128_s0_card0.txt`,
   `results/k7/esimd_mixer_slmht_t128_s0_card1.txt`.
 
-## ESIMD mixer-slmht T=32 is 60 us card0 (K7)
+## ESIMD mixer-slmht T=32 is 59-60 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_mixer_slmht`. T=32
-  C=10240 blk=16. Card0.
+  C=10240 blk=16. Both cards.
   spin=4000. Prior: T=64 117.
   slmht T=32 39. Napkin ~58.
 
 RESULT -> cosine=1.0 max_abs
   3.1e-5 / 9.8e-4 ok=1. pipe_host
-  59.779 event 59.057. timed
-  act=2683 cur=2800 throttle=1.
+  59.779 / 59.233. Spread ~0.9%.
+  timed act 2683 / 2717 cur=2800
+  throttle=1.
 
 VERDICT -> Mixer-slmht T=32 is
-  60 us pipe_host card0, napkin
-  58, T-linear vs 117, ~1.53x
-  slmht 39. throttle=1. Do not
-  freeze 60 as 2800. Sibling
+  59-60 us pipe_host both cards,
+  napkin 58, T-linear vs 117,
+  ~1.53x slmht 39. throttle=1.
+  Do not freeze 60 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_slmht_t32_s4000_card0.txt`,
+  `results/k7/esimd_mixer_slmht_t32_s4000_card1.txt`.
+
+## ESIMD mixer-slmht T=16 is 31 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_mixer_slmht`. T=16
+  C=10240 blk=16. Card0.
+  spin=4000. Prior: T=32 60.
+  slmht T=16 22. Napkin ~29.
+
+RESULT -> cosine=1.0 max_abs
+  3.1e-5 / 9.8e-4 ok=1. pipe_host
+  31.295 event 31.188. timed
+  act=2733 cur=2800 throttle=1.
+
+VERDICT -> Mixer-slmht T=16 is
+  31 us pipe_host card0, napkin
+  29, ~1.92x T=32 60, ~1.42x
+  slmht 22. throttle=1. Do not
+  freeze 31 as 2800. Sibling
   before citing the map. Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_mixer_slmht_t32_s4000_card0.txt`.
+Evidence: `results/k7/esimd_mixer_slmht_t16_s4000_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5422,7 +5446,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   mixer-slmht T=32 is 60 us
   card0 (2026-09-03io), napkin
   58. throttle=1. Do not freeze
-  60 as 2800.
+  60 as 2800. mixer-slmht T=32
+  is 59-60 us both cards
+  (2026-09-03io/ir), throttle=1.
+  Do not freeze 60 as 2800.
+  mixer-slmht T=16 is 31 us
+  card0 (2026-09-03iq), napkin
+  29. throttle=1. Do not freeze
+  31 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
