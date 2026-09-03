@@ -4137,3 +4137,65 @@ VERDICT -> Closed-form LUT M=256 is 1089
   ~6.7%. One-card. Do not freeze 1089 us
   until card0. Rank us. Next: sibling scf
   M=256 vs scf M=64 N=17408.
+
+### 2026-09-03ap - K6 closed-form LUT 4x8 A-db M=256 sibling card0
+
+CONTEXT -> card1 closed-form 4x8 M=256 was
+  1089 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_scf_db48_m256.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 1088.057 us, pipe_host
+  1077.148 vs card1 1089.132 vs M=64 331.6
+  vs merge 1203 vs s8 128 vs compose 194.9.
+  Spread ~1.1%. min/max 1021.5-1246.0.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  closed-form LUT M=256 floor 1083 us at
+  2800 both cards. ~3.27x M=64, ~1.11x
+  merge 1203, ~8.46x s8 128. Rank us.
+
+### 2026-09-03aq - K6 closed-form LUT 4x8 A-db M=64 N=17408 card1
+
+CONTEXT -> scf 4x8 is 331.6 us at square.
+  merge LUT N=17408 is 1032 (~2.63x). s8
+  338.9. s4 94.7. compose 326.9. Napkin
+  331.6*1032/392.4 ~872. FFN-up prefill.
+  One-card. Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=64 N=17408
+  K=5120. Packed E2M1 B.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_scf_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2783 cur=2800 throttle=1.
+  M=64 card1: event 879.787 us, pipe_host
+  877.318 vs 5120 331.6 vs merge 1032 vs
+  s8 338.9 vs s4 94.7 vs compose 326.9 vs
+  napkin 872. Ratio 877.3/331.6 ~2.64x.
+  min/max 872.4-923.5.
+
+VERDICT -> Wide-N closed-form LUT is 877
+  us at 2783/2800, napkin held, ~2.64x
+  square, ~1.18x merge 1032, ~2.59x s8
+  338.9. Throttle=1. One-card. Do not
+  freeze until card0. Rank us. Next:
+  sibling scf N=17408 vs scf M=64 K=17408.
