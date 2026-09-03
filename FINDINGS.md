@@ -602,6 +602,49 @@ Evidence: `results/k6/lutdb48_m64_n2_s512_card0.txt`,
   `results/k6/lutdb48_m64_n2_s512_card1.txt`,
   `results/k6/lutdb48_dpas_lines.txt`.
 
+## E2M1 two-term 4x8 A-db N=17408 is 326.9 us at M=64 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_db48`. M=64 N=17408 K=5120.
+  Both cards, NT=2, spin=512. Never
+  bitcast. Prior: N-linear ~233 us; s4 94.7.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  328.03/325.80 vs 5120 68.7 vs s4 94.7 vs
+  s8 338.9. Spread ~0.7%.
+
+VERDICT -> New E2M1 two-term 4x8 wide-N
+  floor 326.9 us at 2800 both cards. ~4.76x
+  square, ~3.45x native s4 94.7. More
+  N-hostile than s4's 2.81x. Barely under
+  s8 338.9. Rank us.
+
+Evidence: `results/k6/e2m1db48_m64_n17408_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m64_n17408_n2_s512_card1.txt`.
+
+## E2M1 two-term 4x8 A-db K=17408 is 403.4 us at M=64 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_db48`. M=64 N=5120 K=17408.
+  Both cards, NT=2, spin=512. Never
+  bitcast. Prior: K-linear ~233 us; s4 106.0.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  403.60/403.19 vs 5120 68.7 vs N=17408
+  326.9 vs s4 106.0 vs s8 374.7. Spread
+  ~0.1%.
+
+VERDICT -> New E2M1 two-term 4x8 wide-K
+  floor 403.4 us at 2800 both cards. ~5.87x
+  square, ~3.81x native s4 106, and loses
+  to s8 374.7. Qwen FFN compose M=64 map
+  is closed. Rank us.
+
+Evidence: `results/k6/e2m1db48_m64_k17408_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m64_k17408_n2_s512_card1.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1740,6 +1783,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   cards (~3.12x 8x2-N 607). nibble LUT on
   s8 4x8 A-db M=64 is 392.4 us both cards
   (~1.67x 8x2-N 656, still ~5.23x s8 75).
+  compose 4x8 A-db M=64 N=17408 is 326.9 us
+  both cards (~4.76x square vs s4 94.7).
+  compose M=64 K=17408 is 403.4 us both
+  cards (~5.87x square vs s4 106, loses to
+  s8 374.7).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

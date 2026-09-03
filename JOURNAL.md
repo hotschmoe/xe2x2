@@ -3399,3 +3399,123 @@ VERDICT -> Sibling matches. New 4x8 A-db
   LUT floor 392.4 us at 2800 both cards.
   ~1.67x 8x2-N, still ~5.23x s8 75. Packed
   E2M1 stays in HBM. Rank us.
+
+### 2026-09-03v - K3/K6 E2M1 two-term 4x8 A-db M=64 N=17408 card0
+
+CONTEXT -> compose 4x8 A-db is 68.7 us at
+  M=64 N=5120. s4 same tile N=17408 is
+  94.7 us (~2.81x). Napkin N-linear
+  68.7*17408/5120 ~233 us. FFN-up prefill.
+  One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  RC=8 NT=2 U=16 spin=512. M=64 N=17408
+  K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_db48_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card0: event 326.505 us, pipe_host
+  328.026 vs 5120 68.7 vs s4 94.7 vs s8
+  338.9 vs napkin 233. Ratio 328.0/68.7
+  ~4.77x, worse than s4's 2.81x. min/max
+  308.8-350.9.
+
+VERDICT -> Wide-N compose is a real 328 us
+  at 2800, ~4.77x square, ~3.46x native s4
+  94.7. N-hostile vs s4. One-card. Do not
+  freeze until card1. Rank us.
+
+### 2026-09-03w - K3/K6 E2M1 two-term 4x8 A-db M=64 K=17408 card1
+
+CONTEXT -> compose N=17408 is 328 us.
+  s4 K=17408 is 106.0 us (~3.15x). Napkin
+  K-linear ~233 us. FFN-down prefill.
+  One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  Same RC=8 NT=2 U=16 spin=512. M=64
+  N=5120 K=17408. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_db48_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 402.849 us, pipe_host
+  403.192 vs 5120 68.7 vs N=17408 328 vs
+  s4 106.0 vs s8 374.7 vs napkin 233.
+  Ratio 403.2/68.7 ~5.87x, worse than s4's
+  3.15x. min/max 393.0-410.7.
+
+VERDICT -> Wide-K compose is 403 us at
+  2800, ~5.87x square, ~3.80x native s4
+  106, and loses to s8 374.7. K-hostile.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling N=17408 vs
+  sibling K=17408.
+
+### 2026-09-03x - K3/K6 E2M1 two-term 4x8 A-db N=17408 sibling card1
+
+CONTEXT -> card0 compose M=64 N=17408 was
+  328 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 324.958 us, pipe_host
+  325.801 vs card0 328.026 vs s4 94.7 vs
+  s8 338.9. Spread ~0.7%.
+
+VERDICT -> Sibling matches. New E2M1
+  two-term 4x8 wide-N floor 326.9 us at
+  2800 both cards. ~4.76x square, ~3.45x
+  s4 94.7. Barely under s8 338.9. Rank us.
+
+### 2026-09-03y - K3/K6 E2M1 two-term 4x8 A-db K=17408 sibling card0
+
+CONTEXT -> card1 compose M=64 K=17408 was
+  403 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_db48_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card0: event 402.219 us, pipe_host
+  403.596 vs card1 403.192 vs s4 106.0 vs
+  s8 374.7. Spread ~0.1%.
+
+VERDICT -> Sibling matches. New E2M1
+  two-term 4x8 wide-K floor 403.4 us at
+  2800 both cards. ~5.87x square, ~3.81x
+  s4 106, loses to s8 374.7. Qwen FFN
+  compose M=64 map is closed. Rank us.

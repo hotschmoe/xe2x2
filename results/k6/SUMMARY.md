@@ -246,3 +246,30 @@ Never bitcast.
 
 New 4x8 LUT floor 392.4 us both cards.
 ~1.67x 8x2-N, still ~5.23x s8 75.
+
+## E2M1 two-term 4x8 A-db M=64 N=17408 card0 (2026-09-03v)
+
+Same tile, N=17408 K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 N | s8 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 | 0 | 328.026 | 68.7 | 94.7 | 338.9 | 233 |
+| 64 x 17408 | 1 | 325.801 | 68.7 | 94.7 | 338.9 | 233 |
+
+New wide-N floor 326.9 us both cards.
+~4.76x square vs s4 2.81x.
+
+## E2M1 two-term 4x8 A-db M=64 K=17408 (2026-09-03w/y)
+
+Same tile, N=5120 K=17408. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 K | s8 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 0 | 403.596 | 68.7 | 106.0 | 374.7 | 233 |
+| 64 x 5120 x 17408 | 1 | 403.192 | 68.7 | 106.0 | 374.7 | 233 |
+
+New wide-K floor 403.4 us both cards.
+~5.87x square vs s4 3.15x. Loses to s8
+374.7. Qwen FFN compose M=64 map closed.

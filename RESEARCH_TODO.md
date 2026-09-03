@@ -112,9 +112,15 @@ A-db M=256 is 194.9 us both cards
 s4 4-acc 48.6, loses to W8A8 75. nibble
 LUT on s8 4x8 A-db M=64 is 392.4 us both
 cards (2026-09-03u), ~1.67x 8x2-N 656,
-still ~5.23x s8 75.
-Next: split. card0: compose_e2m1_db48 M=64
-N=17408. card1: compose_e2m1_db48 M=64
+still ~5.23x s8 75. compose 4x8 A-db
+M=64 N=17408 is 326.9 us both cards
+(2026-09-03x), ~4.76x square vs s4 94.7.
+compose M=64 K=17408 is 403.4 us both
+cards (2026-09-03y), ~5.87x square vs s4
+106.0, loses to s8 374.7. Qwen FFN compose
+M=64 map is closed. A=s4.
+Next: split. card0: compose_e2m1_db48 M=256
+N=17408. card1: compose_e2m1_db48 M=256
 K=17408. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
