@@ -79,10 +79,12 @@ map is closed. K6 nibble_lut_sc on the s8
 RC=4 decode tile is 158 us both cards (cq)
 at 2800, cosine=1 max_abs=0, ~4.65x s8 34.
 Packed E2M1 stays in HBM. Never bitcast s4.
-Next: split. card0: two-launch unpack control
-on the same decode tile. card1: LUT tax steal
-(LUT once per k64 / fewer merges). Loop every
-20m.
+iselect 16-entry table LUT is 1022 us both
+cards (cr), a loss vs merge 158. Stop gather
+tables. Next: split. card0: two-launch unpack
+control on the same decode tile. card1: LUT
+once per k64 (one packed load, no iselect).
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

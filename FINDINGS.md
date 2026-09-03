@@ -333,6 +333,24 @@ VERDICT -> First serving-shaped NVFP4 in-register spoof
 Evidence: `results/k6/sc_n2_s4000_card0.txt`,
   `results/k6/sc_n2_s4000_card1.txt`.
 
+## 16-entry iselect table LUT loses to merge LUT (K6)
+
+CONFIG -> backend `sycl+l0`, standalone `nibble_lut_sct`.
+  Same packed E2M1 RC=4 8x2-N tile as `nibble_lut_sc`,
+  but decode is a 16-entry GRF table + `iselect`.
+  Never bitcast s4. Both cards, NT=2, spin=4000.
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=1 pipe_host 1021.73/1021.88 vs merge
+  LUT 158 vs s8 34. M=4 tracks. Spread ~0.01%.
+
+VERDICT -> iselect table is ~6.46x the merge LUT.
+  Numeric closed, us lost. Stop GRF gather tables
+  on this tile. Keep the merge-chain simd LUT.
+
+Evidence: `results/k6/sct_n2_s4000_card0.txt`,
+  `results/k6/sct_n2_s4000_card1.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1448,7 +1466,8 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   us; simd LUT is ~6-8x that arm (304-406 us) and still clock-
   bound vs two-launch unpack. Serving-shaped simd LUT on the
   RC=4 8x2-N tile is 158 us at 2800 both cards (cq), numeric
-  closed, ~4.65x s8 34. Packed E2M1 stays in HBM.
+  closed, ~4.65x s8 34. Packed E2M1 stays in HBM. 16-entry
+  iselect table is 1022 us (cr), a loss; stop gather tables.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

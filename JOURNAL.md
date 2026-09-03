@@ -2759,3 +2759,33 @@ VERDICT -> First serving-shaped NVFP4
   HBM. "Cannot feed XMX" is false; "as fast
   as s8" is false. Rank us. Next: two-launch
   unpack control on this tile vs LUT tax steal.
+
+### 2026-09-02cr - K6 16-entry iselect table LUT both cards
+
+CONTEXT -> nibble_lut_sc merge LUT is 158 us at
+  2800. Napkin: a 16-entry E2M1 table + iselect
+  is fewer merges. Same RC=4 8x2-N tile. New
+  LUT implementation, both cards.
+
+CONFIG -> sycl+l0, standalone nibble_lut_sct,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0 || --card 1. NT=2 U=16
+  spin=4000. Same fill/scales as cq.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_sct.sh 0 2 4000
+  gpu-run --card 1 kernels/nvfp4/run_k6_sct.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0 both cards.
+  timed act=cur=2800 throttle=0.
+  M=1 pipe_host 1021.73/1021.88 vs merge LUT
+  158 vs s8 34. M=4 tracks. Packed-B 12.8 GB/s.
+  Spread ~0.01%. Zebin 2.5 MiB vs merge 0.86.
+
+VERDICT -> iselect table is a loss (~6.46x
+  merge LUT). Numeric closed, us lost. Stop
+  GRF gather tables on this tile. Keep the
+  merge-chain simd LUT. Rank us. Next:
+  two-launch unpack control on the decode tile.

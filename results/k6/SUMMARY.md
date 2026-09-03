@@ -61,3 +61,16 @@ timed act=cur=2800 throttle=0.
 New serving-shaped NVFP4 LUT floor 158.2 us at
 2800 both cards. ~4.65x s8 34. Packed-B 83 GB/s
 (LUT tax, not HBM). M=4 tracks. Numeric closed.
+
+## 16-entry iselect table (2026-09-02cr)
+
+`nibble_lut_sct`: same tile, GRF table + iselect.
+cosine=1.0 max_abs=0 both cards. timed
+act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | merge LUT |
+|---|---|---:|---:|
+| 1 x 5120 | 0 | 1021.728 | 158 |
+| 1 x 5120 | 1 | 1021.884 | 158 |
+
+~6.46x merge LUT. Stop iselect tables. Keep merge.
