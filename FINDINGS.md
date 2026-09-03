@@ -2683,6 +2683,52 @@ VERDICT -> Packed-qkv conv T=64
 Evidence: `results/k7/esimd_conv1d_t64_c10240_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t64_c10240_s4000_card1.txt`.
 
+## ESIMD conv1d T=256 C=10240 is 40.7-40.8 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. C=10240
+  T=256 K=4 f16 (packed qkv).
+  Both cards. spin=4000. Prior:
+  C=2048 37.7, C=6144 38.0,
+  napkin 5x ~189.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 40.797/40.742. Spread
+  ~0.13%.
+
+VERDICT -> Packed-qkv conv T=256
+  C=10240 is 40.7-40.8 us
+  pipe_host both cards at 2800,
+  ~1.07x C=6144 38.0 not 5x.
+  Occupancy. Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t256_c10240_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t256_c10240_s4000_card1.txt`.
+
+## ESIMD chunk/WY C=16 loses to fused delta T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_chunk` AOT
+  `intel_gpu_bmg_g31`. T=256 C=16
+  nv=48 dv=128 dk=128 f16. FLA
+  KK^T + (I+L)^{-1} + w/u + h/o.
+  Card1. spin=4000. Prior: fused
+  1100-1109 throttle=1.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  3210.272 event 3199.857. timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> Chunk/WY C=16 is 3210
+  us pipe_host card1 at 2800,
+  ~2.92x fused 1100. Numeric
+  closed. Stop C=16 vs fused.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_chunk_t256_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4069,11 +4115,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   cards at 2800 (2026-09-03gb/gc),
   wash vs C=2048 10.1 not 5x.
   Occupancy. ESIMD conv T=256
-  C=10240 is 40.7 us card1 at
-  2800 (2026-09-03gd), ~1.07x
-  C=6144 38.0 not 5x. One-card.
-  Do not freeze 40.7 until
-  sibling.
+  C=10240 is 40.7-40.8 us both
+  cards at 2800 (2026-09-03gd/ge),
+  ~1.07x C=6144 38.0 not 5x.
+  Occupancy. ESIMD chunk/WY C=16
+  T=256 is 3210 us card1 at 2800
+  (2026-09-03gf), cosine=1,
+  ~2.92x fused 1100. Stop C=16
+  vs fused.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

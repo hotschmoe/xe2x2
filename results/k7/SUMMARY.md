@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/gd
+# K7 GDN inventory 2026-09-03ep/gf
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -316,16 +316,35 @@ throttle=0.
 Wash vs C=2048 10.1 not 5x.
 Occupancy.
 
-## ESIMD conv1d T=256 C=10240 card1 (2026-09-03gd)
+## ESIMD conv1d T=256 C=10240 both cards (2026-09-03gd/ge)
 
 backend sycl+l0, same
 gdn_conv1d_t. C=10240 T=256
 spin=4000. cosine=1 max_abs=0
 ok=1. timed act=cur=2800
-throttle=0. pipe_host 40.742
-event 40.393. 259 GB/s. ~1.07x
-C=6144 38.0 not 5x. One-card.
-Do not freeze 40.7.
+throttle=0.
 
-K7 next: sibling conv T=256
-C=10240 vs chunk/WY delta T=256.
+| card | pipe_host us | event us | GBs |
+|---|---:|---:|---:|
+| 0 | 40.797 | 40.344 | 259 |
+| 1 | 40.742 | 40.393 | 259 |
+
+40.7-40.8 us both. Spread ~0.13%.
+~1.07x C=6144 38.0 not 5x.
+Occupancy.
+
+## ESIMD chunk/WY delta T=256 C=16 card1 (2026-09-03gf)
+
+backend sycl+l0, AOT
+gdn_delta_chunk. T=256 C=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. timed act=cur=2800
+throttle=0. pipe_host 3210.272
+event 3199.857. 4.91 GB/s.
+~2.92x fused 1100. Stop C=16
+vs fused. One-card.
+
+K7 next: chunk/WY C=64 T=256 vs
+fused delta T=256 held-clock
+retry.

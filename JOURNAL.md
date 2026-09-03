@@ -8623,6 +8623,71 @@ VERDICT -> ESIMD conv T=256
   sibling. Rank pipe_host. Next:
   sibling vs chunk/WY delta.
 
+### 2026-09-03ge - K7 ESIMD conv1d T=256 C=10240 sibling card0
+
+CONTEXT -> card1 conv T=256
+  C=10240 was 40.7 us pipe_host
+  at 2800. ~1.07x C=6144 38.0.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. C=10240 T=256 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t256_c10240.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 40.344 pipe_host 40.797 vs
+  card1 40.742. Spread ~0.13%.
+  259 GB/s.
+
+VERDICT -> Sibling matches. ESIMD
+  conv T=256 C=10240 is 40.7-40.8
+  us pipe_host both cards at 2800.
+  ~1.07x C=6144 38.0 not 5x.
+  Occupancy. Rank pipe_host.
+
+### 2026-09-03gf - K7 ESIMD chunk/WY delta T=256 C=16 card1
+
+CONTEXT -> fused delta T=256 is
+  1100-1109 throttle=1. FLA
+  chunk/WY C=16. Napkin beats
+  serial 1100. New TU
+  gdn_delta_chunk.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_chunk.
+  gpu-run --card 1. T=256 C=16
+  nv=48 dv=128 dk=128 f16.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_chunk_t256.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 3199.857 pipe_host
+  3210.272. 4.91 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  fused 1100 (~2.92x).
+
+VERDICT -> ESIMD chunk/WY C=16
+  T=256 is 3210 us pipe_host
+  card1 at 2800, numeric closed,
+  ~2.92x fused 1100. Napkin
+  miss. Stop C=16 vs fused.
+  One-card. Do not freeze 3210
+  as a floor. Rank pipe_host.
+  Next: chunk C=64 vs fused.
+
+
 
 
 
