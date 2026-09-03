@@ -1371,27 +1371,51 @@ VERDICT -> New s2 decode floor 11.5 us
 Evidence: `results/k2/s2sc_n2_s4000_card0.txt`,
   `results/k2/s2sc_n2_s4000_card1.txt`.
 
-## ESIMD s2xs8 decode mix is 14.1 us card1 (K2)
+## ESIMD s2xs8 decode mix is 14.1 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
   AOT `dpas_s2xs8_sc`. A=s8 B=s2 pack=4,
   dpas K=32 (OPC=4). RC=4 8x2-N scale-to-
-  f16. NT=2 spin=4000. Card1. Literature
-  mix arXiv 2508.06753. Never E2M1 bitcast.
+  f16. NT=2 spin=4000. Both cards.
+  Literature mix arXiv 2508.06753. Never
+  E2M1 bitcast.
 
-RESULT -> COMPILE_OK. check 4x32x512
-  cosine=1.0 max_abs=0. timed M=1 5120
-  act=cur=2800 throttle=0. pipe_host
-  14.140 us vs s2 11.5 vs s4 16.5 vs s8
-  34 vs napkin 34. M=4 pipe 13.962.
-  ~2.41x s8. Paper same-rate napkin missed.
+RESULT -> check cosine=1.0 max_abs=0.
+  timed M=1 5120 act=cur=2800 throttle=0.
+  pipe_host 13.971/14.140 us vs s2 11.5
+  vs s4 16.5 vs s8 34 vs napkin 34. M=4
+  tracks. Spread ~1.2%. ~2.41x s8.
 
-VERDICT -> Mix lights, numeric-closed,
-  14.1 us at 2800 card1. Beats s8, loses
-  to s2xs2 11.5. New mix. One-card. Do
-  not freeze 14.1 us until card0.
+VERDICT -> New s2xs8 decode floor 14.1
+  us pipe_host at 2800 both cards.
+  Numeric closed. Beats s8, loses to
+  s2xs2 11.5. Paper same-rate napkin
+  missed. Rank pipe_host.
 
-Evidence: `results/k2/s2xs8sc_n2_s4000_card1.txt`.
+Evidence: `results/k2/s2xs8sc_n2_s4000_card0.txt`,
+  `results/k2/s2xs8sc_n2_s4000_card1.txt`.
+
+## K5 producer+GEMM N=17408 is 154 us card1 (K5)
+
+CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
+  WG-256 RMSNorm-quant then RC=4 s8 GEMM.
+  NT=2 spin=4000. M=1 N=17408 K=5120.
+  Card1. Named clock 2800.
+
+RESULT -> timed act=cur=2800 throttle=0.
+  prod 10.818 gemm 142.625 pair_event
+  153.581 pipe_host 154.033 vs square 44
+  vs s8 GEMM 141.6 vs W8A8 158.1 vs
+  napkin 151. cosine=1.0 max_abs=0. M=4
+  pipe 155.938. Extra ~11 us over GEMM.
+
+VERDICT -> Wide-N pair is N-linear. The
+  producer tax stays ~11 us (K=5120), not
+  N. Beats W8A8 158.1. One-card. Do not
+  freeze 154 us until card0. Rank
+  pipe_host.
+
+Evidence: `results/k5/prod_n17408_n2_s4000_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2635,8 +2659,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ESIMD s2 RC=4 decode is 11.5 us both
   cards at 2800 (cosine=1 max_abs=0,
   ~1.43x s4 16.5). ESIMD s2xs8 decode
-  mix is 14.1 us card1 at 2800 (beats
-  s8 34, loses to s2xs2 11.5). One-card.
+  mix is 14.1 us both cards at 2800
+  (beats s8 34, loses to s2xs2 11.5).
+  K5 producer+GEMM N=17408 is 154 us
+  card1 (prod ~11 + gemm 143, beats
+  W8A8 158.1). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

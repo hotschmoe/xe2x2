@@ -77,3 +77,21 @@ NT=2 spin=4000. timed 2800. cosine=1.0 max_abs=0.015625.
 
 Beats fusev 72 us. Extra ~10 us over GEMM-only 34.
 Keep two-kernel producer+GEMM.
+
+## producer+GEMM M=1 N=17408 card1 (2026-09-03cc)
+
+Same dpas_s8_prod. NT=2 spin=4000. timed
+act=cur=2800 throttle=0. cosine=1.0
+max_abs=0 (M=1) / 0.0078125 (M=4).
+
+| shape | card | prod_us | gemm_us | pair_event | pipe_host |
+|---|---|---:|---:|---:|---:|
+| 1 x 17408 x 5120 | 1 | 10.818 | 142.625 | 153.581 | 154.033 |
+| 4 x 17408 x 5120 | 1 | 10.828 | 143.437 | 154.401 | 155.938 |
+
+~3.48x square 44. Extra still ~11 us
+(K=5120). Beats W8A8 158.1. One-card.
+Do not freeze 154 us.
+
+K5 next: sibling producer N=17408 vs
+producer K=17408.

@@ -951,7 +951,7 @@ max_abs=0. timed act=cur=2800 throttle=0.
 New s2 decode floor 11.5 us both cards.
 ~1.43x s4, ~2.96x s8. Spread ~0.05%.
 
-## s2xs8 RC=4 decode mix card1 (2026-09-03ca)
+## s2xs8 RC=4 decode mix (2026-09-03ca/cb)
 
 sycl+l0 AOT dpas_s2xs8_sc. A=s8 B=s2
 pack=4 K=32 dpas. NT=2 spin=4000.
@@ -959,12 +959,13 @@ cosine=1.0 max_abs=0. timed 2800.
 
 | shape | card | event_us | pipe_host_us | s2 | s4 | s8 |
 |---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 13.583 | 13.971 | 11.5 | 16.5 | 34 |
 | 1 x 5120 | 1 | 13.557 | 14.140 | 11.5 | 16.5 | 34 |
+| 4 x 5120 | 0 | 13.565 | 13.965 | 11.5 | 16.5 | 34 |
 | 4 x 5120 | 1 | 13.570 | 13.962 | 11.5 | 16.5 | 34 |
 
-COMPILE_OK. ~2.41x s8. Paper same-rate
-napkin 34 missed. One-card. Do not freeze
-14.1 us.
+New s2xs8 decode floor 14.1 us both
+cards. ~2.41x s8. Spread ~1.2%.
 
-K2 next: sibling s2xs8 vs K5 producer
-N=17408.
+K2 next: K5 producer N=17408 sibling vs
+K=17408. See `results/k5/SUMMARY.md`.

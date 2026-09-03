@@ -206,8 +206,11 @@ closed. ESIMD s2 RC=4 decode is 11.5 us
 both cards (2026-09-03bz) at 2800,
 cosine=1 max_abs=0, ~1.43x s4 16.5.
 ESIMD s2xs8 decode mix is 14.1 us
-card1 (2026-09-03ca) at 2800, beats s8
-34, loses to s2xs2 11.5. One-card.
+both cards (2026-09-03cb) at 2800,
+beats s8 34, loses to s2xs2 11.5.
+K5 producer+GEMM N=17408 is 154 us
+card1 (2026-09-03cc), prod ~11 + gemm
+143, beats W8A8 158.1. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -219,9 +222,10 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: sibling K2 s2xs8
-decode mix (14.1 us last, new mix).
-card1: K5 producer+GEMM M=1 N=17408.
+Next: split. card0: sibling K5
+producer+GEMM M=1 N=17408 (154 us last).
+card1: K5 producer+GEMM M=1 K=17408
+(runner kernels/esimd_dpas/run_prod_k17408.sh).
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -231,9 +235,8 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling s2xs8 decode (card1 14.1 us).
-   Then K5 producer+GEMM FFN N=17408
-   and K=17408 (decode leftover after 44 us).
+1. Sibling K5 producer N=17408 (card1
+   154 us), then producer K=17408.
 2. Integer GPTQ/AWQ s4 checkpoint through
    ESIMD s4 (K6 arm 9, true INT4 XMX).
 3. Mixed s8xs4 numeric oracle (ISA lit,
