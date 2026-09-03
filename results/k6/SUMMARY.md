@@ -709,5 +709,4 @@ s8 261.6. Loses to s4 53.4 and W8A8
 155.3. Qwen FFN GPTQ decode map
 closed (29.9 / 100 / 174.6).
 
-K6 next: parked on decode. Mix 4x8
-M=64 FFN is K2.
+K6 next: GPTQ 8x2-N M=64 vs M=256.

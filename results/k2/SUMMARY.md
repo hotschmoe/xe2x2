@@ -1081,22 +1081,22 @@ Spread ~0.36%. ~2.85x M=64. Beats s8
 128. Loses to s4 48.6 and W8A8 75.
 Stop 4x8 mix at M=256 prefill.
 
-## s8xs4 4x8 A-db M=64 N=17408 card0 (2026-09-03dd)
+## s8xs4 4x8 A-db M=64 N=17408 both cards (2026-09-03dg)
 
 Same dpas_s8xs4_db48. NT=2 spin=512.
-cosine=1.0 max_abs=0. timed act=2783
-cur=2800 throttle=1.
+cosine=1.0 max_abs=0.
 
 | shape | card | event_us | pipe_host_us | s4 | s8 | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
 | 64 x 17408 x 5120 | 0 | 127.969 | 126.931 | 94.7 | 338.9 | 202 |
+| 64 x 17408 x 5120 | 1 | 129.344 | 129.215 | 94.7 | 338.9 | 202 |
 
-126.9 us at 2800 card0. ~2.93x
-square, under linear. Beats s8 and
-W8A8 202. Loses to s4 94.7.
-throttle=1. One-card.
+New floor 129 us both cards. card0
+throttle=1, card1 2800 throttle=0.
+Spread ~1.80%. ~2.98x square. Beats
+s8 and W8A8 202. Loses to s4 94.7.
 
-## s8xs4 4x8 A-db M=64 K=17408 card1 (2026-09-03de)
+## s8xs4 4x8 A-db M=64 K=17408 both cards (2026-09-03df)
 
 Same dpas_s8xs4_db48. NT=2 spin=512.
 cosine=1.0 max_abs=0. timed 2800
@@ -1104,12 +1104,14 @@ throttle=0.
 
 | shape | card | event_us | pipe_host_us | s4 | s8 | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 0 | 143.875 | 144.261 | 106.0 | 374.7 | 181 |
 | 64 x 5120 x 17408 | 1 | 144.771 | 144.684 | 106.0 | 374.7 | 181 |
 
-144.7 us at 2800 card1. ~3.34x
-square, near linear. Beats s8 and
-W8A8 181. Loses to s4 106.0.
-One-card.
+New floor 144.7 us both cards.
+Spread ~0.29%. ~3.34x square. Beats
+s8 and W8A8 181. Loses to s4 106.0.
+Qwen FFN mix M=64 map closed
+(43.3 / 129 / 144.7).
 
-K2 next: sibling N-wide vs sibling
-K-wide.
+K2 next: parked on mix M=64 FFN.
+GPTQ 8x2-N prefill is K6.
