@@ -3384,6 +3384,30 @@ VERDICT -> slmht blk=32 T=256 is
 
 Evidence: `results/k7/esimd_delta_slmht32_t256_s0_card0.txt`.
 
+## ESIMD slmht blk=32 T=256 is 252-292 us both cards (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht32`. T=256
+  blk=32. Card1 sibling. spin=4000.
+  Prior: card0 252 at 2600.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  292.134 vs card0 252.173.
+  Spread ~16%. act 2233-2250
+  cur=2800 throttle=1.
+
+VERDICT -> blk=32 T=256 is 252-
+  292 us pipe_host both cards.
+  Clock-linear vs 252 at 2600.
+  Do not freeze 252 as 2800.
+  ~1.03x at matched 2600 is too
+  small to promote. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht32_t256_s0_card0.txt`,
+  `results/k7/esimd_delta_slmht32_t256_s4000_card1.txt`.
+
 ## ESIMD slmht packed-o is 247 us T=256 card1 (K7)
 
 CONFIG -> backend `sycl+l0`,
@@ -3406,6 +3430,30 @@ VERDICT -> slmht packed-o T=256
   Rank pipe_host.
 
 Evidence: `results/k7/esimd_delta_slmhto_t256_s0_card1.txt`.
+
+## ESIMD slmht packed-o T=256 is clock not kernel (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmhto`. T=256
+  blk=16. Card0 sibling. spin=4000.
+  Prior: card1 247 at 2700.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  296.793 vs card1 247.158.
+  Spread ~20%. act=2233 cur=2800
+  throttle=1.
+
+VERDICT -> packed-o T=256 is
+  247-297 us pipe_host both
+  cards. Clock-linear vs 247 at
+  2700. Do not freeze 247 as
+  2800. Not a kernel cut. Stop
+  packed-o vs slmht. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmhto_t256_s0_card1.txt`,
+  `results/k7/esimd_delta_slmhto_t256_s4000_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4908,7 +4956,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   (2026-09-03ht), ~1.05x slmht
   260. Possible leftover cuts.
   Do not freeze 252 or 247 as
-  2800. Sibling before promote.
+  2800. packed-o sibling is 297
+  us card0 (2026-09-03hu) at
+  2233 throttle=1, spread ~20%.
+  Clock-linear. Stop packed-o vs
+  slmht. blk=32 sibling is 292
+  us card1 (2026-09-03hv) at
+  2233 throttle=1, spread ~16%.
+  Clock-linear. Do not freeze
+  252 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

@@ -9979,6 +9979,78 @@ VERDICT -> ESIMD slmht packed-o
   before promote. Rank
   pipe_host. Next: sibling
   packed-o vs sibling blk=32.
+
+### 2026-09-03hu - K7 ESIMD fused delta T=256 packed-o sibling card0
+
+CONTEXT -> card1 packed-o was
+  247 us at 2700. Possible cut.
+  Sibling hold. spin=4000. Same
+  TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmhto. gpu-run
+  --card 0. T=256 blk=16.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmhto_t256.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 298.659 pipe_host
+  296.793 vs card1 247.158.
+  Spread ~20%. 53.2 GB/s. timed
+  act=2233 cur=2800 throttle=1.
+  vs slmht sibling 294.
+
+VERDICT -> Sibling clock-spread.
+  ESIMD packed-o T=256 is 247-
+  297 us pipe_host both cards.
+  card0 act=2233 throttle=1.
+  Clock-linear vs 247 at 2700.
+  Do not freeze 247 as 2800.
+  Not a kernel cut. Stop packed-o
+  vs slmht. Rank pipe_host.
+
+### 2026-09-03hv - K7 ESIMD fused delta T=256 slmht blk=32 sibling card1
+
+CONTEXT -> card0 blk=32 was 252
+  us at 2600. Possible cut.
+  Sibling hold. spin=4000. Same
+  TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht32. gpu-run
+  --card 1. T=256 blk=32.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmht32_t256.sh 1 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 294.375 pipe_host
+  292.134 vs card0 252.173.
+  Spread ~16%. 54.0 GB/s. timed
+  act 2233-2250 cur=2800
+  throttle=1. vs slmht sibling
+  294.
+
+VERDICT -> Sibling clock-spread.
+  ESIMD slmht blk=32 T=256 is
+  252-292 us pipe_host both
+  cards. card1 act=2233
+  throttle=1. Clock-linear vs
+  252 at 2600. Do not freeze
+  252 as 2800. ~1.03x at
+  matched 2600 is too small to
+  promote. Rank pipe_host.
+  Next: slmht 2-row T=256 vs
+  blk=32 T=64. spin=0 on T=256.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.

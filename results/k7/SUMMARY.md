@@ -804,5 +804,31 @@ slmht 260 at 2600. Clock 2700
 vs 2600. Do not freeze 247 as
 2800. Sibling before promote.
 
-K7 next: sibling packed-o vs
-sibling blk=32.
+## ESIMD fused delta T=256 packed-o sibling card0 (2026-09-03hu)
+
+backend sycl+l0, same
+gdn_delta_slmhto. T=256 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 296.793 event
+298.659 vs card1 247.158.
+Spread ~20%. act=2233 cur=2800
+throttle=1. Clock-linear. Stop
+packed-o vs slmht. Do not
+freeze 247 as 2800.
+
+## ESIMD fused delta T=256 slmht blk=32 sibling card1 (2026-09-03hv)
+
+backend sycl+l0, same
+gdn_delta_slmht32. T=256 blk=32
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 292.134 event
+294.375 vs card0 252.173.
+Spread ~16%. act 2233-2250
+cur=2800 throttle=1. Clock-
+linear. Do not freeze 252 as
+2800.
+
+K7 next: slmht 2-row T=256
+spin=0 vs blk=32 T=64.
