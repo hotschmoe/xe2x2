@@ -855,5 +855,30 @@ vs slmht T=64 67. Stop blk=32
 at T=64. Do not freeze 67 as
 2800.
 
-K7 next: slmht SLM-db T=256
-spin=0 vs slmht8 T=8.
+## ESIMD fused delta T=256 slmht SLM-db card0 (2026-09-03hy)
+
+backend sycl+l0, AOT
+gdn_delta_slmhtdb. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 268.173 event
+268.232. 58.8 GB/s. act 2600-
+2550 cur=2800 throttle=0.
+~1.03x slmht 260. Stop SLM-db
+vs slmht.
+
+## ESIMD fused delta T=8 tile-fused card1 (2026-09-03hz)
+
+backend sycl+l0, same
+gdn_delta_slmht8. T=8 blk=8
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 12.526 event
+14.859. 283 GB/s. act=2750
+cur=2800 throttle=1. ~1.76x
+fused 7.1. Near half T=16 22.
+Do not freeze 13 as 2800.
+Sibling before citing the map.
+
+K7 next: sibling T=8 vs slmht
+T=32.

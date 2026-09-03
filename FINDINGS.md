@@ -3497,6 +3497,49 @@ VERDICT -> blk=32 T=64 is 67 us
 
 Evidence: `results/k7/esimd_delta_slmht32_t64_s0_card1.txt`.
 
+## ESIMD slmht SLM-db loses to tile-fused T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmhtdb` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  ping-pong k/q SLM. Card0. spin=0.
+  Prior: slmht 260.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  268.173. timed act 2600-2550
+  cur=2800 throttle=0.
+
+VERDICT -> slmht SLM-db T=256 is
+  268 us pipe_host card0, ~1.03x
+  slmht 260. Stop SLM-db vs
+  slmht. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmhtdb_t256_s0_card0.txt`.
+
+## ESIMD tile-fused T=8 is 13 us card1 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht8`. T=8
+  blk=8. Card1. spin=4000. Prior:
+  fused T=1 7.1, T=16 22.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  12.526 event 14.859. 283 GB/s.
+  timed act=2750 cur=2800
+  throttle=1.
+
+VERDICT -> Tile-fused T=8 is 13
+  us pipe_host card1 at 2750,
+  ~1.76x fused 7.1, ~1.74x under
+  T=16 22. Near half T=16.
+  throttle=1. Do not freeze 13
+  as 2800. Sibling before citing
+  the map. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht8_t8_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -5013,6 +5056,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   blk=32 T=64 is 67 us card1
   (2026-09-03hx), wash vs slmht
   67. Stop blk=32 at T=64.
+  slmht SLM-db T=256 is 268 us
+  card0 (2026-09-03hy), ~1.03x
+  slmht 260. Stop SLM-db vs
+  slmht. tile-fused T=8 is 13 us
+  card1 at 2750 (2026-09-03hz),
+  ~1.76x fused 7.1, near half
+  T=16 22. Do not freeze 13 as
+  2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
