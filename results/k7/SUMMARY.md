@@ -1005,9 +1005,6 @@ ok=1. pipe_host 329.899 event
 throttle=0. ~1.27x slmht 260.
 Stop skip-hi vs slmht leftover.
 
-K7 next: sibling mixer-slmht
-T=256 vs mixer-slmht T=64.
-
 ## ESIMD mixer-slmht T=64 card0 (2026-09-03ik)
 
 backend sycl+l0, same
@@ -1036,3 +1033,32 @@ both at 2800. Promote.
 
 K7 next: sibling mixer-slmht
 T=64 vs mixer-slmht T=128.
+
+## ESIMD mixer-slmht T=128 card0 (2026-09-03im)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=128 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+232.321 event 261.862. act
+1600-2800 cur 1583-2800
+throttle=0. Napkin 235.
+T-linear vs 117 and 471. Do
+not freeze 232 as 2800. Sibling
+before citing the map.
+
+## ESIMD mixer-slmht T=64 sibling card1 (2026-09-03in)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=64 C=10240
+nv=48 blk=16 spin=4000. cosine=1
+max_abs=3.1e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+116.017 event 116.143 vs card0
+117.467. Spread ~1.2%. act=2717
+cur=2800 throttle=1. 116-117 us
+both. Do not freeze 117 as 2800.
+
+K7 next: sibling mixer-slmht
+T=128 vs mixer-slmht T=32.

@@ -3747,29 +3747,56 @@ VERDICT -> Mixer-slmht T=256 is
 Evidence: `results/k7/esimd_mixer_slmht_t256_s0_card0.txt`,
   `results/k7/esimd_mixer_slmht_t256_s0_card1.txt`.
 
-## ESIMD mixer-slmht T=64 is 117 us card0 (K7)
+## ESIMD mixer-slmht T=64 is 116-117 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_mixer_slmht`. T=64
-  C=10240 blk=16. Card0.
+  C=10240 blk=16. Both cards.
   spin=4000. Prior: packed 395
   vs seq conv 10.5 + slmht 67
   ~77. T=256 471.
 
 RESULT -> cosine=1.0 max_abs
   3.1e-5 / 9.8e-4 ok=1. pipe_host
-  117.467 event 117.503. timed
-  act=2683 cur=2800 throttle=1.
+  117.467 / 116.017. Spread
+  ~1.2%. timed act 2683 / 2717
+  cur=2800 throttle=1.
 
 VERDICT -> Mixer-slmht T=64 is
-  117 us pipe_host card0, ~3.36x
-  packed 395, ~1.53x seq 77,
-  T-linear vs 471. throttle=1.
-  Do not freeze 117 as 2800.
-  Sibling before citing the map.
-  Rank pipe_host.
+  116-117 us pipe_host both
+  cards, ~3.36x packed 395,
+  ~1.53x seq 77, T-linear vs
+  471. throttle=1. Do not freeze
+  117 as 2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_mixer_slmht_t64_s4000_card0.txt`.
+Evidence: `results/k7/esimd_mixer_slmht_t64_s4000_card0.txt`,
+  `results/k7/esimd_mixer_slmht_t64_s4000_card1.txt`.
+
+## ESIMD mixer-slmht T=128 is 232 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_mixer_slmht`. T=128
+  C=10240 blk=16. Card0. spin=0.
+  Prior: T=64 117, T=256 471.
+  Napkin T-linear 235. seq slmht
+  127 + conv ~20 ~147.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 9.8e-4 ok=1. pipe_host
+  232.321 event 261.862. timed
+  act 1600-2800 cur 1583-2800
+  throttle=0.
+
+VERDICT -> Mixer-slmht T=128 is
+  232 us pipe_host card0, napkin
+  235, T-linear vs 117 and 471,
+  ~1.58x seq ~147. Clocks ramped
+  1600 to 2800. Do not freeze
+  232 as 2800. Sibling before
+  citing the map. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_slmht_t128_s0_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5347,6 +5374,16 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   is 330 us card1 at 2800
   (2026-09-03ij), ~1.27x slmht
   260. Stop skip-hi vs slmht.
+  mixer-slmht T=256 is 471 us
+  both cards at 2800
+  (2026-09-03ii/il), ~3.31x
+  packed 1557, ~1.58x seq 298.
+  New mixer T=256 floor.
+  mixer-slmht T=64 is 117 us
+  card0 (2026-09-03ik), ~3.36x
+  packed 395, T-linear vs 471.
+  throttle=1. Do not freeze 117
+  as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
