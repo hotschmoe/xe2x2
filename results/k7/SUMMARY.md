@@ -536,5 +536,32 @@ ok=1. pipe_host 842.973 event
 847-858. Do not freeze 843 as
 2800. Stop double-buffer.
 
-K7 next: tree hsum T=256 vs
-SLM-K T=16.
+## ESIMD fused delta T=256 SLM-K tree hsum card0 (2026-09-03gy)
+
+backend sycl+l0, AOT
+gdn_delta_slmh. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 425.689 event
+416.516. 37.1 GB/s. act 2800-
+2700 throttle=1. ~1.99x SLM-K
+847. New leftover class. Do
+not freeze 426 as 2800. Sibling
+before promote.
+
+## ESIMD fused delta T=16 SLM-K card1 (2026-09-03gz)
+
+backend sycl+l0, same
+gdn_delta_slmk. T=16 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 58.130 event
+200.466 (ramp). timed_begin
+act=cur=550. timed_end
+act=cur=2800 throttle=0.
+event min 57. Near T-linear 53.
+Do not freeze 58 as 2800. Hold
+retry.
+
+K7 next: T=16 hold vs sibling
+tree hsum T=256.

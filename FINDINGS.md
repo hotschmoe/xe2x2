@@ -3055,6 +3055,50 @@ VERDICT -> SLM db is 843 us
 
 Evidence: `results/k7/esimd_delta_slmdb_t256_s0_card1.txt`.
 
+## ESIMD SLM-K tree hsum is 426 us T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmh` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  esimd::reduce hsum. Card0.
+  spin=0. Prior: SLM-K 847-858.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  425.689. timed act 2800-2700
+  throttle=1.
+
+VERDICT -> Tree hsum T=256 is 426
+  us pipe_host card0, ~1.99x
+  SLM-K 847. New leftover class.
+  One-card. Sibling before
+  promote. Do not freeze 426 as
+  2800. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmh_t256_s0_card0.txt`.
+
+## ESIMD SLM-K T=16 is 58 us pipe_host (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmk`. T=16
+  blk=16. Card1. spin=0. Prior:
+  T=256 847, T=64 214.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  58.130 event 200.466 (ramp).
+  timed_begin act=cur=550.
+  timed_end act=cur=2800
+  throttle=0. event min 57.
+
+VERDICT -> SLM-K T=16 is 58 us
+  pipe_host card1, near T-linear
+  53. Clocks ramped 550 to 2800.
+  Do not freeze 58 as 2800. Hold
+  retry. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmk_t16_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4496,7 +4540,16 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   SLM db T=256 is 843 us card1
   (2026-09-03gx), throttle=1,
   wash vs 847-858. Stop
-  double-buffer.
+  double-buffer. tree hsum T=256
+  is 426 us card0 (2026-09-03gy),
+  ~1.99x SLM-K 847, throttle=1.
+  New leftover class. Do not
+  freeze 426 as 2800. Sibling
+  before promote. SLM-K T=16 is
+  58 us card1 (2026-09-03gz),
+  near T-linear 53. Clocks 550
+  to 2800. Do not freeze 58 as
+  2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
