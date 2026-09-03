@@ -5816,3 +5816,65 @@ VERDICT -> Wide-N s8xs4 is 38.6 us
   freeze 38.6 us until card0. Rank
   pipe_host. Next: sibling wide-N vs
   s8xs4 K=17408.
+
+### 2026-09-03cp - K2 s8xs4 RC=4 N=17408 sibling card0
+
+CONTEXT -> card1 s8xs4 N=17408 was
+  38.6 us at 2800, cosine=1 max_abs=0.
+  Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8xs4_sc. gpu-run --card 0.
+  NT=2 spin=4000. M=1 and M=4 N=17408
+  K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s8xs4_sc_wide.sh 0 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 38.026 pipe_host 38.637 vs card1
+  38.554 vs square 22.1 vs s4 29.5 vs
+  s8 141.6. M=4 pipe 38.531. Spread
+  ~0.2%.
+
+VERDICT -> Sibling matches. New s8xs4
+  N=17408 floor 38.6 us pipe_host both
+  cards at 2800. ~1.74x square. Numeric
+  closed. Rank pipe_host.
+
+### 2026-09-03cq - K2 s8xs4 RC=4 K=17408 card1
+
+CONTEXT -> s8xs4 square 22.1. N-wide
+  38.6. s8 K=17408 is 261.6. s4 53.4.
+  W8A8 155.3. Napkin K-linear ~75.
+  Mix A=s8 B=s4. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s8xs4_sc RC=4 NT=2. gpu-run
+  --card 1. M=1 and M=4 N=5120 K=17408.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_sc_k17408.sh 1 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 72.857 pipe_host 73.172 vs
+  square 22.1 vs N-wide 38.6 vs s4 53.4
+  vs s8 261.6 vs W8A8 155.3 vs napkin
+  75. M=4 pipe 73.237 tracks. ~3.31x
+  square, near K-linear.
+
+VERDICT -> Wide-K s8xs4 is 73.2 us
+  pipe_host at 2800 card1. Napkin 75
+  hit. Beats s8 261.6 and W8A8 155.3,
+  loses to s4 53.4 (~1.37x). More
+  K-hostile than N-wide. One-card. Do
+  not freeze 73.2 us until card0. Rank
+  pipe_host. Next: sibling K=17408 vs
+  GPTQ s4 serving decode.

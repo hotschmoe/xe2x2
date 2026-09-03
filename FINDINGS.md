@@ -1084,28 +1084,53 @@ VERDICT -> Group-scale epilogue matches
 Evidence: `results/k6/gptq_s4_sc_card0.txt`,
   `results/k6/gptq_s4_sc_card1.txt`.
 
-## ESIMD s8xs4 N=17408 is 38.6 us card1 (K2)
+## ESIMD s8xs4 N=17408 is 38.6 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s8xs4_sc`. M=1 N=17408 K=5120.
-  Card1. Named clock 2800. NT=2
+  Both cards. Named clock 2800. NT=2
   spin=4000. Prior: square 22.1;
   N-linear ~75; s4 29.5; s8 141.6.
 
 RESULT -> cosine=1.0 max_abs=0. timed
   act=cur=2800 throttle=0. M=1
-  pipe_host 38.554 vs square 22.1 vs
-  s4 29.5 vs s8 141.6 vs W8A8 158.1
-  vs napkin 75. M=4 tracks. ~1.74x
-  square.
+  pipe_host 38.637/38.554 vs square
+  22.1 vs s4 29.5 vs s8 141.6 vs W8A8
+  158.1 vs napkin 75. M=4 tracks.
+  Spread ~0.2%. ~1.74x square.
 
-VERDICT -> Wide-N mix is under linear
-  like s4 (1.80x), not s8 (4.16x).
-  Beats s8 and W8A8, loses to s4
-  (~1.31x). One-card. Do not freeze
-  38.6 us until card0. Rank pipe_host.
+VERDICT -> New s8xs4 N=17408 floor
+  38.6 us pipe_host at 2800 both cards.
+  Under linear like s4 (1.80x), not s8
+  (4.16x). Beats s8 and W8A8, loses to
+  s4 (~1.31x). Rank pipe_host.
 
-Evidence: `results/k2/s8xs4sc_n17408_n2_s4000_card1.txt`.
+Evidence: `results/k2/s8xs4sc_n17408_n2_s4000_card0.txt`,
+  `results/k2/s8xs4sc_n17408_n2_s4000_card1.txt`.
+
+## ESIMD s8xs4 K=17408 is 73.2 us card1 (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s8xs4_sc`. M=1 N=5120 K=17408.
+  Card1. Named clock 2800. NT=2
+  spin=4000. Prior: square 22.1;
+  N-wide 38.6; K-linear ~75; s4 53.4;
+  s8 261.6.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1
+  pipe_host 73.172 vs square 22.1 vs
+  N-wide 38.6 vs s4 53.4 vs s8 261.6
+  vs W8A8 155.3 vs napkin 75. M=4
+  tracks. ~3.31x square.
+
+VERDICT -> Wide-K mix is near K-linear
+  (napkin 75 hit). Beats s8 and W8A8,
+  loses to s4 (~1.37x). One-card. Do
+  not freeze 73.2 us until card0. Rank
+  pipe_host.
+
+Evidence: `results/k2/s8xs4sc_k17408_n2_s4000_card1.txt`.
 
 ## 256-entry product LUT GEMV is a numeric-closed loss (K6)
 
@@ -2820,8 +2845,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   22.1 us both cards at 2800 (beats
   s8 34, loses to s4 16.5). GPTQ s4
   group-scale f16 closed both cards.
-  s8xs4 N=17408 is 38.6 us card1
+  s8xs4 N=17408 is 38.6 us both cards
   (~1.74x square, under linear).
+  s8xs4 K=17408 is 73.2 us card1
+  (~3.31x square, near K-linear).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
