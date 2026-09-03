@@ -2311,6 +2311,57 @@ Evidence: `results/k7/proj_q_w8a8_card0.txt`,
   `results/k7/proj_v_w8a8_card0.txt`,
   `results/k7/proj_v_w8a8_card1.txt`.
 
+## ESIMD GDN conv1d is ~4.4 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_conv1d` AOT
+  `intel_gpu_bmg_g31`. Depthwise
+  K=4 T=1 f16 with K-1 state.
+  VL=16 wg=16. Card0. spin=4000.
+  Prior: eager ~115 us.
+
+RESULT -> cosine=1.0 max_abs=0.
+  C=2048 pipe_host 4.350 event
+  1.456 act=cur=1700 throttle=0.
+  C=6144 pipe_host 4.799 at 2250.
+  vs eager 115.
+
+VERDICT -> Fused ESIMD conv1d is
+  4.35 us pipe_host card0, ~26x
+  eager. Short kernel, clocks not
+  2800. One-card. Do not freeze
+  4.35 until sibling / held 2800.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_s4000_card0.txt`.
+
+## ESIMD GDN delta is 7.1 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta` AOT
+  `intel_gpu_bmg_g31`. 48 heads,
+  S 128x128 f16. VL=16 wg=16.
+  Card1. spin=4000. Prior: eager
+  308 us.
+
+RESULT -> cosine=1.0 max_abs=
+  0.015625 (1 ulp f16) cosine_o=1
+  max_abs_o=0. timed act=cur=2800
+  throttle=0. pipe_host 7.093
+  event 8.432. 450 GB/s vs copy
+  550.
+
+VERDICT -> Fused ESIMD delta is
+  7.09 us pipe_host card1 at 2800,
+  ~43x eager 308, near HBM. One-
+  card. Do not freeze 7.09 until
+  sibling. If sibling matches,
+  mixer ~11 us sits under W8A8
+  46; leftover moves to qkvz.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3646,6 +3697,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   GDN q/v W8A8 M=1 is ~46 us (v
   both-card; q 45-58 clocks), same
   class as square 44, under mixer.
+  ESIMD fused conv1d is 4.35 us
+  pipe_host card0 at 1700 (~26x
+  eager; clocks not 2800). ESIMD
+  fused delta is 7.09 us pipe_host
+  card1 at 2800 (~43x eager, 450
+  GB/s). One-card each. Do not
+  freeze. Sibling next.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

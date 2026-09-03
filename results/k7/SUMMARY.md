@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/es
+# K7 GDN inventory 2026-09-03ep/ey
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -54,5 +54,33 @@ q-proj 45-58, clocks. Same class
 as square 44, not N-linear. Under
 conv 115 and delta 308.
 
-K7 next: fused ESIMD conv1d vs
-fused delta to beat 115 / 308.
+## ESIMD conv1d K=4 card0 (2026-09-03ex)
+
+backend sycl+l0, AOT gdn_conv1d.
+T=1 f16, VL=16 wg=16, spin=4000.
+cosine=1 max_abs=0 ok=1.
+
+| C | pipe_host us | event us | cur MHz |
+|---|---:|---:|---:|
+| 2048 | 4.350 | 1.456 | 1700 |
+| 6144 | 4.799 | 1.083 | 2250 |
+
+~26x eager 115. Clocks not 2800.
+Do not freeze 4.35. One-card.
+
+## ESIMD delta 48x128x128 card1 (2026-09-03ey)
+
+backend sycl+l0, AOT gdn_delta.
+spin=4000. cosine=1 max_abs=0.015625
+(1 ulp f16) ok=1. act=cur=2800
+throttle=0.
+
+| card | pipe_host us | event us | GBs |
+|---|---:|---:|---:|
+| 1 | 7.093 | 8.432 | 450.48 |
+
+~43x eager 308. Near copy 550.
+One-card. Do not freeze 7.09.
+
+K7 next: sibling swap. card0
+delta, card1 conv1d.

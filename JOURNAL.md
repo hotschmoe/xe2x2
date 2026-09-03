@@ -7683,6 +7683,70 @@ VERDICT -> q-proj clocks disagreed.
   Rank us. Next: fused ESIMD
   conv1d vs fused delta.
 
+### 2026-09-03ex - K7 ESIMD GDN conv1d card0
+
+CONTEXT -> Eager conv1d K=4 is
+  ~115 us launch-bound. First
+  fused ESIMD TU. C=2048 q/k and
+  C=6144 v. T=1 with K-1 state.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_conv1d
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. f16, VL=16 wg=16.
+  NT n/a. spin=4000. Named clock
+  not 2800 (short kernel).
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0
+  cosine_st=1 ok=1. C=2048
+  event 1.456 pipe_host 4.350
+  act=cur=1700 throttle=0.
+  C=6144 event 1.083 pipe_host
+  4.799 act=cur=2250. vs eager
+  115. GB/s 11 / 31.
+
+VERDICT -> ESIMD conv1d is 4.35
+  us pipe_host card0 at 1700,
+  ~26x eager 115. Numeric closed.
+  Clocks not 2800. Do not freeze
+  4.35. Rank pipe_host.
+
+### 2026-09-03ey - K7 ESIMD GDN delta card1
+
+CONTEXT -> Eager delta is 308 us.
+  First fused ESIMD recurrent TU.
+  48 heads, S 128x128 f16.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. VL=16 wg=16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.015625
+  (1 ulp f16) cosine_o=1
+  max_abs_o=0 ok=1. event 8.432
+  pipe_host 7.093. 450 GB/s vs
+  copy 550. act=cur=2800
+  throttle=0. vs eager 308.
+
+VERDICT -> ESIMD delta is 7.09 us
+  pipe_host card1 at 2800, ~43x
+  eager 308. Near HBM. Numeric
+  closed. One-card. Do not freeze
+  7.09 until sibling. Rank
+  pipe_host. Next: sibling swap.
+
+
 
 
 

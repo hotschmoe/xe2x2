@@ -1,0 +1,28 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4728514484985 energy2=pkg:2509095937805 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4664550410583 energy2=pkg:2596290116455 temp2_mC=56000
+CONFIG backend=sycl+l0 card=0 arm=gdn_conv1d spin=4000 T=1 k=4 f16
+eager conv1d ~115 us. W8A8 44. s2 decode 11.5.
+=== esimd conv1d C=2048 T=1 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=gdn_conv1d_k4 dtype=f16 T=1 VL=16 wg=16 C=2048 warmup=50 iters=40 card=0 spin=4000 heat=none
+spin_done n=4000 act=1700 cur=1700 power=D0 throttle=0
+timed_begin act=1700 cur=1700 power=D0 throttle=0
+timed_end act=1700 cur=1700 power=D0 throttle=0
+phase,c,kconv,event_us,wait_host_us,pipe_host_us,GBs,cosine,max_abs,cosine_st,max_abs_st,ok,median_us,min_us,max_us
+timed,2048,4,1.456,16.331,4.350,11.30,1.000000,0,1.000000,0,1,1.458,1.354,1.563
+=== esimd conv1d C=6144 T=1 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=gdn_conv1d_k4 dtype=f16 T=1 VL=16 wg=16 C=6144 warmup=50 iters=40 card=0 spin=4000 heat=none
+spin_done n=4000 act=2250 cur=2250 power=D0 throttle=0
+timed_begin act=2250 cur=2250 power=D0 throttle=0
+timed_end act=2250 cur=2250 power=D0 throttle=0
+phase,c,kconv,event_us,wait_host_us,pipe_host_us,GBs,cosine,max_abs,cosine_st,max_abs_st,ok,median_us,min_us,max_us
+timed,6144,4,1.083,16.591,4.799,30.73,1.000000,0,1.000000,0,1,1.042,0.937,1.146
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2250 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4728541126586 energy2=pkg:2509112269836 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4664580048767 energy2=pkg:2596309400817 temp2_mC=54000
