@@ -4394,3 +4394,69 @@ VERDICT -> Wide-K closed-form LUT at
   until card0. Rank us. Next: sibling
   scf M=256 K=17408 vs held-clock
   nvfp4_gemm_w4a16 M=1.
+
+### 2026-09-03ax - K6 closed-form LUT 4x8 A-db M=256 K=17408 sibling card0
+
+CONTEXT -> card1 closed-form 4x8 M=256
+  K=17408 was 3412 us at 2783/2800,
+  throttle=1, numeric closed. Sibling
+  swap. Host oracle ~4 min wall.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_scf_db48_m256_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2750/2767 cur=2800 throttle=1.
+  M=256 card0: event 3433.594 us, pipe_host
+  3444.610 vs card1 3412.241 vs 5120 1083
+  vs s8 477.4 vs s4 149 vs compose 968.7.
+  Spread ~0.9%. min/max 3400.2-3472.6.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  closed-form LUT M=256 wide-K floor 3428
+  us at ~2760/2800 both cards, throttle=1.
+  ~3.17x square, ~7.18x s8 477.4. Qwen
+  FFN closed-form LUT M=256 map is closed.
+  4x8 LUT loses to s8/s4/compose at FFN
+  prefill. Rank us.
+
+### 2026-09-03ay - K6 held-clock nvfp4_gemm_w4a16 M=1 card1
+
+CONTEXT -> sprint unheld was 37.2 us
+  (card1 cur 1750 then 1383, never 2800).
+  s8 34. W8A8 44. LUT 134.8. Hold 2800
+  via M=64 heat + M=1 spin=2000. A=bf16.
+  No E2M1 cosine. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, image
+  b70-sglang-xpu-int8-runtime:20260826-mtp6,
+  v028 _xpu_C.abi3.so load_library, gpu-run
+  --card 1. Packed NT stride(0)=1, g16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m1_hold.sh 1
+  ```
+
+RESULT -> HAS folded and f8scale. out
+  bf16 [1,5120]. spin/timed act=cur=2800
+  throttle=0. us_bench folded 34.395 vs
+  unheld 37.169 vs s8 34 vs W8A8 44 vs
+  LUT 134.8. f8scale 37.944 vs unheld
+  39.611, also 2800 throttle=0.
+
+VERDICT -> Held-clock folded w4a16 is
+  34.4 us at 2800 card1, ~1.08x unheld
+  37.2, under W8A8 44, ~3.9x LUT 135.
+  Same us class as hand s8 34. A is
+  bf16, not s8. One-card. Do not freeze
+  34.4 us until card0. Do not call this
+  a beat of s8. Rank us. Next: sibling
+  w4a16 M=1 vs held-clock w4a16 M=64.

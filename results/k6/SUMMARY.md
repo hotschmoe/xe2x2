@@ -446,19 +446,35 @@ New M=256 wide-N floor 3138 us both
 cards. ~2.90x square. ~6.68x s8.
 Throttle=1.
 
-## closed-form LUT 4x8 A-db M=256 K=17408 card1 (2026-09-03aw)
+## closed-form LUT 4x8 A-db M=256 K=17408 (2026-09-03aw/ax)
 
 Same `nibble_lut_scf_db48`, M=256 N=5120
 K=17408. cosine=1.0 max_abs=0. timed
-act=2783 cur=2800 throttle=1.
+act=2750/2783 cur=2800 throttle=1.
 
 | shape | card | pipe_host_us | square | s8 | compose | napkin |
 |---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 x 17408 | 0 | 3444.610 | 1083 | 477.4 | 968.7 | 3675 |
 | 256 x 5120 x 17408 | 1 | 3412.241 | 1083 | 477.4 | 968.7 | 3675 |
 
-~3.15x square. ~7.15x s8. Napkin 3675
-was high ~7.2%. Throttle=1. One-card.
-Do not freeze 3412 us.
+New M=256 wide-K floor 3428 us both
+cards. ~3.17x square. ~7.18x s8.
+Throttle=1. Qwen FFN closed-form LUT
+M=256 map closed.
+
+## held-clock nvfp4_gemm_w4a16 M=1 card1 (2026-09-03ay)
+
+pytorch-xpu on sycl+l0, v028 so. M=64
+heat, M=1 spin=2000, us_bench M=1 5120.
+timed act=cur=2800 throttle=0.
+
+| op | card | us_bench | unheld | s8 | W8A8 | LUT |
+|---|---|---:|---:|---:|---:|---:|
+| folded | 1 | 34.395 | 37.169 | 34 | 44 | 134.8 |
+| f8scale | 1 | 37.944 | 39.611 | 34 | 44 | 134.8 |
+
+bf16-A. Same us class as s8 34. One-card.
+Do not freeze 34.4 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

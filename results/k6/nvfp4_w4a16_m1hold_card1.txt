@@ -1,0 +1,31 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3793973958618 energy2=pkg:2025503160278 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3724773757812 energy2=pkg:2099087687683 temp2_mC=53000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=nvfp4_gemm_w4a16 heat=M64 spin=2000 time=M1 n=5120
+unheld sprint 36.8/37.2 us clocks not 2800. s8 34. W8A8 44. LUT 134.8.
+CONFIG backend=pytorch-xpu on sycl+l0 op=nvfp4_gemm_w4a16 torch 2.13.0+xpu ZE_AFFINITY_MASK 1 heat=M64 spin=2000 time=M1 n=5120 k=5120
+B70_XPU_C_SO /opt/nvfp4/_xpu_C.abi3.so
+load_library /opt/nvfp4/_xpu_C.abi3.so ok
+HAS nvfp4_gemm_w4a16 True HAS f8scale True
+B_shape (2560, 5120) B_stride (1, 2560)
+out_shape (1, 5120) dtype torch.bfloat16
+heat_M64_done
+spin_done n=2000 act=2800 cur=2800 throttle=0
+timed_begin act=2800 cur=2800 throttle=0
+timed_end act=2800 cur=2800 throttle=0
+nvfp4_gemm_w4a16,1,5120,5120,34.395
+f8_out_shape (1, 5120) dtype torch.bfloat16
+f8_spin_done n=2000 act=2800 cur=2800 throttle=0
+f8_timed_begin act=2800 cur=2800 throttle=0
+f8_timed_end act=2800 cur=2800 throttle=0
+nvfp4_gemm_w4a16_f8scale,1,5120,5120,37.944
+DONE
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3794563187866 energy2=pkg:2025836502990 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3725395216247 energy2=pkg:2099457928283 temp2_mC=56000

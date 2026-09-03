@@ -802,27 +802,30 @@ VERDICT -> New 4x8 A-db closed-form LUT
 Evidence: `results/k6/lutscfdb48_m256_n17408_n2_s512_card0.txt`,
   `results/k6/lutscfdb48_m256_n17408_n2_s512_card1.txt`.
 
-## Closed-form LUT 4x8 A-db M=256 K=17408 is 3412 us (K6)
+## Closed-form LUT 4x8 A-db M=256 K=17408 is 3428 us (K6)
 
 CONFIG -> backend `sycl+l0`, same
   `nibble_lut_scf_db48`. M=256 N=5120
-  K=17408. Card1 only, NT=2, spin=512.
+  K=17408. Both cards, NT=2, spin=512.
   Never bitcast. Prior: 1083*1125/331.6
   ~3675 us.
 
 RESULT -> cosine=1.0 max_abs=0. timed
-  act=2783 cur=2800 throttle=1. M=256
-  pipe_host 3412.241 vs 5120 1083 vs
-  M=64 K=17408 1125 vs s8 477.4 vs s4 149
-  vs compose 968.7 vs napkin 3675.
+  act=2750/2783 cur=2800 throttle=1.
+  M=256 pipe_host 3444.61/3412.24 vs 5120
+  1083 vs M=64 K=17408 1125 vs s8 477.4
+  vs s4 149 vs compose 968.7 vs napkin
+  3675. Spread ~0.9%.
 
-VERDICT -> Wide-K closed-form LUT at
-  M=256 is ~3.15x square, ~7.15x s8
-  477.4. Napkin 3675 was high ~7.2%.
-  Throttle=1. One-card. Do not freeze
-  3412 us until card0.
+VERDICT -> New 4x8 A-db closed-form LUT
+  M=256 wide-K floor 3428 us at ~2760/2800
+  both cards, throttle=1. ~3.17x square,
+  ~7.18x s8 477.4. Qwen FFN closed-form
+  LUT M=256 map is closed. 4x8 LUT loses
+  to s8/s4/compose at FFN prefill. Rank us.
 
-Evidence: `results/k6/lutscfdb48_m256_k17408_n2_s512_card1.txt`.
+Evidence: `results/k6/lutscfdb48_m256_k17408_n2_s512_card0.txt`,
+  `results/k6/lutscfdb48_m256_k17408_n2_s512_card1.txt`.
 
 ## E2M1 two-term 4x8 A-db N=17408 is 326.9 us at M=64 (K3/K6)
 
@@ -1036,6 +1039,29 @@ VERDICT -> The 27B-class incumbent lights and is
 
 Evidence: `results/k6/nvfp4_w4a16_m1_card0.txt`,
   `results/k6/nvfp4_w4a16_m1_card1.txt`.
+
+## Held-clock nvfp4_gemm_w4a16 M=1 is 34.4 us card1 (K6)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  Same v028 so, packed NT, g16. M=64 heat
+  then M=1 spin=2000 then us_bench M=1
+  5120. Card1 only. Named clock 2800.
+
+RESULT -> spin/timed act=cur=2800
+  throttle=0. Folded bf16 scale 34.395 us
+  vs unheld 37.169 vs s8 34 vs W8A8 44 vs
+  LUT 134.8. f8scale 37.944 vs unheld
+  39.611, also 2800 throttle=0. out bf16
+  [1,5120]. No E2M1 cosine.
+
+VERDICT -> Held-clock folded w4a16 is
+  34.4 us at 2800 card1, ~1.08x unheld.
+  Same us class as hand s8 34 and under
+  W8A8 44. A is bf16, not s8. One-card.
+  Do not freeze 34.4 us until card0.
+  Do not call this a beat of s8.
+
+Evidence: `results/k6/nvfp4_w4a16_m1hold_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2228,14 +2254,21 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   closed-form LUT 4x8 A-db M=256 N=17408
   is 3138 us both cards (~2.90x square vs
   s8 469.8, throttle=1). closed-form LUT
-  4x8 A-db M=256 K=17408 is 3412 us card1
-  (~3.15x square vs s8 477.4, throttle=1).
+  4x8 A-db M=256 K=17408 is 3428 us both
+  cards (~3.17x square vs s8 477.4,
+  throttle=1). Qwen FFN closed-form LUT
+  M=256 map is closed. 4x8 LUT loses to
+  s8/s4/compose at FFN prefill.
+  Held-clock nvfp4_gemm_w4a16 M=1 is
+  34.4 us card1 at 2800 (bf16-A, same
+  us class as s8 34, under W8A8 44).
   One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
   Local dump (v028 so, M=64 heat, clocks not held 2800): ~37 us
-  folded / ~39 us f8scale at M=1 5120. Stock mtp6 image lacks the
+  folded / ~39 us f8scale at M=1 5120. Held 2800 card1: 34.4 us
+  folded / 37.9 us f8scale. Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
   on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
   and s8 K=16 dpas do not compile. Product LUT GEMV is a

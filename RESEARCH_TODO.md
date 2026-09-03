@@ -154,8 +154,14 @@ closed-form LUT 4x8 A-db M=256 N=17408
 is 3138 us both cards (2026-09-03av),
 ~2.90x square vs s8 469.8, throttle=1.
 closed-form LUT 4x8 A-db M=256 K=17408
-is 3412 us card1 (2026-09-03aw),
-~3.15x square vs s8 477.4, throttle=1.
+is 3428 us both cards (2026-09-03ax),
+~3.17x square vs s8 477.4, throttle=1.
+Qwen FFN closed-form LUT M=256 map is
+closed. 4x8 LUT loses to s8/s4/compose
+at FFN prefill. Held-clock
+nvfp4_gemm_w4a16 M=1 is 34.4 us card1
+(2026-09-03ay) at 2800, bf16-A, same
+us class as s8 34, under W8A8 44.
 One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
@@ -165,13 +171,12 @@ explicit negative. Sparse-hi dies
 s2xs4 and s8 K=16 dpas refuse.
 Product LUT GEMV is a numeric-closed
 us loss. oneDNN nvfp4_gemm_w4a16
-lights at ~37 us after M=64 heat
-(clocks not held 2800). MXFP4 absent.
+lights at ~37 us unheld / 34.4 us
+held 2800 card1. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: sibling nibble_lut_scf_db48
-M=256 K=17408 (throttle=1 last). card1:
-held-clock nvfp4_gemm_w4a16 M=1 5120
-(sprint clocks were not 2800).
+Next: split. card0: sibling held-clock
+nvfp4_gemm_w4a16 M=1 5120. card1:
+held-clock nvfp4_gemm_w4a16 M=64 5120.
 Loop every 10m.
 
 ## After P0: kernel workstreams (parallelizable)
