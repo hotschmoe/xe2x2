@@ -1800,6 +1800,32 @@ VERDICT -> New s2 decode floor 11.5 us
 Evidence: `results/k2/s2sc_n2_s4000_card0.txt`,
   `results/k2/s2sc_n2_s4000_card1.txt`.
 
+## ESIMD s2 4x8 A-db M=64 is 20 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s2_db48`. RC=8 wg 4x8 A-db
+  pack=4 along K. IGC s2 [-2,1]. M=64
+  N=K=5120. Both cards. NT=2 spin=512.
+  Named clock 2800. Never E2M1.
+  Prior: s2 decode 11.5; s4 4x8 33.6;
+  W8A8 46.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64
+  pipe_host 19.794/20.814 vs s2
+  decode 11.5 vs s4 33.6 vs W8A8 46.
+  event 19.318/19.667. pipe spread
+  ~5.2%, event ~1.8%.
+
+VERDICT -> New s2 4x8 A-db M=64 floor
+  20 us pipe_host at 2800 both cards.
+  Numeric closed. Beats s4 33.6
+  (~1.68x) and W8A8 46 (~2.21x). New
+  M=64 hand floor. Rank pipe_host.
+
+Evidence: `results/k2/s2db48_m64_n2_s512_card0.txt`,
+  `results/k2/s2db48_m64_n2_s512_card1.txt`.
+
 ## ESIMD s2xs8 decode mix is 14.1 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
@@ -3119,7 +3145,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   Qwen FFN W8A8 M=64 map is closed.
   ESIMD s2 RC=4 decode is 11.5 us both
   cards at 2800 (cosine=1 max_abs=0,
-  ~1.43x s4 16.5). ESIMD s2xs8 decode
+  ~1.43x s4 16.5). s2 4x8 A-db M=64
+  is 20 us both cards at 2800, beats
+  s4 33.6 (~1.68x) and W8A8 46
+  (~2.21x). New M=64 hand floor.
+  ESIMD s2xs8 decode
   mix is 14.1 us both cards at 2800
   (beats s8 34, loses to s2xs2 11.5).
   K5 producer+GEMM N=17408 is 155 us

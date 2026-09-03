@@ -268,7 +268,11 @@ Stop 8x2-N GPTQ at prefill. GPTQ
 (~2.24x). GPTQ 4x8 A-db M=256 is
 303 us card1 (2026-09-03dk) at
 2800, a loss vs W8A8 75. Stop
-GPTQ 4x8 at prefill vs W8A8.
+GPTQ 4x8 at prefill vs W8A8. s2 4x8
+A-db M=64 is 20 us both cards
+(2026-09-03dm) at 2800, beats s4
+33.6 (~1.68x) and W8A8 46 (~2.21x).
+New M=64 hand floor.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -280,11 +284,12 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: s2 4x8 A-db M=64 both-card
-(new dtype on 4x8; skip second
-steal). Binary ready. runner
-kernels/esimd_dpas/run_s2_db48.sh
-on card0 || card1.
+Next: split. card0: s2 4x8 A-db
+M=64 N=17408 (runner
+kernels/esimd_dpas/run_s2_db48_wide.sh).
+card1: s2 4x8 A-db M=64 K=17408
+(runner
+kernels/esimd_dpas/run_s2_db48_k17408.sh).
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -294,11 +299,12 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2 4x8 A-db M=64 both-card (s2
-   decode 11.5, s4 4x8 33.6, W8A8
-   46). New dtype: both cards.
-2. After s2 4x8: s2xs8 4x8 or park
-   GDN/fabric.
+1. s2 4x8 M=64 N=17408 (square 20,
+   s4 94.7, mix 129, W8A8 202,
+   napkin ~68).
+2. s2 4x8 M=64 K=17408 (s4 106.0,
+   mix 144.7, W8A8 181, napkin ~68).
+   Then s2xs8 4x8 or s2 M=256.
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

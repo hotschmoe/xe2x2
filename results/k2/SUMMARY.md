@@ -1113,4 +1113,21 @@ s8 and W8A8 181. Loses to s4 106.0.
 Qwen FFN mix M=64 map closed
 (43.3 / 129 / 144.7).
 
-K2 next: s2 4x8 A-db M=64 both-card.
+## s2 4x8 A-db M=64 both cards (2026-09-03dl/dm)
+
+dpas_s2_db48 RC=8 wg 4x8 A-db pack=4.
+IGC s2 [-2,1]. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4x8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 19.318 | 19.794 | 33.6 | 46 |
+| 64 x 5120 | 1 | 19.667 | 20.814 | 33.6 | 46 |
+
+New floor 20 us both cards. Event
+spread ~1.8%, pipe ~5.2%. Beats s4
+33.6 (~1.68x) and W8A8 46 (~2.21x).
+New M=64 hand floor.
+
+K2 next: s2 4x8 M=64 N=17408.

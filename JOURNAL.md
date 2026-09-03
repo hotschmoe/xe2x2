@@ -6538,6 +6538,65 @@ VERDICT -> GPTQ 4x8 M=256 is 303 us
   Rank pipe_host. Next: s2 4x8 A-db
   M=64 both-card.
 
+### 2026-09-03dl - K2 s2 4x8 A-db M=64 card0
+
+CONTEXT -> s2 decode 11.5. s4 4x8
+  33.6. W8A8 46. First s2 on 4x8
+  A-db. IGC s2 [-2,1]. Never E2M1.
+  New dtype: both-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_db48 RC=8 wg 4x8 A-db
+  pack=4. gpu-run --card 0. M=64
+  N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_db48.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 19.318 pipe_host 19.794 vs
+  s2 decode 11.5 vs s4 33.6 vs W8A8
+  46. ~1.70x s4, ~2.32x W8A8.
+
+VERDICT -> s2 4x8 M=64 is 19.8 us
+  pipe_host at 2800 card0. Numeric
+  closed. New M=64 floor vs s4 33.6
+  and W8A8 46. Rank pipe_host.
+
+### 2026-09-03dm - K2 s2 4x8 A-db M=64 sibling card1
+
+CONTEXT -> card0 s2 4x8 M=64 was
+  19.8 us at 2800, cosine=1
+  max_abs=0. New dtype sibling.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48. gpu-run --card 1.
+  M=64 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_db48.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 19.667 pipe_host 20.814 vs
+  card0 19.794 vs s4 33.6 vs W8A8
+  46. Event spread ~1.8%. pipe
+  spread ~5.2%.
+
+VERDICT -> Sibling matches on event.
+  New s2 4x8 A-db M=64 floor 20 us
+  pipe_host both cards at 2800.
+  Beats s4 33.6 (~1.68x) and W8A8
+  46 (~2.21x). Rank pipe_host.
+  Next: s2 4x8 M=64 N=17408 vs
+  K=17408.
+
+
 
 
 

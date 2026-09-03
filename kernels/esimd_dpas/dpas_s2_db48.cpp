@@ -450,12 +450,12 @@ int main(int argc, char **argv) {
                               : "sycl+other";
     std::printf("# CONFIG backend=%s device=\"%s\" driver=%s "
                 "dtype=s2xs2->f16_scaled RC=%d NT=%d unroll=%d dpas=%d "
-                "wg=%dx%d_NxM A_double_buffer=1 no_slm=1 pack=2 "
+                "wg=%dx%d_NxM A_double_buffer=1 no_slm=1 pack=%d "
                 "grf256_request=1 a_scale=b_scale=%.4f out=f16 "
                 "warmup=%d iters=%d card=%d spin=%d heat=none\n",
                 backend, name.c_str(), driver.c_str(), kRc, nt, unroll,
-                nt * unroll, kWgX, kWgY, double(kScale), warmup, iters, g_card,
-                g_spin);
+                nt * unroll, kWgX, kWgY, kPack, double(kScale), warmup, iters,
+                g_card, g_spin);
     int rc = 0;
     run_shape(q, nt, unroll, "check", kRc * kWgY, nt * kExecN * kWgX,
               unroll * kK64, 1, 1, &rc, 0);
