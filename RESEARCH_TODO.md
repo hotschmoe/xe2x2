@@ -311,6 +311,12 @@ square, beats W8A8 181 (~1.69x)
 and mix 144.7, loses to s2 64
 (~1.67x). Qwen FFN s2xs8 M=64
 map is closed (33.2 / 100.5 / 107).
+s2xs8 4x8 A-db M=256 is 96 us
+both cards (2026-09-03ee) at 2800,
+throttle=1, ~2.88x M=64, beats
+mix 123, loses to s2 55.5 (~1.72x)
+and W8A8 75 (~1.27x). Stop 4x8
+mix at M=256 prefill vs W8A8.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -322,14 +328,14 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: both-card s2xs8 4x8 A-db
-M=256 (first M=256 of this mix;
-mix 4x8 M=256 was 123 a loss vs
-W8A8 75; napkin 33.2*4 ~133).
-Runner kernels/esimd_dpas/run_s2xs8_db48_m256.sh.
-Skip the second steal. Loop every
-5m. Do not drop below 5m: M=256
-FFN K-wide already ~4 min GPU.
+Next: both-card s2 4-acc M=256
+(s4 4-acc 48.6 is the M=256 hand
+floor; s2 4x8 55.5 loses ~1.14x).
+New TU: clone dpas_s4_w48m4 to
+dpas_s2_w48m4. Skip the second
+steal. Loop every 5m. Do not drop below 5m:
+M=256 FFN spin=512 already 2-3 min GPU,
+and overlapping fires serialize on gpu-run.
 
 
 ## 10-hour remaining (ruthless)
@@ -337,12 +343,12 @@ FFN K-wide already ~4 min GPU.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2xs8 4x8 M=256 (square 33.2,
-   s2 55.5, mix 123 a loss, W8A8
-   75, napkin ~133). Both-card.
-2. If that floor holds vs W8A8:
-   s2xs8 M=256 N/K=17408. Else
-   stop 4x8 mix at M=256 prefill.
+1. s2 4-acc M=256 (s4 4-acc 48.6,
+   s2 4x8 55.5, W8A8 75, napkin
+   48.6*20/33.6 ~29). New TU.
+   Both-card.
+2. If that beats s4 48.6: FFN
+   N/K=17408. Else stop 4-acc s2.
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

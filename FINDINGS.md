@@ -2069,6 +2069,33 @@ VERDICT -> New s2xs8 4x8 M=64
 Evidence: `results/k2/s2xs8db48_m64_k17408_n2_s512_card0.txt`,
   `results/k2/s2xs8db48_m64_k17408_n2_s512_card1.txt`.
 
+## s2xs8 4x8 A-db M=256 loses at 96 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2xs8_db48`. A=s8 B=s2
+  pack=4. M=256 N=K=5120. Both
+  cards. NT=2 spin=512. Named
+  clock 2800. Never E2M1. Prior:
+  M=64 33.2; s2 55.5; mix 123 a
+  loss; W8A8 75; napkin ~133.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=2767/2800 throttle=1
+  both. M=256 pipe_host
+  95.536/95.735 vs M=64 33.2 vs
+  s2 55.5 vs mix 123 vs W8A8 75.
+  Spread ~0.21%. ~2.88x M=64.
+
+VERDICT -> s2xs8 4x8 M=256 is 96 us
+  pipe_host at 2800 both cards.
+  throttle=1. Beats mix 123. Loses
+  to s2 55.5 (~1.72x) and W8A8 75
+  (~1.27x). Stop 4x8 mix at M=256
+  prefill vs W8A8. Rank pipe_host.
+
+Evidence: `results/k2/s2xs8db48_m256_n2_s512_card0.txt`,
+  `results/k2/s2xs8db48_m256_n2_s512_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3399,7 +3426,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   and mix 144.7, loses to s2 64).
   Qwen FFN s2xs8 M=64 map is
   closed (33.2 / 100.5 / 107).
-  ESIMD s2xs8 decode
+  s2xs8 4x8 A-db M=256 is 96 us
+  both cards at 2800, throttle=1,
+  a loss vs W8A8 75 (~1.27x) and
+  s2 55.5. Stop 4x8 mix at M=256
+  prefill vs W8A8. ESIMD s2xs8 decode
   mix is 14.1 us both cards at 2800
   (beats s8 34, loses to s2xs2 11.5).
   K5 producer+GEMM N=17408 is 155 us
@@ -3497,7 +3528,8 @@ throttle=1) and K=17408 s2 (201
 vs W8A8 226 us). s2xs8 M=64
 N=17408 is 100.5 vs W8A8 202.
 s2xs8 M=64 K=17408 is 107 vs
-W8A8 181.
+W8A8 181. s2xs8 M=256 is 96 vs
+W8A8 75 (loss).
 Different dtype than W8A8, not a W8A8 replacement. s4 M=1
 N=17408 is 29.5 us both cards (1.80x N=5120, not 3.4x).
 s4 M=1 K=17408 is 53.4 us both cards (~3.24x, near

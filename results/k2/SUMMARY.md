@@ -1263,4 +1263,21 @@ Beats W8A8 181 (~1.69x) and mix
 Qwen FFN s2xs8 M=64 map closed
 (33.2 / 100.5 / 107).
 
-K2 next: s2xs8 4x8 M=256 both-card.
+## s2xs8 4x8 A-db M=256 both cards (2026-09-03ed/ee)
+
+Same dpas_s2xs8_db48. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed
+act=2767/2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | s2 | mix | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 95.333 | 95.536 | 55.5 | 123 | 75 |
+| 256 x 5120 | 1 | 96.448 | 95.735 | 55.5 | 123 | 75 |
+
+96 us both cards, throttle=1.
+Spread ~0.21%. ~2.88x M=64. Beats
+mix 123. Loses to s2 55.5 (~1.72x)
+and W8A8 75 (~1.27x). Stop 4x8 mix
+at M=256 prefill vs W8A8.
+
+K2 next: s2 4-acc M=256 both-card.
