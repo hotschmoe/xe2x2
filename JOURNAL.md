@@ -10361,6 +10361,69 @@ VERDICT -> ESIMD tile-fused
   the map. Rank pipe_host. Next:
   sibling slmht T=128 vs mixer
   T=256 retry.
+
+### 2026-09-03ig - K7 ESIMD fused delta T=128 tile-fused sibling card0
+
+CONTEXT -> card1 T=128 was 127
+  us at 2700. Map. Sibling.
+  spin=0. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht. gpu-run
+  --card 0. T=128 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht_t128.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 132.412 pipe_host
+  131.440 vs card1 126.655.
+  Spread ~4%. 72.0 GB/s. timed
+  act=2600 cur=2800 throttle=0.
+  vs T=64 67 vs T=256 260.
+
+VERDICT -> Sibling clock-spread
+  4%. ESIMD tile-fused T=128 is
+  127-131 us pipe_host both
+  cards at 2600-2700. Do not
+  freeze 127 as 2800. T-map
+  closed. Rank pipe_host.
+
+### 2026-09-03ih - K7 ESIMD mixer T=256 card1
+
+CONTEXT -> mixer T=64 395 vs
+  seq 275. Leftover now conv 38
+  + slmht 260 ~298. spin=0.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_t. gpu-run
+  --card 1. T=256 C=10240.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=7.6e-6
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 1539.995 pipe_host
+  1557.055. timed act 2750-2667
+  cur=2800 throttle=1. vs seq
+  ~298 (~5.2x) vs mixer T=64
+  395 (~3.9x).
+
+VERDICT -> ESIMD mixer T=256 is
+  1557 us pipe_host card1,
+  ~5.2x seq 298. Old delta
+  path. Stop packed mixer at
+  T=256. Do not freeze 1557 as
+  2800. Rank pipe_host. Next:
+  mixer-slmht T=256 vs skip-hi
+  T=256.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.

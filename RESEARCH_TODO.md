@@ -608,10 +608,17 @@ not freeze 125 as 2800.
 tile-fused T=128 is 127 us
 card1 at 2700 (2026-09-03if),
 wash vs slmht32 125. Stop
-blk=32 at T=128. Next: split.
-card0: sibling slmht T=128.
-card1: mixer T=256 retry. Loop
-every 5m.
+blk=32 at T=128. tile-fused
+T=128 is 127-131 us both cards
+(2026-09-03if/ig) at 2600-2700,
+spread ~4%. Do not freeze 127
+as 2800. T-map closed. mixer
+T=256 is 1557 us card1
+(2026-09-03ih), ~5.2x seq 298.
+Stop packed mixer at T=256.
+Next: split. card0: mixer-slmht
+T=256. card1: skip-hi T=256.
+Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -622,13 +629,13 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling slmht T=128
-   (127 us card1 at 2700).
-2. mixer T=256 retry
-   (T=64 mixer lost; leftover now 37+260).
+1. mixer-slmht T=256
+   (seq 298; packed mixer 1557).
+2. skip-hi T=256
+   (260 leftover; gated b).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
-T=256 (T=64 mixer loses), C=16/C=64
+T=256 packed (1557 vs seq 298), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
 tree hsum T=1, tile-fused T=1 reduce,

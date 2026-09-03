@@ -3674,6 +3674,52 @@ VERDICT -> Tile-fused T=128 is
 
 Evidence: `results/k7/esimd_delta_slmht_t128_s0_card1.txt`.
 
+## ESIMD tile-fused T=128 is 127-131 us both cards (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht`. T=128
+  blk=16. Both cards. spin=0.
+  Prior: card1 126.655 at 2700.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  131.440 / 126.655. Spread ~4%.
+  act 2600 / 2700 cur=2800
+  throttle=0.
+
+VERDICT -> Tile-fused T=128 is
+  127-131 us pipe_host both
+  cards at 2600-2700. Clock
+  spread 4%. Do not freeze 127
+  as 2800. T-map closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht_t128_s0_card0.txt`,
+  `results/k7/esimd_delta_slmht_t128_s0_card1.txt`.
+
+## ESIMD packed mixer T=256 loses ~5.2x sequential (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_mixer_t`. T=256
+  C=10240 two-kernel conv+delta.
+  Card1. spin=0. Prior: mixer
+  T=64 395 vs seq 275. Seq now
+  conv 38 + slmht 260 ~298.
+
+RESULT -> cosine=1.0 max_abs
+  7.6e-6 / 2.4e-4 ok=1. pipe_host
+  1557.055. timed act 2750-2667
+  cur=2800 throttle=1.
+
+VERDICT -> Mixer T=256 is 1557
+  us pipe_host card1, ~5.2x seq
+  298. Old delta path. Stop
+  packed mixer at T=256. Do not
+  freeze 1557 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_t256_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -5212,6 +5258,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   127 us card1 at 2700
   (2026-09-03if), wash vs slmht32
   125. Stop blk=32 at T=128.
+  tile-fused T=128 is 127-131 us
+  both cards (2026-09-03if/ig)
+  at 2600-2700, spread ~4%. Do
+  not freeze 127 as 2800. mixer
+  T=256 is 1557 us card1
+  (2026-09-03ih), ~5.2x seq 298.
+  Stop packed mixer at T=256.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

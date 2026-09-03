@@ -954,5 +954,31 @@ throttle=0. Wash vs slmht32
 not freeze 127 as 2800. Sibling
 before citing the map.
 
-K7 next: sibling slmht T=128 vs
-mixer T=256 retry.
+## ESIMD fused delta T=128 tile-fused sibling card0 (2026-09-03ig)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=128 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 131.440 event
+132.412 vs card1 126.655.
+Spread ~4%. act=2600 cur=2800
+throttle=0. 127-131 us both.
+Do not freeze 127 as 2800.
+T-map closed.
+
+## ESIMD mixer T=256 card1 (2026-09-03ih)
+
+backend sycl+l0, same
+gdn_mixer_t. T=256 C=10240
+spin=0. cosine=1 max_abs=7.6e-6
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 1557.055 event
+1539.995. act 2750-2667
+cur=2800 throttle=1. ~5.2x seq
+298. Stop packed mixer at
+T=256. Do not freeze 1557 as
+2800.
+
+K7 next: mixer-slmht T=256 vs
+skip-hi T=256.
