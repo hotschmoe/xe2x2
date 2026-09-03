@@ -4706,3 +4706,67 @@ VERDICT -> Wide-K w4a16 M=1 is 101 us at
   One-card. Do not freeze until card0.
   Rank us. Next: sibling w4a16 K=17408
   vs w4a16 M=64 N=17408.
+
+### 2026-09-03bh - K6 nvfp4_gemm_w4a16 M=1 K=17408 sibling card0
+
+CONTEXT -> card1 w4a16 M=1 K=17408 was
+  101 us at 2750/2800, throttle=1.
+  Sibling swap. A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. M=64 heat, spin=2000 of M=1.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m1_k17408_hold.sh 0 2000
+  ```
+
+RESULT -> out bf16 [1,5120]. timed
+  act=2733 cur=2800 throttle=1. us_bench
+  folded 101.909 vs card1 101.270 vs
+  square 34.7 vs s8 261.6 vs W8A8 155.3
+  vs s4 53.4. Spread ~0.6%. f8scale
+  97.361 vs card1 97.931, act=2717
+  throttle=1.
+
+VERDICT -> Sibling matches. New w4a16
+  M=1 wide-K floor 101 us both cards at
+  ~2740/2800, throttle=1. ~2.92x square,
+  beats s8 261.6 and W8A8 155.3, loses
+  to s4 53.4. Qwen FFN w4a16 decode map
+  is closed. Rank us.
+
+### 2026-09-03bi - K6 nvfp4_gemm_w4a16 M=64 N=17408 card1
+
+CONTEXT -> w4a16 M=64 square is 37.1 us.
+  M=1 N=17408 is 97 (~2.80x). s8 338.9.
+  s4 94.7. compose 326.9. LUT 880. Napkin
+  37.1*97/34.7 ~104. FFN-up prefill.
+  A=bf16. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. spin=512 of M=64 then us_bench.
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m64_wide_hold.sh 1 512
+  ```
+
+RESULT -> out bf16 [64,17408]. timed
+  act=2300 cur=2800 throttle=0. us_bench
+  folded 138.903 vs square 37.1 vs M=1
+  N=17408 97 vs s8 338.9 vs s4 94.7 vs
+  compose 326.9 vs LUT 880 vs napkin 104.
+  Ratio 138.9/37.1 ~3.74x. f8scale
+  138.595, act=2200 cur=2800.
+
+VERDICT -> Wide-N w4a16 M=64 is 139 us at
+  act=2300/2800 card1, ~3.74x square
+  (napkin 104 missed), beats s8 338.9 and
+  compose 326.9, loses to s4 94.7. Act
+  not 2800. One-card. Do not freeze until
+  card0. Rank us. Next: sibling w4a16
+  M=64 N=17408 vs w4a16 M=64 K=17408.
