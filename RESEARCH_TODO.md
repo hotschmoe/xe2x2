@@ -165,8 +165,11 @@ same us class as s8 34, under W8A8 44.
 nvfp4_gemm_w4a16 M=64 is 37.1 us both
 cards (2026-09-03bb), act 2150-2400/2800,
 ~1.07x M=1, under W8A8 46. nvfp4_gemm_w4a16
-M=256 is 116 us card1 (2026-09-03bc),
-~3.12x M=64, loses to W8A8 75. One-card.
+M=256 is 118 us both cards (2026-09-03bd),
+~3.18x M=64, loses to W8A8 75.
+nvfp4_gemm_w4a16 M=1 N=17408 is 97 us
+card1 (2026-09-03be), ~2.80x square,
+beats s8 141.6, throttle=1. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -179,8 +182,8 @@ lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nvfp4_gemm_w4a16
-M=256 5120 (act~2500 last). card1:
-held-clock nvfp4_gemm_w4a16 M=1 N=17408.
+M=1 N=17408 (throttle=1 last). card1:
+held-clock nvfp4_gemm_w4a16 M=1 K=17408.
 Loop every 10m.
 
 ## After P0: kernel workstreams (parallelizable)

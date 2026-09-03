@@ -494,18 +494,34 @@ throttle=0.
 New M=64 floor 37.1 us both cards.
 ~1.07x M=1. Under W8A8 46. Act not 2800.
 
-## nvfp4_gemm_w4a16 M=256 card1 (2026-09-03bc)
+## nvfp4_gemm_w4a16 M=256 (2026-09-03bc/bd)
 
 Same v028 so. spin=512 of M=256.
-timed act=2550/2500 cur=2800 throttle=0.
+timed act=2350/2550 cur=2800 throttle=0.
+Card0 try1 folded 140.1 discarded.
 
 | op | card | us_bench | M=64 | W8A8 | s8 | LUT |
 |---|---|---:|---:|---:|---:|---:|
+| folded | 0 | 120.540 | 37.1 | 75 | 128 | 1083 |
 | folded | 1 | 115.560 | 37.1 | 75 | 128 | 1083 |
+| f8scale | 0 | 116.389 | 37.1 | 75 | 128 | 1083 |
 | f8scale | 1 | 114.151 | 37.1 | 75 | 128 | 1083 |
 
-~3.12x M=64. Loses to W8A8 75. One-card.
-Do not freeze 116 us.
+New M=256 floor 118 us both cards.
+~3.18x M=64. Loses to W8A8 75.
+
+## nvfp4_gemm_w4a16 M=1 N=17408 card1 (2026-09-03be)
+
+Same v028 so. M=64 heat, spin=2000 of
+M=1. timed act=2717 cur=2800 throttle=1.
+
+| op | card | us_bench | square | s8 | W8A8 | s4 |
+|---|---|---:|---:|---:|---:|---:|
+| folded | 1 | 97.050 | 34.7 | 141.6 | 158.1 | 29.5 |
+| f8scale | 1 | 89.023 | 34.7 | 141.6 | 158.1 | 29.5 |
+
+~2.80x square. Beats s8 141.6. One-card.
+Do not freeze 97 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

@@ -4583,3 +4583,64 @@ VERDICT -> w4a16 M=256 is 116 us at
   dies at M=256. One-card. Do not freeze
   until card0. Rank us. Next: sibling
   w4a16 M=256 vs w4a16 M=1 N=17408.
+
+### 2026-09-03bd - K6 nvfp4_gemm_w4a16 M=256 sibling card0
+
+CONTEXT -> card1 w4a16 M=256 was 116 us
+  at act~2500/2800. Sibling swap. A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. spin=512 of M=256 then us_bench.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m256_hold.sh 0 512
+  ```
+
+RESULT -> try1 folded 140.093 (act=2350,
+  19% vs card1, discarded as cold). try2
+  out bf16 [256,5120]. timed act=2350
+  cur=2800 throttle=0. us_bench folded
+  120.540 vs card1 115.560 vs M=64 37.1
+  vs W8A8 75 vs s8 128. Spread ~4.2%.
+  f8scale 116.389 vs card1 114.151.
+
+VERDICT -> Sibling matches on try2. New
+  w4a16 M=256 floor 118 us both cards,
+  cur=2800, act 2350-2550. ~3.18x M=64,
+  loses to W8A8 75 (~1.57x) and s4 48.6,
+  beats s8 128. Rank us.
+
+### 2026-09-03be - K6 nvfp4_gemm_w4a16 M=1 N=17408 card1
+
+CONTEXT -> w4a16 M=1 square is 34.7 us.
+  s8 N=17408 141.6. W8A8 158.1. s4 29.5.
+  compose 103.5. Napkin 34.7*17408/5120
+  ~118. Decode FFN-up. A=bf16. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. M=64 heat on same B, spin=2000 of
+  M=1 then us_bench. N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m1_wide_hold.sh 1 2000
+  ```
+
+RESULT -> out bf16 [1,17408]. timed
+  act=2717 cur=2800 throttle=1. us_bench
+  folded 97.050 vs square 34.7 vs s8 141.6
+  vs W8A8 158.1 vs s4 29.5 vs compose
+  103.5 vs napkin 118. Ratio 97.05/34.7
+  ~2.80x. f8scale 89.023, act=2667
+  cur=2800 throttle=1.
+
+VERDICT -> Wide-N w4a16 M=1 is 97 us at
+  2717/2800 card1, ~2.80x square, under
+  napkin 118, beats s8 141.6 and W8A8
+  158.1, loses to s4 29.5. Throttle=1.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling w4a16 N=17408
+  vs w4a16 M=1 K=17408.
