@@ -3157,26 +3157,51 @@ VERDICT -> Tree hsum T=1 is 6.09
 
 Evidence: `results/k7/esimd_delta_h_s4000_card1.txt`.
 
-## ESIMD tree hsum T=16 is 34 us (K7)
+## ESIMD tree hsum T=16 is 34 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_delta_slmh`. T=16
-  blk=16. Card0. spin=4000.
+  blk=16. Both cards. spin=4000.
   Prior: SLM-K T=16 58.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  33.801. timed act=2583
-  cur=2800 throttle=1.
+  33.801 / 33.683. Spread ~0.3%.
+  act 2583 / 2633 cur=2800
+  throttle=1 both.
 
 VERDICT -> Tree hsum T=16 is 34
-  us pipe_host card0, ~1.72x
+  us pipe_host both cards, ~1.72x
   SLM-K 58. throttle=1. Do not
-  freeze 34 as 2800. One-card.
+  freeze 34 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmh_t16_s4000_card0.txt`,
+  `results/k7/esimd_delta_slmh_t16_s4000_card1.txt`.
+
+## ESIMD tile-fused reduce is 260 us T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmht` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  one 16-wide acc then reduce.
+  Card0. spin=0. Prior: tree
+  hsum 426-477.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  260.132. timed act=2600
+  cur=2800 throttle=0.
+
+VERDICT -> Tile-fused reduce
+  T=256 is 260 us pipe_host
+  card0, ~1.64x tree hsum 426.
+  New leftover class. Do not
+  freeze 260 as 2800. One-card.
   Sibling before promote. Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmh_t16_s4000_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmht_t256_s0_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4637,9 +4662,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   2800, ~1.16x fused 7.1.
   max_abs_o=2. Do not replace
   fused 7.1. tree hsum T=16 is
-  34 us card0 (2026-09-03he),
-  ~1.72x SLM-K 58, throttle=1.
-  Do not freeze 34 as 2800.
+  34 us both cards
+  (2026-09-03he/hh), ~1.72x
+  SLM-K 58, spread ~0.3%.
+  throttle=1. Do not freeze 34
+  as 2800. tile-fused reduce
+  T=256 is 260 us card0
+  (2026-09-03hg), ~1.64x tree
+  hsum 426. New leftover class.
+  Do not freeze 260 as 2800.
   Sibling before promote.
   s2 4x8
   M=256 N=17408 is 171 us both

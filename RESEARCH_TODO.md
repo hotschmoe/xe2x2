@@ -504,10 +504,20 @@ promote. tree hsum T=64 is
 109-125 us both cards
 (2026-09-03hc/hf). Clock
 spread 15% (2450 vs 2800). Do
-not freeze 109 as 2800. Next:
-split. card0: tile-fused
-reduce T=256. card1: sibling
-T=16. Loop every 5m.
+not freeze 109 as 2800. tree
+hsum T=16 is 34 us both cards
+(2026-09-03he/hh), ~1.72x
+SLM-K 58, spread ~0.3%.
+throttle=1. Do not freeze 34
+as 2800. tile-fused reduce
+T=256 is 260 us card0
+(2026-09-03hg), ~1.64x tree
+hsum 426. New leftover class.
+Do not freeze 260 as 2800.
+Sibling before promote. Next:
+split. card0: tile-fused T=64.
+card1: sibling tile-fused
+T=256. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -518,10 +528,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling tree hsum T=16
-   (34 us; ~1.72x 58).
-2. tile-fused reduce T=256
-   (426 leftover; one 128-sum).
+1. sibling tile-fused T=256
+   (260 us; ~1.64x 426).
+2. tile-fused T=64
+   (tree hsum 109; napkin ~66).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
