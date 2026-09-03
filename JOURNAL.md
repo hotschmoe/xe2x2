@@ -10639,3 +10639,70 @@ VERDICT -> Sibling matches.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-03io - K7 ESIMD mixer-slmht T=32 card0
+
+CONTEXT -> T=64 mixer-slmht 117.
+  slmht T=32 39. Napkin T-linear
+  ~58. Same TU. spin=4000.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_slmht. gpu-run
+  --card 0. T=32 C=10240 nv=48
+  blk=16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer_slmht_t32.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=3.1e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 59.057 pipe_host
+  59.779. timed act=2683
+  cur=2800 throttle=1. vs napkin
+  58 vs T=64 117 (~1.96x) vs
+  slmht 39 (~1.53x).
+
+VERDICT -> ESIMD mixer-slmht
+  T=32 is 60 us pipe_host
+  card0, napkin 58, T-linear vs
+  117. throttle=1. Do not freeze
+  60 as 2800. Sibling before
+  citing the map. Rank
+  pipe_host.
+
+### 2026-09-03ip - K7 ESIMD mixer-slmht T=128 sibling card1
+
+CONTEXT -> card0 T=128 was 232
+  us, clocks ramped 1600 to
+  2800. Map. Sibling. spin=0.
+  Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_slmht. gpu-run
+  --card 1. T=128 C=10240 nv=48
+  blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer_slmht_t128.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 232.526 pipe_host
+  232.288 vs card0 232.321.
+  Spread ~0.01%. timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> Sibling matches.
+  ESIMD mixer-slmht T=128 is
+  232 us pipe_host both cards,
+  card1 at 2800. Napkin 235.
+  T-linear. Rank pipe_host.
+  Next: sibling mixer-slmht
+  T=32 vs T=16.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

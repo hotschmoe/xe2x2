@@ -641,9 +641,16 @@ mixer-slmht T=128 is 232 us
 card0 (2026-09-03im), napkin
 235, T-linear. Clocks ramped
 1600 to 2800. Do not freeze
-232 as 2800. Next: split.
+232 as 2800. mixer-slmht T=128
+is 232 us both cards
+(2026-09-03im/ip), card1 at
+2800. Napkin 235. T-linear.
+mixer-slmht T=32 is 60 us
+card0 (2026-09-03io), napkin
+58. throttle=1. Do not freeze
+60 as 2800. Next: split.
 card1: sibling mixer-slmht
-T=128. card0: mixer-slmht T=32.
+T=32. card0: mixer-slmht T=16.
 Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -655,10 +662,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling mixer-slmht T=128
-   (232; clocks 1600 to 2800).
-2. mixer-slmht T=32
-   (T-map; napkin ~58).
+1. sibling mixer-slmht T=32
+   (60 throttle=1; napkin 58).
+2. mixer-slmht T=16
+   (T-map; napkin ~29).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),
