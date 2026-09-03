@@ -1019,20 +1019,21 @@ New floor 38.6 us both cards. ~1.74x
 square. Spread ~0.2%. Beats s8 141.6.
 Loses to s4 29.5.
 
-## s8xs4 RC=4 K=17408 card1 (2026-09-03cq)
+## s8xs4 RC=4 K=17408 both cards (2026-09-03cr)
 
 Same tile. N=5120 K=17408. cosine=1.0
 max_abs=0. timed 2800 throttle=0.
 
 | shape | card | event_us | pipe_host_us | square | s4 | s8 |
 |---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 0 | 72.815 | 73.188 | 22.1 | 53.4 | 261.6 |
 | 1 x 5120 x 17408 | 1 | 72.857 | 73.172 | 22.1 | 53.4 | 261.6 |
+| 4 x 5120 x 17408 | 0 | 72.912 | 73.374 | 22.1 | 53.4 | 261.6 |
 | 4 x 5120 x 17408 | 1 | 72.940 | 73.237 | 22.1 | 53.4 | 261.6 |
 
-73.2 us at 2800 card1. ~3.31x square,
-near K-linear (napkin 75). Beats s8
-261.6 and W8A8 155.3. Loses to s4
-53.4. One-card.
+New floor 73.2 us both cards. ~3.31x
+square. Spread ~0.02%. Qwen FFN s8xs4
+decode map closed (22.1 / 38.6 / 73.2).
 
-K2 next: sibling K=17408 vs GPTQ s4
-serving decode.
+K2 next: s8xs4 M=64. GPTQ decode is
+K6.

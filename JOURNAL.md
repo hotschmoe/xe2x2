@@ -5878,3 +5878,70 @@ VERDICT -> Wide-K s8xs4 is 73.2 us
   not freeze 73.2 us until card0. Rank
   pipe_host. Next: sibling K=17408 vs
   GPTQ s4 serving decode.
+
+### 2026-09-03cr - K2 s8xs4 RC=4 K=17408 sibling card0
+
+CONTEXT -> card1 s8xs4 K=17408 was
+  73.2 us at 2800, cosine=1 max_abs=0.
+  Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8xs4_sc. gpu-run --card 0.
+  NT=2 spin=4000. M=1 and M=4 N=5120
+  K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s8xs4_sc_k17408.sh 0 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 72.815 pipe_host 73.188 vs card1
+  73.172 vs square 22.1 vs N-wide 38.6
+  vs s4 53.4 vs s8 261.6. M=4 pipe
+  73.374. Spread ~0.02%.
+
+VERDICT -> Sibling matches. New s8xs4
+  K=17408 floor 73.2 us pipe_host both
+  cards at 2800. ~3.31x square. Qwen
+  FFN s8xs4 decode map is closed. Rank
+  pipe_host.
+
+### 2026-09-03cs - K6 GPTQ s4 RC=4 decode card1
+
+CONTEXT -> GPTQ group-scale micro is
+  closed. First serving-shaped GPTQ
+  s4 on RC=4 8x2-N. Real down_proj
+  5120x5120 s4 + g128 f16. s4 16.5.
+  W8A8 44. Napkin 16.5+scale tax.
+  Never E2M1. One-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s4_gptq_sc RC=4 NT=2 gs=128.
+  gpu-run --card 1. M=1 and M=4
+  5120. spin=4000.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s4_gptq_sc.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_gptq_s4_sc_dec.sh 1 2 4000
+  ```
+
+RESULT -> COMPILE_OK. dump 5120 gs=128
+  sc 0.0024-0.108. check cosine=1.000
+  max_abs=0. timed M=1 act=cur=2800
+  throttle=0. event 29.448 pipe_host
+  29.850 vs s4 16.5 vs s8xs4 22.1 vs
+  s8 34 vs W8A8 44. cosine=1.000
+  max_abs=6e-8 ok=1. M=4 pipe 29.890.
+  ~1.81x s4.
+
+VERDICT -> GPTQ serving decode is 29.9
+  us pipe_host at 2800 card1. Numeric
+  closed. Beats s8 34 and W8A8 44,
+  loses to native s4 16.5 and s8xs4
+  22.1. Scale tax ~13 us. One-card.
+  Do not freeze 29.9 us until card0.
+  Rank pipe_host. Next: sibling GPTQ
+  decode vs s8xs4 M=64.
