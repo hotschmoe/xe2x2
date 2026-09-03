@@ -212,9 +212,12 @@ K5 producer+GEMM N=17408 is 155 us
 both cards (2026-09-03cd), prod ~11
 + gemm 143, beats W8A8 158.1.
 K5 producer+GEMM K=17408 is 294 us
-card1 (2026-09-03ce), prod ~33 +
-gemm 261, loses to W8A8 155.3.
-One-card. Napkin 297 hit.
+both cards (2026-09-03cf), prod ~33
++ gemm 261, loses to W8A8 155.3.
+Qwen FFN producer decode map is
+closed. Mixed s8xs4 host-s32 closed
+card1 (2026-09-03cg), max_abs=0 both
+mixes. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -226,12 +229,11 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: sibling K5
-producer+GEMM M=1 K=17408 (294 us last;
-runner kernels/esimd_dpas/run_prod_k17408.sh).
-card1: mixed s8xs4 numeric oracle
-(ISA lit, no s32 oracle yet). GPTQ/AWQ
-s4 checkpoint (K6 arm 9) after that.
+Next: split. card0: sibling mixed
+s8xs4 host-s32 oracle (card1 max_abs=0;
+runner kernels/esimd_dpas/run_s8xs4.sh).
+card1: Integer GPTQ/AWQ s4 checkpoint
+through ESIMD s4 (K6 arm 9).
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -241,13 +243,12 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling K5 producer K=17408 (card1
-   294 us), then Qwen FFN producer
-   decode map is closed.
-2. Mixed s8xs4 numeric oracle (ISA lit,
-   no s32 oracle yet).
-3. Integer GPTQ/AWQ s4 checkpoint through
+1. Sibling mixed s8xs4 host-s32 oracle
+   (card1 max_abs=0 both mixes).
+2. Integer GPTQ/AWQ s4 checkpoint through
    ESIMD s4 (K6 arm 9, true INT4 XMX).
+3. Serving-shaped s8xs4 decode tile
+   after the oracle is both-card.
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

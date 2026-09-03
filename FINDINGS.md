@@ -994,6 +994,27 @@ Evidence: `results/k6/sprint_mix_prod_card1.txt`,
   `results/k6/g16_k16_dpas.compile.log`,
   `results/k6/g16_scale_landmine.txt`.
 
+## Mixed s8xs4 is host-s32 closed card1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s8xs4`. AOT `intel_gpu_bmg_g31`.
+  K=32 (OPC=4), s4 [-8,7], Transformed
+  B. Host unpacked s8*s4 s32. Card1.
+  Never E2M1 bitcast.
+
+RESULT -> COMPILE_OK. max_abs=0 ok=1
+  on s8A_s4B and s4A_s8B at 8x16x32,
+  32x32x128, and 256^3. bin_rc=0.
+  Timed 256^3 clocks not held.
+
+VERDICT -> Mixed s8/s4 is numerically
+  the integer product, not a dummy
+  MIX_OK. K=32 mix, not s4xs4 K=64.
+  One-card. Do not freeze until card0.
+  Do not quote 256^3 us.
+
+Evidence: `results/k2/s8xs4_oracle_card1.txt`.
+
 ## 256-entry product LUT GEMV is a numeric-closed loss (K6)
 
 CONFIG -> backend `sycl+l0`, `prod_lut_gemv` W4A4
@@ -1421,30 +1442,33 @@ VERDICT -> New producer+GEMM N=17408
 Evidence: `results/k5/prod_n17408_n2_s4000_card0.txt`,
   `results/k5/prod_n17408_n2_s4000_card1.txt`.
 
-## K5 producer+GEMM K=17408 is 294 us card1 (K5)
+## K5 producer+GEMM K=17408 is 294 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s8_prod`. NT=2 spin=4000.
-  M=1 N=5120 K=17408. Card1. Named
-  clock 2800. Napkin prod~35 + 262 ~297.
+  M=1 N=5120 K=17408. Both cards.
+  Named clock 2800. Napkin ~297.
 
 RESULT -> timed act=cur=2800 throttle=0.
-  prod 33.099 gemm 261.068 pair_event
-  294.305 pipe_host 294.453 vs square 44
-  vs N-wide 155 vs s8 GEMM 261.6 vs
-  W8A8 155.3 vs napkin 297. cosine=
-  0.999995 max_abs=0.064 ok=1. M=4
-  pipe 295.423. Extra ~33 us over GEMM.
+  card0 prod 33.102 gemm 260.284 pair
+  293.518 pipe_host 294.411. card1 prod
+  33.099 gemm 261.068 pair 294.305
+  pipe_host 294.453 vs square 44 vs
+  N-wide 155 vs s8 GEMM 261.6 vs W8A8
+  155.3 vs napkin 297. cosine=0.999995
+  max_abs=0.064 ok=1. M=4 tracks.
+  Spread ~0.01%. Extra ~33 us over GEMM.
 
-VERDICT -> Wide-K pair is 294 us at
-  2800 card1. ~6.68x square. Producer
-  tax is K-linear (~33 us); GEMM
-  matches s8 261.6. Loses to W8A8
-  155.3 (~1.90x). Napkin 297 hit.
-  One-card. Do not freeze 294 us until
-  card0. Rank pipe_host.
+VERDICT -> New producer+GEMM K=17408
+  floor 294 us pipe_host at 2800 both
+  cards. ~6.68x square. Producer tax is
+  K-linear (~33 us); GEMM matches s8
+  261.6. Loses to W8A8 155.3 (~1.90x).
+  Qwen FFN producer decode map is
+  closed. Rank pipe_host.
 
-Evidence: `results/k5/prod_k17408_n2_s4000_card1.txt`.
+Evidence: `results/k5/prod_k17408_n2_s4000_card0.txt`,
+  `results/k5/prod_k17408_n2_s4000_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2693,9 +2717,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   K5 producer+GEMM N=17408 is 155 us
   both cards (prod ~11 + gemm 143,
   beats W8A8 158.1). K5 producer+GEMM
-  K=17408 is 294 us card1 (prod ~33 +
-  gemm 261, loses to W8A8 155.3).
-  One-card.
+  K=17408 is 294 us both cards (prod
+  ~33 + gemm 261, loses to W8A8 155.3).
+  Qwen FFN producer decode map is
+  closed. Mixed s8xs4 host-s32 closed
+  card1 (max_abs=0 both mixes).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
@@ -2714,7 +2740,8 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   throttle=1.
   Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
-  on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
+  on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights and is
+  host-s32 closed card1 (max_abs=0 both mixes). s2xs4
   and s8 K=16 dpas do not compile. Product LUT GEMV is a
   numeric-closed us loss. MXFP4 is absent from this checkpoint.
 - M=1 decode is tens to hundreds of times under the compute roof.
@@ -2767,8 +2794,9 @@ still true for INT8 s8 at M=64
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
 ~10 us over GEMM-only 34. N-wide pair
 155 us both cards (beats W8A8 158.1).
-K-wide pair 294 us card1 (loses to
+K-wide pair 294 us both cards (loses to
 W8A8 155.3; producer tax K-linear).
+Qwen FFN producer decode map is closed.
 Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.

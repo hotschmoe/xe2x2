@@ -1,0 +1,23 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4130779047119 energy2=pkg:2199631593261 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4062667949401 energy2=pkg:2277158074890 temp2_mC=51000
+CONFIG backend=sycl+l0 card=1 arm=dpas_s8xs4 host_s32_oracle
+sprint MIX_OK had no s32 oracle. s4 [-8,7]. Never E2M1 bitcast.
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs4s32 RC=8 K=32 N=16 s4_range=[-8,7] Bload=lsc_load_2d_Transformed warmup=5 iters=20 note=host_s32_oracle_both_mixes
+arm,phase,m,n,k,us,TOPS,max_abs,ok
+s8A_s4B,check,8,16,32,27.130,0.0003,0,1
+s4A_s8B,check,8,16,32,18.677,0.0004,0,1
+s8A_s4B,check2,32,32,128,20.542,0.0128,0,1
+s4A_s8B,check2,32,32,128,20.787,0.0126,0,1
+s8A_s4B,timed,256,256,256,24.203,1.3864,0,1
+s4A_s8B,timed,256,256,256,5.000,6.7110,0,1
+bin_rc=0
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4130797803833 energy2=pkg:2199642243041 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4062690220336 energy2=pkg:2277172153076 temp2_mC=51000

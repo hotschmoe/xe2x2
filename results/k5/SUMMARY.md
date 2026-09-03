@@ -95,7 +95,7 @@ New floor 155 us both cards. ~3.52x
 square 44. Spread ~1.5%. Extra still
 ~11 us (K=5120). Beats W8A8 158.1.
 
-## producer+GEMM M=1 K=17408 card1 (2026-09-03ce)
+## producer+GEMM M=1 K=17408 both cards (2026-09-03cf)
 
 Same dpas_s8_prod. NT=2 spin=4000. timed
 act=cur=2800 throttle=0. cosine=0.999995
@@ -103,13 +103,15 @@ max_abs=0.064 ok=1.
 
 | shape | card | prod_us | gemm_us | pair_event | pipe_host |
 |---|---|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 0 | 33.102 | 260.284 | 293.518 | 294.411 |
 | 1 x 5120 x 17408 | 1 | 33.099 | 261.068 | 294.305 | 294.453 |
+| 4 x 5120 x 17408 | 0 | 33.885 | 260.232 | 294.250 | 295.006 |
 | 4 x 5120 x 17408 | 1 | 33.870 | 260.320 | 294.320 | 295.423 |
 
-~6.68x square 44. Extra ~33 us
+New floor 294 us both cards. ~6.68x
+square 44. Spread ~0.01%. Extra ~33 us
 (K-linear). GEMM matches s8 261.6.
-Loses to W8A8 155.3 (~1.90x). Napkin
-297 hit. One-card. Do not freeze 294 us.
+Loses to W8A8 155.3 (~1.90x). Qwen FFN
+producer decode map is closed.
 
-K5 next: sibling producer K=17408 vs
-mixed s8xs4 numeric oracle.
+K5 next: parked. Mix oracle is K2.

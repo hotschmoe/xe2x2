@@ -5504,3 +5504,68 @@ VERDICT -> Wide-K producer+GEMM is 294
   us until card0. Rank pipe_host. Next:
   sibling producer K=17408 vs mixed
   s8xs4 numeric oracle.
+
+### 2026-09-03cf - K5 producer+GEMM M=1 K=17408 sibling card0
+
+CONTEXT -> card1 producer+GEMM K=17408 was
+  294 us at 2800, cosine=1 max_abs=0.064.
+  Extra ~33 us K-linear. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8_prod RC=4 NT=2.
+  gpu-run --card 0. M=1 and M=4
+  N=5120 K=17408. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_prod_k17408.sh 0 2 4000
+  ```
+
+RESULT -> timed act=cur=2800 throttle=0.
+  M=1 prod 33.102 gemm 260.284 pair_event
+  293.518 pipe_host 294.411 vs card1
+  294.453 vs square 44 vs N-wide 155 vs
+  s8 GEMM 261.6 vs W8A8 155.3. cosine=
+  0.999995 max_abs=0.064 ok=1. M=4 pipe
+  295.006. Spread ~0.01%. Extra ~33 us.
+
+VERDICT -> Sibling matches. New
+  producer+GEMM K=17408 floor 294 us
+  pipe_host both cards at 2800. ~6.68x
+  square. Extra is K-linear producer.
+  Loses to W8A8 155.3 (~1.90x). Qwen
+  FFN producer decode map is closed.
+  Rank pipe_host.
+
+### 2026-09-03cg - K2 mixed s8xs4 host s32 oracle card1
+
+CONTEXT -> Sprint MIX_OK s8A_s4B and
+  s4A_s8B had no s32 oracle. s4 [-8,7].
+  K=32 (A or B is s8, OPC=4). Never
+  E2M1 bitcast. New numeric. One-card.
+
+CONFIG -> backend sycl+l0, standalone
+  AOT dpas_s8xs4. gpu-run --card 1.
+  Check 8x16x32 and 32x32x128, timed
+  256^3. Host unpacked s8*s4 s32.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s8xs4.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4.sh 1
+  ```
+
+RESULT -> COMPILE_OK. All six rows
+  max_abs=0 ok=1. s8A_s4B check 8x16x32
+  27.1 us. s4A_s8B check 18.7 us.
+  check2 32x32x128 both 20.5/20.8 us.
+  timed 256^3 24.2 / 5.0 us (clocks
+  not held; do not rank). bin_rc=0.
+
+VERDICT -> Mixed s8xs4 is host-s32
+  closed on card1. Both directions.
+  K=32 mix, not s4xs4 K=64. Do not
+  freeze numeric until card0. Do not
+  quote 256^3 us. Rank the close.
+  Next: sibling s8xs4 oracle vs
+  GPTQ/AWQ s4 checkpoint.

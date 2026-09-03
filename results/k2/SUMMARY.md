@@ -967,5 +967,24 @@ cosine=1.0 max_abs=0. timed 2800.
 New s2xs8 decode floor 14.1 us both
 cards. ~2.41x s8. Spread ~1.2%.
 
-K2 next: K5 producer N=17408 sibling vs
-K=17408. See `results/k5/SUMMARY.md`.
+## mixed s8xs4 host s32 oracle card1 (2026-09-03cg)
+
+sycl+l0 AOT dpas_s8xs4. K=32 OPC=4.
+s4 [-8,7]. Host unpacked s8*s4 s32.
+Never E2M1. Card1. bin_rc=0.
+
+| arm | phase | shape | us | max_abs | ok |
+|---|---|---|---:|---:|---:|
+| s8A_s4B | check | 8x16x32 | 27.130 | 0 | 1 |
+| s4A_s8B | check | 8x16x32 | 18.677 | 0 | 1 |
+| s8A_s4B | check2 | 32x32x128 | 20.542 | 0 | 1 |
+| s4A_s8B | check2 | 32x32x128 | 20.787 | 0 | 1 |
+| s8A_s4B | timed | 256^3 | 24.203 | 0 | 1 |
+| s4A_s8B | timed | 256^3 | 5.000 | 0 | 1 |
+
+Numeric closed both mixes. Do not
+quote 256^3 us (clocks not held).
+One-card. Do not freeze until card0.
+
+K2 next: sibling s8xs4 oracle vs
+GPTQ/AWQ s4 checkpoint.

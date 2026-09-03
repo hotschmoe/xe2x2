@@ -616,7 +616,7 @@ Throttle=1. Qwen FFN w4a16 M=256 map closed.
 |---|---|
 | 1 sparse-hi / lo-only | hist ov 24.6-25.1%. loonly 16.34/16.35 us cosine 0.76 ok=0 |
 | 2 dyadic s2 | s2xs2 COMPILE_OK max_abs=0. s2xs4 COMPILE_REFUSED. 4-plane not fused |
-| 3 mixed dpas | MIX_OK s8xs4 and s4xs8 both cards. no s32 oracle |
+| 3 mixed dpas | MIX_OK s8xs4 and s4xs8 both cards. host-s32 closed card1 (03cg) max_abs=0 |
 | 4 product LUT GEMV | max_abs=0. 697/1106 us clocks unmatched. stop |
 | 5 closed-form | 134.8 us both-card held 2800 |
 | 6 nvfp4_gemm_w4a16 | v028 so. 36.8/37.2 us after M=64 heat. clocks not 2800 |
