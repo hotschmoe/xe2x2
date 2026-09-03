@@ -2609,6 +2609,35 @@ VERDICT -> Prefill delta T=256 is
 Evidence: `results/k7/esimd_delta_t256_s4000_card0.txt`,
   `results/k7/esimd_delta_t256_s4000_card1.txt`.
 
+## ESIMD mixer T=64 is 395-399 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_t` AOT
+  `intel_gpu_bmg_g31`. T=64 packed
+  conv C=10240 then delta, q/k
+  repeat 16->48, L2-norm q/k.
+  Both cards. spin=4000. Prior:
+  decode mixer 8.2, sequential
+  conv 10.1 + delta 265 ~275.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  399.311/394.542. Spread ~1.2%.
+  timed act 2633/2667 cur=2800
+  throttle=1 both.
+
+VERDICT -> Prefill mixer T=64 is
+  395-399 us pipe_host both cards,
+  ~1.45x sequential ~275. Packed
+  layout + L2 tax. Stop two-kernel
+  packed mixer at prefill vs
+  sequential conv+delta. Do not
+  freeze 395 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_t64_s4000_card0.txt`,
+  `results/k7/esimd_mixer_t64_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3981,7 +4010,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   1100-1109 us both cards,
   throttle=1, ~4.1x T=64. Prefill
   leftover. Do not freeze 1100 as
-  2800.
+  2800. ESIMD mixer T=64 is
+  395-399 us both cards,
+  throttle=1, ~1.45x sequential
+  ~275. Stop two-kernel packed
+  mixer at prefill. Do not freeze
+  395 as 2800. ESIMD conv T=64
+  C=6144 is 10.2 us card1 at 2800,
+  wash vs C=2048 10.1; one-card.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

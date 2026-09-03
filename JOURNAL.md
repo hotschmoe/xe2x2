@@ -8412,6 +8412,99 @@ VERDICT -> Sibling matches. ESIMD
   pipe_host. Next: mixer T=64 vs
   conv T=64 C=6144.
 
+### 2026-09-03fx - K7 ESIMD conv1d T=64 C=6144 card1
+
+CONTEXT -> C=2048 T=64 is 10.1.
+  C=6144 T=256 is 38.0 occupancy
+  wash. Napkin 3x ~30 if C-linear.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 1. C=6144 T=64 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t64_c6144.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 9.872 pipe_host 10.231.
+  159 GB/s. vs C=2048 10.1.
+
+VERDICT -> ESIMD conv T=64 C=6144
+  is 10.2 us pipe_host card1 at
+  2800, wash vs C=2048 10.1 not
+  3x. Occupancy. One-card. Do not
+  freeze 10.2 until sibling. Rank
+  pipe_host.
+
+### 2026-09-03fy - K7 ESIMD mixer T=64 card0
+
+CONTEXT -> decode mixer 8.2.
+  conv T=64 10.1. delta T=64 265.
+  Napkin sequential ~275. New TU
+  gdn_mixer_t. L2-norm q/k.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_t.
+  gpu-run --card 0. T=64 C=10240
+  nv=48. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer_t64.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 400.487 pipe_host
+  399.311. act=2633-2650 cur=2800
+  throttle=1. vs napkin 275 vs
+  delta 265.
+
+VERDICT -> ESIMD mixer T=64 is
+  399 us pipe_host card0, ~1.45x
+  sequential 275. throttle=1. Do
+  not freeze 399 as 2800. Rank
+  pipe_host. Next: sibling
+  (throttle=1).
+
+### 2026-09-03fz - K7 ESIMD mixer T=64 sibling card1
+
+CONTEXT -> card0 mixer T=64 was
+  399 us pipe_host throttle=1.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_t. gpu-run
+  --card 1. T=64. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer_t64.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 395.102 pipe_host
+  394.542 vs card0 399.311.
+  Spread ~1.2%. act=2667 cur=2800
+  throttle=1.
+
+VERDICT -> Sibling matches. ESIMD
+  mixer T=64 is 395-399 us
+  pipe_host both cards.
+  throttle=1 both. Loses to
+  sequential ~275. Stop two-kernel
+  packed mixer at prefill. Do not
+  freeze 395 as 2800. Rank
+  pipe_host. Next: conv T=64
+  C=6144 sibling vs conv T=64
+  C=10240.
+
+
 
 
 
