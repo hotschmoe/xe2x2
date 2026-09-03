@@ -4014,3 +4014,66 @@ VERDICT -> LUT M=256 is 1207 us at 2800,
   M=256 floor. One-card. Do not freeze.
   Rank us. Next: sibling LUT M=256 vs
   closed-form LUT on 4x8 A-db.
+
+### 2026-09-03al - K6 nibble LUT 4x8 A-db M=256 sibling card0
+
+CONTEXT -> card1 LUT M=256 was 1207 us at
+  2800, numeric closed. Sibling swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_db48_m256.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 1194.062 us, pipe_host
+  1198.437 vs card1 1207.283 vs s8 128 vs
+  compose 194.9. Spread ~0.7%.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  LUT M=256 floor 1203 us at 2800 both
+  cards. ~3.07x M=64, ~9.4x s8 128. Rank
+  us.
+
+### 2026-09-03am - K6 closed-form LUT 4x8 A-db M=64 card1
+
+CONTEXT -> merge LUT 4x8 is 392.4 us.
+  closed-form scf is 134.8 us at decode
+  vs merge 158 (~1.17x). Steal scf onto
+  the 4x8 A-db tile. New geometry.
+  One-card. Napkin 392.4*134.8/158 ~335
+  us. Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=64 N=K=5120.
+  Packed E2M1 B. exp/mant shift decode.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_scf_db48_m64.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: NT=2 64x dpas.8x8 rW:b
+  rA:b, grf_count 128, no slm_size.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card1: event 331.672 us, pipe_host
+  331.554 vs merge 392.4 vs scf decode
+  134.8 vs s8 75 vs W8A8 46 vs napkin 335.
+  Ratio 392.4/331.6 ~1.18x. min/max
+  331.46-333.65.
+
+VERDICT -> Closed-form 4x8 LUT is a real
+  331.6 us at 2800, ~1.18x merge, napkin
+  held. Still ~4.42x s8 75. One-card. Do
+  not freeze 332 us until card0. Rank us.
+  Next: sibling scf 4x8 vs scf 4x8 M=256.

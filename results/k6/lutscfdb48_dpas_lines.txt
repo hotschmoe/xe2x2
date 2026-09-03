@@ -1,0 +1,9 @@
+K6 nibble_lut_scf_db48 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 RC=8 closed-form LUT A-db wg 4x8 f16 M=64 never_bitcast
+  name:            _ZTSN12_GLOBAL__N_121DpasLutScfDb48Nt4NameE, _ZTSN12_GLOBAL__N_121DpasLutScfDb48Nt2NameE
+  grf_count:       128, 128, has_dpas:        true, true
+  slm_size: (absent)
+.text._ZTSN12_GLOBAL__N_121DpasLutScfDb48Nt2NameE.asm dpas.8x8=64 :b=64 slm=0
+  first_dpas: dpas.8x8 (16|M0)         r76:d         r76:d             r17:b             r85.0:b          {$3}
+.text._ZTSN12_GLOBAL__N_121DpasLutScfDb48Nt4NameE.asm dpas.8x8=64 :b=64 slm=0
+  first_dpas: dpas.8x8 (16|M0)         r96:d         r96:d             r17:b             r117.0:b         {$3}

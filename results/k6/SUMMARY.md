@@ -359,7 +359,7 @@ New wide-K floor 1333 us both cards.
 K-linear ~3.40x. ~3.56x s8. Qwen FFN LUT
 M=64 map closed.
 
-## nibble LUT 4x8 A-db M=256 card1 (2026-09-03ak)
+## nibble LUT 4x8 A-db M=256 (2026-09-03ak/al)
 
 Same `nibble_lut_db48`, M=256 N=K=5120.
 cosine=1.0 max_abs=0. timed act=cur=2800
@@ -367,10 +367,24 @@ throttle=0.
 
 | shape | card | pipe_host_us | M=64 | s8 | compose | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 1198.437 | 392.4 | 128 | 194.9 | 75 |
 | 256 x 5120 | 1 | 1207.283 | 392.4 | 128 | 194.9 | 75 |
 
-~3.08x M=64 vs napkin 4x. ~9.4x s8.
-One-card.
+New M=256 floor 1203 us both cards.
+~3.07x M=64. ~9.4x s8.
+
+## closed-form LUT 4x8 A-db M=64 card1 (2026-09-03am)
+
+`nibble_lut_scf_db48`: exp/mant shift on
+the 4x8 A-db tile. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0. ocloc 64x
+dpas.8x8 rW:b rA:b, grf 128, no SLM.
+
+| shape | card | pipe_host_us | merge | scf decode | s8 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 1 | 331.554 | 392.4 | 134.8 | 75 | 335 |
+
+~1.18x merge. Napkin held. One-card.
 
 ## 12-idea sprint (2026-09-03ae)
 

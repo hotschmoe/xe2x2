@@ -136,8 +136,11 @@ nibble LUT 4x8 A-db M=64 N=17408 is
 K=17408 is 1333 us both cards (2026-09-03aj),
 K-linear ~3.40x vs s8 374.7. Qwen FFN LUT
 M=64 map is closed. LUT 4x8 A-db M=256 is
-1207 us card1 (2026-09-03ak), ~3.08x M=64
-vs s8 128. One-card.
+1203 us both cards (2026-09-03al), ~3.07x
+M=64 vs s8 128. closed-form LUT on 4x8
+A-db M=64 is 331.6 us card1 (2026-09-03am),
+~1.18x merge 392.4, napkin 335 held.
+One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -149,9 +152,9 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us after M=64 heat
 (clocks not held 2800). MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: sibling nibble_lut_db48
-M=256. card1: nibble_lut_scf on 4x8 A-db
-M=64 (new geometry). Loop every 20m.
+Next: split. card0: sibling nibble_lut_scf_db48
+M=64. card1: nibble_lut_scf_db48 M=256.
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
