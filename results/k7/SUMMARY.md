@@ -905,5 +905,29 @@ Napkin 40. Do not freeze 39 as
 2800. Sibling before citing
 the map.
 
-K7 next: sibling T=32 vs
-slmht32 T=128.
+## ESIMD fused delta T=32 tile-fused sibling card0 (2026-09-03ic)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=32 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 39.398 event
+40.727 vs card1 38.968. Spread
+~1%. act=2450 cur=2800
+throttle=1. 39 us both. Do not
+freeze 39 as 2800.
+
+## ESIMD fused delta T=128 slmht32 card1 (2026-09-03id)
+
+backend sycl+l0, same
+gdn_delta_slmht32. T=128 blk=32
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 124.610 event
+126.724. 75.9 GB/s. act=cur=2700
+throttle=0. Napkin 130. Do not
+freeze 125 as 2800. Sibling
+before citing the map.
+
+K7 next: sibling slmht32 T=128
+vs slmht T=128.

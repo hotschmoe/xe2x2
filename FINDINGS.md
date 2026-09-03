@@ -3585,6 +3585,50 @@ VERDICT -> Tile-fused T=32 is 39
 
 Evidence: `results/k7/esimd_delta_slmht_t32_s4000_card1.txt`.
 
+## ESIMD tile-fused T=32 is 39 us both cards (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht`. T=32
+  blk=16. Both cards. spin=4000.
+  Prior: card1 38.968 at 2470.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  39.398 / 38.968. Spread ~1%.
+  act 2450 / 2470 cur=2800
+  throttle=1 both.
+
+VERDICT -> Tile-fused T=32 is 39
+  us pipe_host both cards,
+  napkin 40. throttle=1. Do not
+  freeze 39 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht_t32_s4000_card0.txt`,
+  `results/k7/esimd_delta_slmht_t32_s4000_card1.txt`.
+
+## ESIMD slmht32 T=128 is 125 us card1 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht32`. T=128
+  blk=32. Card1. spin=0. Prior:
+  T=64 67, T=256 260. Napkin
+  ~130.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  124.610 event 126.724. 75.9
+  GB/s. timed act=cur=2700
+  throttle=0.
+
+VERDICT -> slmht32 T=128 is 125
+  us pipe_host card1 at 2700,
+  napkin 130. Do not freeze 125
+  as 2800. Sibling before citing
+  the map. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht32_t128_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -5112,9 +5156,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards (2026-09-03hz/ia),
   spread ~1%. throttle=1. Do not
   freeze 13 as 2800. tile-fused
-  T=32 is 39 us card1
-  (2026-09-03ib), napkin 40.
-  Do not freeze 39 as 2800.
+  T=32 is 39 us both cards
+  (2026-09-03ib/ic), napkin 40,
+  spread ~1%. throttle=1. Do not
+  freeze 39 as 2800. slmht32
+  T=128 is 125 us card1 at 2700
+  (2026-09-03id), napkin 130.
+  Do not freeze 125 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

@@ -10237,6 +10237,67 @@ VERDICT -> ESIMD tile-fused T=32
   Sibling before citing the map.
   Rank pipe_host. Next: sibling
   T=32 vs slmht32 T=128.
+
+### 2026-09-03ic - K7 ESIMD fused delta T=32 tile-fused sibling card0
+
+CONTEXT -> card1 T=32 was 39 us
+  at 2470 throttle=1. Map.
+  Sibling hold. spin=4000. Same
+  TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht. gpu-run
+  --card 0. T=32 blk=16.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht_t32.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 40.727 pipe_host
+  39.398 vs card1 38.968.
+  Spread ~1%. 120 GB/s. timed
+  act=2450 cur=2800 throttle=1.
+  vs T=16 22 vs T=64 67.
+
+VERDICT -> Sibling matches.
+  ESIMD tile-fused T=32 is 39 us
+  pipe_host both cards, napkin
+  40. throttle=1. Do not freeze
+  39 as 2800. Rank pipe_host.
+
+### 2026-09-03id - K7 ESIMD fused delta T=128 slmht32 card1
+
+CONTEXT -> T=64 67. T=256 260.
+  Napkin ~130. spin=0.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht32. gpu-run
+  --card 1. T=128 blk=32. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmht32_t128.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 126.724 pipe_host
+  124.610. 75.9 GB/s. timed
+  act=cur=2700 throttle=0. vs
+  T=64 67 (~1.87x) vs T=256 260
+  vs napkin 130.
+
+VERDICT -> ESIMD slmht32 T=128
+  is 125 us pipe_host card1 at
+  2700, napkin 130. Do not
+  freeze 125 as 2800. Sibling
+  before citing the map. Rank
+  pipe_host. Next: sibling
+  slmht32 T=128 vs slmht T=128.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
