@@ -1,0 +1,28 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4372146378356 energy2=pkg:2323786444091 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4305785646667 energy2=pkg:2405109706115 temp2_mC=54000
+CONFIG backend=sycl+l0 card=1 arm=dpas_s4_gptq_sc nt=2 spin=512 m=256 gptq g128
+GPTQ decode 29.9. s4 4-acc 48.6. s8 128. W8A8 75. 8x2-N compose 607 a loss.
+=== dump (CPU) ===
+reuse /mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_down0_5120_sc.bin
+dump_rc=0
+=== gptqsc nt=2 spin=512 m=256 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4_gptq->f16 RC=4 NT=2 unroll=16 gs=128 wg=8x2_alongN padM=RC pack=2 a_scale=0.0200 dump_k=5120 dump_n=5120 out=f16 warmup=10 iters=20 card=1 spin=512 heat=none
+timed_begin act=550 cur=550 power=D0 throttle=0
+timed_end act=550 cur=550 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,27.709,60.916,50.667,0.0095,1.000000,0,1,27.709,27.709,27.709
+spin_done n=512 act=2550 cur=2800 power=D0 throttle=1
+timed_begin act=2550 cur=2800 power=D0 throttle=1
+timed_end act=2550 cur=2800 power=D0 throttle=1
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,256,5120,5120,352.682,368.437,354.611,38.0563,1.000000,3.0518e-05,1,349.740,343.125,374.063
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4373102721435 energy2=pkg:2324294849792 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4306834659912 energy2=pkg:2405729272949 temp2_mC=56000

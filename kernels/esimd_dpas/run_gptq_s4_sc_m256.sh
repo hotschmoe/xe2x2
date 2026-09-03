@@ -39,8 +39,13 @@ trap cleanup EXIT
   echo "CONFIG backend=sycl+l0 card=$CARD arm=dpas_s4_gptq_sc nt=$NT spin=$SPIN m=256 gptq g128"
   echo "GPTQ decode 29.9. s4 4-acc 48.6. s8 128. W8A8 75. 8x2-N compose 607 a loss."
   echo "=== dump (CPU) ==="
-  python3 "$ROOT/kernels/nvfp4/gptq_s4_dump.py"
-  echo "dump_rc=$?"
+  if [[ -s "$DUMP" ]]; then
+    echo "reuse $DUMP"
+    echo "dump_rc=0"
+  else
+    python3 "$ROOT/kernels/nvfp4/gptq_s4_dump.py"
+    echo "dump_rc=$?"
+  fi
   echo "=== gptqsc nt=$NT spin=$SPIN m=256 n=5120 k=5120 ==="
   "$BIN" --b-bin "$DUMP" --nt "$NT" --m 256 --n 5120 --k 5120 \
     --warmup 10 --iters 20 --card "$CARD" --spin "$SPIN" --mhz 2400

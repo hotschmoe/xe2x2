@@ -1212,6 +1212,49 @@ VERDICT -> New GPTQ s4 K=17408 floor
 Evidence: `results/k6/gptq_s4sc_k17408_n2_s4000_card0.txt`,
   `results/k6/gptq_s4sc_k17408_n2_s4000_card1.txt`.
 
+## GPTQ 8x2-N loses at M=64 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s4_gptq_sc`. RC=4 NT=2 gs=128.
+  M=64 N=K=5120. Card0. spin=512.
+  Named clock 2800. Prior: decode
+  29.9; s4 4x8 33.6; W8A8 46.
+
+RESULT -> cosine=1.0 max_abs=3e-5.
+  timed act=2767 cur=2800 throttle=1.
+  M=64 pipe_host 123.528 vs decode
+  29.9 vs s4 33.6 vs mix 43.3 vs s8
+  75 vs W8A8 46. ~4.13x decode.
+
+VERDICT -> Decode-tile GPTQ at M=64
+  is not a prefill floor. Loses to
+  s4, mix, W8A8 (~2.68x), and s8.
+  Stop 8x2-N GPTQ at M=64 prefill.
+  One-card. Rank pipe_host.
+
+Evidence: `results/k6/gptq_s4sc_m64_n2_s512_card0.txt`.
+
+## GPTQ 8x2-N loses at M=256 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s4_gptq_sc`. M=256 N=K=5120.
+  Card1. NT=2 spin=512. Named clock
+  2800. Prior: s4 4-acc 48.6; W8A8
+  75.
+
+RESULT -> cosine=1.0 max_abs=3e-5.
+  timed act=2550 cur=2800 throttle=1.
+  M=256 pipe_host 354.611 vs s4 48.6
+  vs s8 128 vs W8A8 75 vs compose
+  607. ~2.87x M=64.
+
+VERDICT -> Decode-tile GPTQ at M=256
+  loses to s4, s8, and W8A8 (~4.73x).
+  Stop 8x2-N GPTQ at M=256 prefill.
+  One-card. Rank pipe_host.
+
+Evidence: `results/k6/gptq_s4sc_m256_n2_s512_card1.txt`.
+
 ## s8xs4 4x8 A-db M=64 is 43.3 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
@@ -3072,7 +3115,12 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   K=17408 is 144.7 us both cards
   (beats W8A8 181). Qwen FFN mix
   M=64 map is closed (43.3 / 129 /
-  144.7).
+  144.7). GPTQ 8x2-N M=64 is 123.5
+  us card0 throttle=1, a loss vs
+  W8A8 46. GPTQ 8x2-N M=256 is 355
+  us card1 throttle=1, a loss vs
+  W8A8 75. Stop 8x2-N GPTQ at
+  prefill.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

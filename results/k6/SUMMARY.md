@@ -709,4 +709,33 @@ s8 261.6. Loses to s4 53.4 and W8A8
 155.3. Qwen FFN GPTQ decode map
 closed (29.9 / 100 / 174.6).
 
-K6 next: GPTQ 8x2-N M=64 vs M=256.
+## GPTQ s4 RC=4 8x2-N M=64 card0 (2026-09-03dh)
+
+Same dpas_s4_gptq_sc. NT=2 spin=512.
+cosine=1.0 max_abs=3e-5. timed
+act=2767 cur=2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | s4 4x8 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 124.219 | 123.528 | 33.6 | 75 | 46 |
+
+123.5 us at 2800 card0. ~4.13x
+decode. Loses to s4, mix 43.3, W8A8
+46, s8 75. Stop 8x2-N at M=64
+prefill. One-card.
+
+## GPTQ s4 RC=4 8x2-N M=256 card1 (2026-09-03di)
+
+Same dpas_s4_gptq_sc. NT=2 spin=512.
+cosine=1.0 max_abs=3e-5. timed
+act=2550 cur=2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | s4 4-acc | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 352.682 | 354.611 | 48.6 | 128 | 75 |
+
+355 us at 2800 card1. ~2.87x M=64.
+Loses to s4, s8, W8A8 75. Stop
+8x2-N at M=256 prefill. One-card.
+
+K6 next: GPTQ 4x8 A-db M=64.
