@@ -462,7 +462,7 @@ cards. ~3.17x square. ~7.18x s8.
 Throttle=1. Qwen FFN closed-form LUT
 M=256 map closed.
 
-## held-clock nvfp4_gemm_w4a16 M=1 card1 (2026-09-03ay)
+## held-clock nvfp4_gemm_w4a16 M=1 (2026-09-03ay/az)
 
 pytorch-xpu on sycl+l0, v028 so. M=64
 heat, M=1 spin=2000, us_bench M=1 5120.
@@ -470,11 +470,26 @@ timed act=cur=2800 throttle=0.
 
 | op | card | us_bench | unheld | s8 | W8A8 | LUT |
 |---|---|---:|---:|---:|---:|---:|
+| folded | 0 | 34.964 | 36.809 | 34 | 44 | 134.8 |
 | folded | 1 | 34.395 | 37.169 | 34 | 44 | 134.8 |
+| f8scale | 0 | 37.738 | 38.448 | 34 | 44 | 134.8 |
 | f8scale | 1 | 37.944 | 39.611 | 34 | 44 | 134.8 |
 
-bf16-A. Same us class as s8 34. One-card.
-Do not freeze 34.4 us.
+New M=1 floor 34.7 us both cards.
+bf16-A. Same us class as s8 34.
+
+## nvfp4_gemm_w4a16 M=64 card1 (2026-09-03ba)
+
+Same v028 so. spin=1000 of M=64.
+timed act=2400 cur=2800 throttle=0.
+
+| op | card | us_bench | M=1 | W8A8 | s8 | LUT |
+|---|---|---:|---:|---:|---:|---:|
+| folded | 1 | 36.761 | 34.7 | 46 | 75 | 331.6 |
+| f8scale | 1 | 39.047 | 37.8 | 46 | 75 | 331.6 |
+
+~1.06x M=1. Under W8A8 46. Act not 2800.
+One-card. Do not freeze 36.8 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

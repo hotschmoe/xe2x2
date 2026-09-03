@@ -4460,3 +4460,65 @@ VERDICT -> Held-clock folded w4a16 is
   34.4 us until card0. Do not call this
   a beat of s8. Rank us. Next: sibling
   w4a16 M=1 vs held-clock w4a16 M=64.
+
+### 2026-09-03az - K6 held-clock nvfp4_gemm_w4a16 M=1 sibling card0
+
+CONTEXT -> card1 held-clock folded
+  w4a16 M=1 was 34.4 us at 2800.
+  Sibling swap. A=bf16. No E2M1 cosine.
+
+CONFIG -> pytorch-xpu on sycl+l0, image
+  b70-sglang-xpu-int8-runtime:20260826-mtp6,
+  v028 _xpu_C.abi3.so load_library, gpu-run
+  --card 0. Packed NT, g16, spin=2000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m1_hold.sh 0
+  ```
+
+RESULT -> HAS folded and f8scale. out
+  bf16 [1,5120]. spin/timed act=cur=2800
+  throttle=0. us_bench folded 34.964 vs
+  card1 34.395 vs unheld 36.809 vs s8 34
+  vs W8A8 44 vs LUT 134.8. Spread ~1.6%.
+  f8scale 37.738 vs card1 37.944, also
+  2800 throttle=0.
+
+VERDICT -> Sibling matches. New held-
+  clock folded w4a16 M=1 floor 34.7 us
+  at 2800 both cards. Same us class as
+  s8 34, under W8A8 44, ~3.9x LUT 135.
+  A is bf16, not s8. Do not call this a
+  beat of s8. Rank us.
+
+### 2026-09-03ba - K6 held-clock nvfp4_gemm_w4a16 M=64 card1
+
+CONTEXT -> w4a16 M=1 is 34.7 us. W8A8
+  M=64 46. s8 75. compose 68.7. LUT
+  331.6. Napkin ~48-75. Prefill. A=bf16.
+  One-card. No E2M1 cosine.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. spin=1000 of M=64 then us_bench.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m64_hold.sh 1
+  ```
+
+RESULT -> out bf16 [64,5120]. timed
+  act=2400 cur=2800 throttle=0. us_bench
+  folded 36.761 vs M=1 34.7 vs W8A8 46
+  vs s8 75 vs compose 68.7 vs LUT 331.6.
+  f8scale 39.047, act=2250 cur=2800
+  throttle=0.
+
+VERDICT -> w4a16 M=64 is 36.8 us at
+  act=2400/2800 card1, only ~1.06x M=1,
+  under W8A8 46 and ~2.04x s8 75. Napkin
+  48-75 was high. Act not 2800. One-card.
+  Do not freeze until card0. Rank us.
+  Next: sibling w4a16 M=64 vs held-clock
+  w4a16 M=256.
