@@ -8822,6 +8822,71 @@ VERDICT -> ESIMD row-block rb=4
   pipe_host. Next: sibling SLM-K
   vs rb=8.
 
+### 2026-09-03gk - K7 ESIMD fused delta T=256 SLM-K sibling card1
+
+CONTEXT -> card0 SLM-K was 847 us
+  pipe_host, throttle=1. Possible
+  leftover cut. Sibling. spin=4000
+  hold. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmk. gpu-run
+  --card 1. T=256 blk=16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmk_t256.sh 1 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 859.891 pipe_host
+  858.215 vs card0 847.280.
+  Spread ~1.3%. 18.4 GB/s. timed
+  act=2700-2717 cur=2800
+  throttle=1. vs fused 1086.
+
+VERDICT -> Sibling matches. ESIMD
+  SLM-K T=256 is 847-858 us
+  pipe_host both cards, ~1.27x
+  fused 1086. throttle=1 both.
+  Do not freeze 847 as 2800. New
+  leftover class. Rank pipe_host.
+
+### 2026-09-03gl - K7 ESIMD fused delta T=256 row-block rb=8 card0
+
+CONTEXT -> rb=4 1034. SLM-K 847.
+  Napkin 8-row k-reuse vs
+  occupancy. One WG per head.
+  spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_rowb8.
+  gpu-run --card 0. T=256 rb=8
+  nv=48. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_rowb8_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 2058.990 pipe_host
+  2060.439. 7.7 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  rb=4 1034 (~1.99x) vs SLM-K
+  847.
+
+VERDICT -> ESIMD row-block rb=8
+  T=256 is 2060 us pipe_host
+  card0 at 2800, ~2x rb=4, ~2.4x
+  SLM-K. Occupancy loss. Stop
+  rb=8 vs rb=4 and SLM-K. Rank
+  pipe_host. Next: SLM-K+rb=4 vs
+  SLM-K blk=32.
+
+
 
 
 

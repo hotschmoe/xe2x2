@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/gj
+# K7 GDN inventory 2026-09-03ep/gl
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -369,17 +369,22 @@ event 95413.974. 0.17 GB/s.
 ~88x fused 1086, ~30x C=16.
 Stop C=64. Stop this WY path.
 
-## ESIMD fused delta T=256 SLM-K card0 (2026-09-03gi)
+## ESIMD fused delta T=256 SLM-K both cards (2026-09-03gi/gk)
 
 backend sycl+l0, AOT
-gdn_delta_slmk. T=256 blk=16
-spin=0. cosine=1 max_abs=1.5e-5
+gdn_delta_slmk. T=256 blk=16.
+cosine=1 max_abs=1.5e-5
 cosine_o=1 max_abs_o=2.4e-4
-ok=1. pipe_host 847.280 event
-840.529. 18.6 GB/s. act 2783-
-2767 throttle=1 at end. ~1.28x
-fused 1086. Do not freeze 847.
-Sibling before promote.
+ok=1. throttle=1 both.
+
+| card | spin | pipe_host us | event us | act |
+|---|---:|---:|---:|---:|
+| 0 | 0 | 847.280 | 840.529 | 2767 |
+| 1 | 4000 | 858.215 | 859.891 | 2700 |
+
+847-858 us both. Spread ~1.3%.
+~1.27x fused 1086. New leftover
+class. Do not freeze 847 as 2800.
 
 ## ESIMD fused delta T=256 row-block rb=4 card1 (2026-09-03gj)
 
@@ -393,5 +398,17 @@ event 1034.237. 15.3 GB/s.
 ~1.05x fused 1086, loses to
 SLM-K 847.
 
-K7 next: sibling SLM-K vs
-row-block rb=8.
+## ESIMD fused delta T=256 row-block rb=8 card0 (2026-09-03gl)
+
+backend sycl+l0, AOT
+gdn_delta_rowb8. T=256 rb=8
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. timed act=cur=2800
+throttle=0. pipe_host 2060.439
+event 2058.990. 7.7 GB/s.
+~2x rb=4 1034, ~2.4x SLM-K 847.
+Stop rb=8.
+
+K7 next: SLM-K+rb=4 vs SLM-K
+blk=32.
