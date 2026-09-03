@@ -587,9 +587,16 @@ tile-fused T=8 is 13 us card1
 at 2750 (2026-09-03hz), ~1.76x
 fused 7.1, near half T=16 22.
 throttle=1. Do not freeze 13 as
+2800. tile-fused T=8 is 13 us
+both cards (2026-09-03hz/ia),
+spread ~1%. throttle=1. Do not
+freeze 13 as 2800. tile-fused
+T=32 is 39 us card1
+(2026-09-03ib), napkin 40.
+throttle=1. Do not freeze 39 as
 2800. Next: split. card0:
-sibling T=8. card1: slmht T=32.
-Loop every 5m.
+sibling T=32. card1: slmht32
+T=128. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -600,10 +607,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling slmht8 T=8
-   (13 us card1 at 2750).
-2. slmht T=32
-   (between T=16 22 and T=64 67).
+1. sibling slmht T=32
+   (39 us card1 at 2470).
+2. slmht32 T=128
+   (between T=64 67 and T=256 260).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64

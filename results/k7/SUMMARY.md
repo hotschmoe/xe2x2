@@ -880,5 +880,30 @@ fused 7.1. Near half T=16 22.
 Do not freeze 13 as 2800.
 Sibling before citing the map.
 
-K7 next: sibling T=8 vs slmht
-T=32.
+## ESIMD fused delta T=8 tile-fused sibling card0 (2026-09-03ia)
+
+backend sycl+l0, same
+gdn_delta_slmht8. T=8 blk=8
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 12.393 event
+13.482 vs card1 12.526. Spread
+~1%. act=2733 cur=2800
+throttle=1. 13 us both. Do not
+freeze 13 as 2800.
+
+## ESIMD fused delta T=32 tile-fused card1 (2026-09-03ib)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=32 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 38.968 event
+40.987. 121 GB/s. act 2483-
+2467 cur=2800 throttle=1.
+Napkin 40. Do not freeze 39 as
+2800. Sibling before citing
+the map.
+
+K7 next: sibling T=32 vs
+slmht32 T=128.
