@@ -6208,4 +6208,71 @@ VERDICT -> Mix 4x8 M=256 is 123 us
   Next: sibling mix M=256 vs sibling
   GPTQ K=17408.
 
+### 2026-09-03db - K2 s8xs4 4x8 A-db M=256 sibling card0
+
+CONTEXT -> card1 mix 4x8 M=256 was
+  123 us at 2800, throttle=1,
+  cosine=1 max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8xs4_db48. RC=8 wg 4x8
+  A-db. gpu-run --card 0. M=256
+  N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s8xs4_db48_m256.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=256 act=2767/2750 cur=2800
+  throttle=1. event 122.859 pipe_host
+  122.830 vs card1 123.272 vs M=64
+  43.3 vs s4 48.6 vs s8 128 vs W8A8
+  75 vs compose 194.9. Spread ~0.36%.
+
+VERDICT -> Sibling matches. Mix 4x8
+  M=256 is 123 us pipe_host both
+  cards, throttle=1. Still a loss vs
+  s4 48.6 and W8A8 75. Stop 4x8 mix
+  at M=256 prefill. Rank pipe_host.
+
+### 2026-09-03dc - K6 GPTQ s4 RC=4 K=17408 sibling card1
+
+CONTEXT -> card0 GPTQ K=17408 was
+  174.6 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s4_gptq_sc. RC=4 NT=2
+  gs=128. gpu-run --card 1. M=1 and
+  M=4 N=5120 K=17408. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_gptq_s4_sc_k17408.sh 1 2 4000
+  ```
+
+RESULT -> dump down 17408x5120.
+  check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 173.448 pipe_host 174.509 vs
+  card0 174.629 vs square 29.9 vs
+  N-wide 100 vs s4 53.4 vs s8xs4
+  73.2 vs s8 261.6 vs W8A8 155.3.
+  cosine=1 max_abs=0. M=4 pipe
+  174.251. Spread ~0.07%. ~5.84x
+  square.
+
+VERDICT -> Sibling matches. New GPTQ
+  s4 K=17408 floor 174.6 us
+  pipe_host both cards at 2800.
+  Qwen FFN GPTQ decode map is closed
+  (29.9 / 100 / 174.6). Beats s8
+  261.6, loses to s4 53.4, s8xs4
+  73.2, and W8A8 155.3. Rank
+  pipe_host. Next: mix 4x8 M=64
+  N=17408 vs K=17408.
+
+
 

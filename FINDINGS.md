@@ -1184,29 +1184,33 @@ VERDICT -> New GPTQ s4 N=17408 floor
 Evidence: `results/k6/gptq_s4sc_n17408_n2_s4000_card0.txt`,
   `results/k6/gptq_s4sc_n17408_n2_s4000_card1.txt`.
 
-## GPTQ s4 K=17408 is 174.6 us card0 (K6)
+## GPTQ s4 K=17408 is 174.6 us both cards (K6)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s4_gptq_sc`. M=1 N=5120 K=17408
-  down_proj dump. Card0. Named clock
-  2800. NT=2 spin=4000. Prior: square
-  29.9; N-wide 100; K-linear ~102;
-  s4 53.4; W8A8 155.3.
+  down_proj dump. Both cards. Named
+  clock 2800. NT=2 spin=4000. Prior:
+  square 29.9; N-wide 100; K-linear
+  ~102; s4 53.4; W8A8 155.3.
 
 RESULT -> cosine=1.0 max_abs=0.
   timed act=cur=2800 throttle=0. M=1
-  pipe_host 174.629 vs square 29.9 vs
-  N-wide 100 vs s4 53.4 vs s8xs4 73.2
-  vs s8 261.6 vs W8A8 155.3 vs napkin
-  102. M=4 tracks. ~5.84x square.
+  pipe_host 174.629/174.509 vs square
+  29.9 vs N-wide 100 vs s4 53.4 vs
+  s8xs4 73.2 vs s8 261.6 vs W8A8
+  155.3 vs napkin 102. M=4 tracks.
+  Spread ~0.07%. ~5.84x square.
 
-VERDICT -> Wide-K GPTQ is K-hostile.
-  Beats s8, loses to s4, s8xs4, and
-  W8A8 (~1.12x). One-card. Do not
-  freeze 174.6 us until card1. Rank
+VERDICT -> New GPTQ s4 K=17408 floor
+  174.6 us pipe_host at 2800 both
+  cards. K-hostile. Qwen FFN GPTQ
+  decode map is closed (29.9 / 100 /
+  174.6). Beats s8, loses to s4,
+  s8xs4, and W8A8 (~1.12x). Rank
   pipe_host.
 
-Evidence: `results/k6/gptq_s4sc_k17408_n2_s4000_card0.txt`.
+Evidence: `results/k6/gptq_s4sc_k17408_n2_s4000_card0.txt`,
+  `results/k6/gptq_s4sc_k17408_n2_s4000_card1.txt`.
 
 ## s8xs4 4x8 A-db M=64 is 43.3 us both cards (K2)
 
@@ -1232,29 +1236,33 @@ VERDICT -> New s8xs4 4x8 A-db M=64
 Evidence: `results/k2/s8xs4db48_m64_n2_s512_card0.txt`,
   `results/k2/s8xs4db48_m64_n2_s512_card1.txt`.
 
-## s8xs4 4x8 A-db M=256 is 123 us card1 (K2)
+## s8xs4 4x8 A-db M=256 loses both cards (K2)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s8xs4_db48`. RC=8 wg 4x8 A-db.
   A=s8 B=s4 pack=2. M=256 N=K=5120.
-  Card1. NT=2 spin=512. Named clock
-  2800. Prior: M=64 43.3; napkin ~173;
-  s4 4-acc 48.6; W8A8 75.
+  Both cards. NT=2 spin=512. Named
+  clock 2800. Prior: M=64 43.3;
+  napkin ~173; s4 4-acc 48.6; W8A8
+  75.
 
 RESULT -> cosine=1.0 max_abs=0. timed
-  act=2767 cur=2800 throttle=1. M=256
-  pipe_host 123.272 vs M=64 43.3 vs
-  s4 48.6 vs s8 128 vs W8A8 75 vs
-  compose 194.9. ~2.85x M=64.
+  act=2767/2750 cur=2800 throttle=1.
+  M=256 pipe_host 122.830/123.272 vs
+  M=64 43.3 vs s4 48.6 vs s8 128 vs
+  W8A8 75 vs compose 194.9. Spread
+  ~0.36%. ~2.85x M=64.
 
-VERDICT -> Mix 4x8 at M=256 is under
-  linear but not a prefill floor.
-  Beats s8 and compose, loses to s4
-  (~2.54x) and W8A8 (~1.64x).
-  throttle=1. One-card. Do not freeze.
+VERDICT -> Mix 4x8 at M=256 is 123 us
+  pipe_host both cards, throttle=1.
+  Under linear but not a prefill
+  floor. Beats s8 and compose, loses
+  to s4 (~2.54x) and W8A8 (~1.64x).
+  Stop 4x8 mix at M=256 prefill.
   Rank pipe_host.
 
-Evidence: `results/k2/s8xs4db48_m256_n2_s512_card1.txt`.
+Evidence: `results/k2/s8xs4db48_m256_n2_s512_card0.txt`,
+  `results/k2/s8xs4db48_m256_n2_s512_card1.txt`.
 
 ## s8xs4 8x2-N loses at M=64 (K2)
 
@@ -3000,10 +3008,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   s8xs4 4x8 A-db M=64 is 43.3 us both
   cards (beats W8A8 46, loses to s4
   33.6). GPTQ K=17408 is 174.6 us
-  card0 (~5.84x square, loses to
-  W8A8 155.3). s8xs4 4x8 A-db M=256
-  is 123 us card1 throttle=1, a loss
-  vs W8A8 75 and s4 48.6.
+  both cards (~5.84x square, loses
+  to W8A8 155.3). Qwen FFN GPTQ
+  decode map is closed (29.9 / 100 /
+  174.6). s8xs4 4x8 A-db M=256 is
+  123 us both cards throttle=1, a
+  loss vs W8A8 75 and s4 48.6. Stop
+  4x8 mix at M=256 prefill.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
