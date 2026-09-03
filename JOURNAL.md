@@ -7362,6 +7362,68 @@ VERDICT -> Sibling matches. New s2
   / 108). Rank pipe_host. Next:
   s2 4-acc M=64 vs NT=4 M=256.
 
+### 2026-09-03el - K2 s2 4-acc M=64 card0
+
+CONTEXT -> s2 4x8 M=64 is 20. s2
+  4-acc M=256 is 37.4. W8A8 46.
+  4-acc tile pads M to 256-shaped
+  grid. Occupancy check. One-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_w48m4 RC=8 4-acc wg 4x8
+  k128 pack=4. gpu-run --card 0.
+  M=64 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_w48m4_m64.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800
+  throttle=0. event 36.515
+  pipe_host 37.152 vs 4x8 20 vs
+  M=256 37.4 vs W8A8 46. ~1.86x
+  4x8. Matches M=256 us.
+
+VERDICT -> s2 4-acc M=64 is 37 us
+  pipe_host at 2800 card0. Numeric
+  closed. Occupancy pad: same us
+  as M=256. Loses to 4x8 20
+  (~1.86x). Stop 4-acc at M=64.
+  One-card. Do not freeze. Rank
+  pipe_host.
+
+### 2026-09-03em - K2 s2 4-acc M=256 NT=4 card1
+
+CONTEXT -> NT=2 4-acc is 37.4.
+  NT=4 unroll=4 vs 8. Same tile.
+  Schedule steal. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4. gpu-run --card 1.
+  M=256 N=K=5120. NT=4 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_w48m4.sh 1 4 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 307.016
+  pipe_host 307.201 vs NT=2 37.4
+  vs s4 48.6 vs W8A8 75. ~8.21x
+  NT=2.
+
+VERDICT -> NT=4 is 307 us pipe_host
+  at 2800 card1. Numeric closed.
+  ~8.2x NT=2. Stop NT=4 on this
+  tile. One-card. Do not freeze.
+  Rank pipe_host. Next: s2 4-acc
+  A-db M=256 both-card.
+
+
 
 
 

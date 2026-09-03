@@ -2178,6 +2178,44 @@ VERDICT -> New s2 4-acc M=256
 Evidence: `results/k2/s2w48m4_m256_k17408_n2_s512_card0.txt`,
   `results/k2/s2w48m4_m256_k17408_n2_s512_card1.txt`.
 
+## s2 4-acc M=64 pads to M=256 us (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2_w48m4`. M=64 N=K=5120.
+  Card0. NT=2 spin=512. Named
+  clock 2800. Occupancy check.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=64 pipe_host 37.152 vs 4x8 20
+  vs M=256 37.4 vs W8A8 46.
+
+VERDICT -> 4-acc at M=64 is 37 us
+  pipe_host at 2800 card0, same
+  class as M=256. Loses to 4x8 20
+  (~1.86x). Stop 4-acc at M=64.
+  One-card.
+
+Evidence: `results/k2/s2w48m4_m64_n2_s512_card0.txt`.
+
+## s2 4-acc NT=4 loses at M=256 (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2_w48m4`. M=256 N=K=5120.
+  Card1. NT=4 unroll=4 spin=512.
+  Named clock 2800.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=256 pipe_host 307.201 vs NT=2
+  37.4 vs W8A8 75.
+
+VERDICT -> NT=4 is 307 us pipe_host
+  at 2800 card1, ~8.2x NT=2. Stop
+  NT=4 on this tile. One-card.
+
+Evidence: `results/k2/s2w48m4_m256_n4_s512_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3498,7 +3536,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   beats s4 149 and W8A8 226
   (~2.09x). Qwen FFN s2 4-acc
   M=256 map is closed (37.4 / 110
-  / 108). s2 4x8
+  / 108). s2 4-acc M=64 is 37 us
+  card0, occupancy pad, loses to
+  4x8 20. Stop 4-acc at M=64. s2
+  4-acc NT=4 is 307 us card1,
+  ~8.2x NT=2. Stop NT=4. s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
   W8A8 248 (~1.45x), loses to s4

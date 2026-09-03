@@ -1331,4 +1331,21 @@ Beats s4 149 (~1.38x) and W8A8
 M=256 map closed (37.4 / 110 /
 108).
 
-K2 next: s2 4-acc M=64 vs NT=4.
+## s2 4-acc M=64 card0 (2026-09-03el)
+
+Same dpas_s2_w48m4. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0. M=64 pipe_host 37.152
+vs 4x8 20 vs M=256 37.4. Occupancy
+pad: same us as M=256. Stop 4-acc
+at M=64. One-card.
+
+## s2 4-acc M=256 NT=4 card1 (2026-09-03em)
+
+Same dpas_s2_w48m4. NT=4 unroll=4.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0. M=256 pipe_host 307.201
+vs NT=2 37.4. ~8.2x. Stop NT=4.
+One-card.
+
+K2 next: s2 4-acc A-db M=256.

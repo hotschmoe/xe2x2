@@ -331,6 +331,12 @@ at 2800, ~2.89x square, beats s4
 149 (~1.38x) and W8A8 226
 (~2.09x). Qwen FFN s2 4-acc M=256
 map is closed (37.4 / 110 / 108).
+s2 4-acc M=64 is 37 us card0
+(2026-09-03el) at 2800, same us
+as M=256, loses to 4x8 20 (~1.86x).
+Stop 4-acc at M=64. s2 4-acc NT=4
+M=256 is 307 us card1 (2026-09-03em)
+at 2800, ~8.2x NT=2. Stop NT=4.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -342,12 +348,12 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: s2 4-acc M=64
-(runner
-kernels/esimd_dpas/run_s2_w48m4_m64.sh).
-card1: s2 4-acc M=256 NT=4 (same
-binary run_s2_w48m4.sh 1 4 512).
-Loop every 5m. Do not drop below 5m:
+Next: both-card s2 4-acc A-db M=256
+(s4 A-db 4-acc was 51.9 tax vs
+48.6; s2 4-acc 37.4). New TU:
+clone dpas_s4_w48m4db to
+dpas_s2_w48m4db. Skip the second
+steal. Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 2-4 min GPU,
 and overlapping fires serialize on gpu-run.
 
@@ -357,10 +363,11 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2 4-acc M=64 (4x8 20, W8A8 46,
-   occupancy check vs M=256 37.4).
-2. s2 4-acc M=256 NT=4 (NT=2 37.4,
-   unroll 4 vs 8).
+1. s2 4-acc A-db M=256 (s4 A-db
+   51.9 tax vs 48.6; s2 37.4).
+   New TU. Both-card.
+2. If A-db beats 37.4: FFN N/K.
+   Else stop A-db on s2 4-acc.
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
