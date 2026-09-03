@@ -489,5 +489,29 @@ ok=1. pipe_host 873.078 event
 2750 throttle=1. ~1.03x SLM-K
 847. Stop v-prefetch vs SLM-K.
 
-K7 next: SLM-K T=1 vs inner
-unroll T=256.
+## ESIMD fused delta T=1 SLM-K blk=1 card0 (2026-09-03gu)
+
+backend sycl+l0, AOT
+gdn_delta_slmk1. T=1 blk=1
+spin=4000. cosine=1 max_abs=1.2e-4
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. timed act=cur=2800
+throttle=0. pipe_host 8.149
+event 7.836. 392 GB/s. ~1.16x
+fused 7.1. Event wash vs fused
+7.825. Stop SLM-K vs fused at
+decode.
+
+## ESIMD fused delta T=256 SLM-K inner unroll card1 (2026-09-03gv)
+
+backend sycl+l0, AOT
+gdn_delta_slmku. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 856.296 event
+853.003. 18.4 GB/s. act 2800-
+2783 throttle=1. Wash vs SLM-K
+847-858. Stop inner unroll.
+
+K7 next: SLM f32 k/q T=256 vs
+SLM double-buffer T=256.

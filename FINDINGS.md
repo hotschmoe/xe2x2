@@ -2968,6 +2968,50 @@ VERDICT -> v-prefetch is 873 us
 
 Evidence: `results/k7/esimd_delta_slmv_t256_s0_card0.txt`.
 
+## ESIMD SLM-K T=1 blk=1 loses to fused decode (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmk1` AOT
+  `intel_gpu_bmg_g31`. T=1 blk=1
+  k/q SLM, lid<1 fill. Card0.
+  spin=4000. Prior: fused 7.1 at
+  2800.
+
+RESULT -> cosine=1.0 max_abs
+  1.2e-4 / 2.4e-4 ok=1. pipe_host
+  8.149 event 7.836. 392 GB/s.
+  timed act=cur=2800 throttle=0.
+
+VERDICT -> SLM-K T=1 is 8.15 us
+  pipe_host card0 at 2800, ~1.16x
+  fused 7.1. Event wash vs fused
+  7.825. Barrier tax. Stop SLM-K
+  vs fused at decode. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmk1_t1_s4000_card0.txt`.
+
+## ESIMD SLM-K inner unroll washes vs T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmku` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  inner tt unrolled. Card1.
+  spin=0. Prior: SLM-K 847-858.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  856.296. timed act 2800-2783
+  throttle=1.
+
+VERDICT -> Inner unroll T=256 is
+  856 us pipe_host card1, wash vs
+  SLM-K 847-858. Stop inner
+  unroll vs SLM-K. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmku_t256_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4396,6 +4440,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   v-prefetch T=256 is 873 us
   card0 (2026-09-03gt), ~1.03x
   SLM-K 847. Stop v-prefetch.
+  SLM-K T=1 blk=1 is 8.15 us
+  card0 (2026-09-03gu) at 2800,
+  ~1.16x fused 7.1. Stop SLM-K
+  at decode. inner unroll T=256
+  is 856 us card1 (2026-09-03gv),
+  wash vs SLM-K 847-858,
+  throttle=1. Stop inner unroll.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

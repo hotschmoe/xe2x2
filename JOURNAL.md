@@ -9139,6 +9139,68 @@ VERDICT -> ESIMD v-prefetch T=256
   pipe_host. Next: SLM-K T=1 vs
   inner unroll T=256.
 
+### 2026-09-03gu - K7 ESIMD fused delta T=1 SLM-K blk=1 card0
+
+CONTEXT -> fused T=1 7.1 at 2800.
+  slmk needs T%16. New blk=1 TU.
+  spin=4000 hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmk1.
+  gpu-run --card 0. T=1 blk=1.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmk1_t1.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.2e-4
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 7.836 pipe_host
+  8.149. 392 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  fused 7.1 (~1.16x). event wash
+  vs fused 7.825.
+
+VERDICT -> ESIMD SLM-K T=1 blk=1
+  is 8.15 us pipe_host card0 at
+  2800, ~1.16x fused 7.1.
+  Barrier tax. Stop SLM-K vs
+  fused at decode. Rank
+  pipe_host.
+
+### 2026-09-03gv - K7 ESIMD fused delta T=256 SLM-K inner unroll card1
+
+CONTEXT -> SLM-K 847 leftover.
+  Napkin unroll tt=16 hides SLM.
+  spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmku.
+  gpu-run --card 1. T=256 blk=16.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmku_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 853.003 pipe_host
+  856.296. 18.4 GB/s. timed
+  act 2800-2783 throttle=1. vs
+  SLM-K 847-858.
+
+VERDICT -> ESIMD inner unroll
+  T=256 is 856 us pipe_host
+  card1, wash vs SLM-K 847-858.
+  Napkin miss. Stop inner unroll
+  vs SLM-K. Rank pipe_host.
+  Next: SLM f32 k/q vs SLM
+  double-buffer T=256.
+
 
 
 
