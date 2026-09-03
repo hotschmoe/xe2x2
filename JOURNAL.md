@@ -3824,3 +3824,73 @@ VERDICT -> DoA split stands, with
   s2xs4, hand K=16 dpas.
   Family-A floor is now 134.8.
   Rank us. Never bitcast s4.
+
+### 2026-09-03af - K3/K6 E2M1 two-term 4-acc M=256 card0
+
+CONTEXT -> 4x8 A-db compose is 194.9 us at
+  M=256 vs s4 4-acc 48.6. Steal two-term
+  E2M1 onto the 4-acc tile. New geometry.
+  One-card. A=s4. Never bitcast. Napkin:
+  2x s4 ~97 us if the two DPAS terms are
+  compute-bound.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_w48m4, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  RC=8 4-acc NT=2 U=8 (256 s4 dpas.8x8
+  lo+hi), wg 4x8 k128, pack=2,
+  grf_size<256>, no SLM. spin=512
+  warmup=10 iters=20. M=256 N=K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_w48m4_m256.sh 0 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: NT=2 256x dpas.8x8 rW:s4
+  rA:s4, store_block2d d16, grf_count 128,
+  no slm_size. cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 412.646 us, pipe_host
+  411.303 vs 4x8 compose 194.9 vs s4 48.6
+  vs s8 128 vs W8A8 75 vs napkin 97. Ratio
+  411.3/48.6 ~8.46x. min/max 392.9-439.7.
+
+VERDICT -> 4-acc compose loses to 4x8 A-db
+  194.9 (~2.11x) and ~8.46x native s4.
+  Napkin 2x died. GRF 128. One-card. Do
+  not freeze 411 us. Rank us.
+
+### 2026-09-03ag - K6 nibble LUT 4x8 A-db M=64 N=17408 card1
+
+CONTEXT -> LUT 4x8 A-db is 392.4 us at
+  M=64 N=5120. s8 N=17408 is 338.9. s4
+  94.7 (~2.81x). FFN-up prefill. One-card.
+  Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=64 N=17408
+  K=5120. Packed E2M1 B.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 1028.037 us, pipe_host
+  1037.007 vs 5120 392.4 vs s8 338.9 vs
+  s4 94.7 vs compose 326.9. Ratio
+  1037/392.4 ~2.64x, near s4's 2.81x.
+  min/max 1025.5-1040.5.
+
+VERDICT -> Wide-N LUT is a real 1037 us
+  at 2800, ~2.64x square, ~3.06x s8 338.9.
+  Better N-scale than compose 4.76x. Still
+  a loss vs s8. One-card. Do not freeze.
+  Rank us. Next: sibling LUT N=17408 vs
+  LUT M=64 K=17408.

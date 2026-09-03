@@ -579,6 +579,28 @@ VERDICT -> New E2M1 two-term 4x8 A-db
 Evidence: `results/k6/e2m1db48_m256_n2_s512_card0.txt`,
   `results/k6/e2m1db48_m256_n2_s512_card1.txt`.
 
+## E2M1 two-term 4-acc loses at M=256 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `compose_e2m1_w48m4`. RC=8 4-acc wg 4x8
+  k128, two s4 DPAS per k64. M=256 N=K=5120.
+  Card0 only, NT=2, spin=512. Never
+  bitcast. Prior: 2x s4 ~97 us.
+
+RESULT -> ocloc 256x `dpas.8x8` rW:s4 rA:s4,
+  grf 128, no SLM. cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0. M=256
+  pipe_host 411.303 vs 4x8 compose 194.9
+  vs s4 48.6 vs s8 128 vs W8A8 75.
+
+VERDICT -> 4-acc compose is ~2.11x the 4x8
+  A-db compose tile and ~8.46x native s4.
+  Napkin 2x died. One-card. Do not freeze
+  411 us until card1.
+
+Evidence: `results/k6/e2m1w48m4_m256_n2_s512_card0.txt`,
+  `results/k6/e2m1w48m4_dpas_lines.txt`.
+
 ## NVFP4 merge LUT on 4x8 A-db is 392.4 us at M=64 (K6)
 
 CONFIG -> backend `sycl+l0`, standalone
@@ -602,6 +624,24 @@ VERDICT -> New 4x8 A-db LUT floor 392.4 us
 Evidence: `results/k6/lutdb48_m64_n2_s512_card0.txt`,
   `results/k6/lutdb48_m64_n2_s512_card1.txt`,
   `results/k6/lutdb48_dpas_lines.txt`.
+
+## NVFP4 merge LUT 4x8 A-db N=17408 is 1037 us at M=64 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `nibble_lut_db48`. M=64 N=17408 K=5120.
+  Card1 only, NT=2, spin=512. Never
+  bitcast.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  1037.007 vs 5120 392.4 vs s8 338.9 vs
+  s4 94.7 vs compose 326.9.
+
+VERDICT -> Wide-N LUT is ~2.64x square,
+  near s4's 2.81x, ~3.06x s8 338.9. One-card.
+  Do not freeze 1037 us until card0.
+
+Evidence: `results/k6/lutdb48_m64_n17408_n2_s512_card1.txt`.
 
 ## E2M1 two-term 4x8 A-db N=17408 is 326.9 us at M=64 (K3/K6)
 
@@ -1984,7 +2024,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   K=17408 is 968.7 us both cards (~4.97x
   square vs s4 149, ~2.03x s8 477.4).
   throttle=0. Qwen FFN compose M=256 map
-  is closed.
+  is closed. compose on s4 4-acc M=256 is
+  411 us card0 (loss vs 4x8 194.9, ~8.46x
+  s4 48.6). nibble LUT 4x8 A-db M=64
+  N=17408 is 1037 us card1 (~2.64x square
+  vs s8 338.9).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

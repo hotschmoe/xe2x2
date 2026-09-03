@@ -314,7 +314,35 @@ act=cur=2800 throttle=0.
 | 1 x 5120 | 1 | 134.783 | 158 | 34 | 44 | 97.542 |
 
 New Family-A floor 134.8 us both cards.
-~1.17x merge LUT, still ~4.0x s8 34.
+~1.17x merge LUT. Still ~4.0x s8 34.
+
+## E2M1 two-term 4-acc M=256 card0 (2026-09-03af)
+
+`compose_e2m1_w48m4`: A s4, two s4 B planes,
+RC=8 4-acc wg 4x8 k128. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+ocloc 256x dpas.8x8 rW:s4 rA:s4, grf 128,
+no SLM. Never bitcast.
+
+| shape | card | pipe_host_us | 4x8 | s4 4-acc | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 411.303 | 194.9 | 48.6 | 128 | 75 |
+
+~8.46x native s4, ~2.11x 4x8 compose.
+One-card. Do not freeze 411 us.
+
+## nibble LUT 4x8 A-db M=64 N=17408 card1 (2026-09-03ag)
+
+Same `nibble_lut_db48`, N=17408 K=5120.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s8 N | s4 | compose |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 | 1 | 1037.007 | 392.4 | 338.9 | 94.7 | 326.9 |
+
+~2.64x square vs s4 2.81x. ~3.06x s8.
+One-card.
 
 ## 12-idea sprint (2026-09-03ae)
 
