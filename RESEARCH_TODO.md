@@ -377,14 +377,15 @@ conv C=10240 is 4.4-4.9 us both
 cards vs trio ~13.8 (2026-09-03fd).
 Clocks 1183/2800 on fused. Do
 not freeze 4.44 as 2800. Packed
-qkv W8A8 n=10240 is 96 us card0
-(2026-09-03ff) vs 3x 46 ~138.
-Mixer conv+delta is 8.23 us
-pipe_host card1 at 2800
-(2026-09-03fg) vs 11.5. One-card.
-Do not freeze. Next: sibling
-swap. card0: mixer. card1:
-packed qkv W8A8. Loop every 5m.
+qkv W8A8 n=10240 is 96 us both
+cards (2026-09-03fi) vs 3x 46
+~138. Mixer conv+delta is 8.2-8.7
+us both cards at 2800
+(2026-09-03fh) vs 11.5, spread
+6.3%. Do not freeze 8.23. Next:
+split. card0: packed qkv W8A8
+M=64. card1: ESIMD conv1d T=64.
+Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -395,10 +396,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling ESIMD mixer card0
-   (card1 8.23 us at 2800).
-2. Sibling packed qkv W8A8
-   card1 (card0 96 us).
+1. Packed qkv W8A8 M=64 n=10240
+   (vs M=1 96).
+2. ESIMD GDN conv1d T=64
+   (eager 115, decode 4.4).
 Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

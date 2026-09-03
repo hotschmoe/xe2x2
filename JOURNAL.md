@@ -7970,6 +7970,59 @@ VERDICT -> Mixer is 8.23 us
   8.23 until sibling. Rank
   pipe_host. Next: sibling swap.
 
+### 2026-09-03fh - K7 ESIMD mixer sibling card0
+
+CONTEXT -> card1 mixer was 8.23
+  us pipe_host at 2800. First
+  mixer fuse. Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer. gpu-run --card 0.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=
+  0.000122 cosine_o=1 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 8.898 pipe_host 8.746 vs
+  card1 8.229. Spread ~6.3%.
+
+VERDICT -> Sibling matches the
+  8.2-8.7 us class both cards at
+  2800. Spread >5%. Do not freeze
+  8.23. Conv still hides under
+  delta vs 11.5. Rank pipe_host.
+
+### 2026-09-03fi - K7 packed qkv W8A8 sibling card1
+
+CONTEXT -> card0 packed qkv was
+  96 us. Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  int8_gemm_w8a8 M=1 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_qkv_w8a8.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.055
+  ok=1. 95.481 us vs card0
+  95.783. Spread ~0.3%.
+
+VERDICT -> Sibling matches. Packed
+  qkv W8A8 is 96 us both cards,
+  ~1.44x 3 sequential 138. Rank
+  us. Next: packed qkv M=64 vs
+  conv T=64.
+
+
 
 
 
