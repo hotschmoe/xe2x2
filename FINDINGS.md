@@ -2287,6 +2287,30 @@ VERDICT -> Eager delta is 308 us
 Evidence: `results/k7/delta_recurrent_card0.txt`,
   `results/k7/delta_recurrent_card1.txt`.
 
+## GDN q/v proj W8A8 is ~46 us decode (K7)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. M=1 k=5120. q n=2048,
+  v n=6144. int8_gemm_w8a8. Heat
+  M=64 spin=512. Both cards. No
+  serve.
+
+RESULT -> v-proj 46.080/46.306 us
+  cosine=1. q-proj 45.344/58.429
+  (spread ~29%, clocks). vs square
+  44 vs conv 115 vs delta 308.
+
+VERDICT -> GDN projections sit in
+  the W8A8 44 us class, not 3x N.
+  Mixer (conv 115 + delta 308) is
+  the leftover, not qkvz GEMM.
+  Do not freeze q 45. Rank us.
+
+Evidence: `results/k7/proj_q_w8a8_card0.txt`,
+  `results/k7/proj_q_w8a8_card1.txt`,
+  `results/k7/proj_v_w8a8_card0.txt`,
+  `results/k7/proj_v_w8a8_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3619,6 +3643,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   eager delta recurrent is 308 us
   both cards (~7x W8A8 44). Decode
   leftover after INT8 projections.
+  GDN q/v W8A8 M=1 is ~46 us (v
+  both-card; q 45-58 clocks), same
+  class as square 44, under mixer.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

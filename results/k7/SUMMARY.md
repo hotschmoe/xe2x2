@@ -39,5 +39,20 @@ decode 11.5 vs W8A8 44.
 ~308 us both cards. Spread ~0.8%. ~7x W8A8 44.
 State 1.5 MiB/layer is not the roof; this eager bmm path is.
 
-K7 next: qkvz GEMM 5120x2048 / 5120x6144 vs s2/W8A8.
-Then a fused conv or delta kernel to beat 115 / 308.
+## GDN q/v proj W8A8 M=1 (2026-09-03et/ew)
+
+int8_gemm_w8a8. k=5120. heat M=64
+spin=512. cosine=1 ok=1.
+
+| arm | n | card0 us | card1 us |
+|---|---:|---:|---:|
+| q | 2048 | 45.344 | 58.429 |
+| v | 6144 | 46.080 | 46.306 |
+
+v-proj 46 us both (spread 0.5%).
+q-proj 45-58, clocks. Same class
+as square 44, not N-linear. Under
+conv 115 and delta 308.
+
+K7 next: fused ESIMD conv1d vs
+fused delta to beat 115 / 308.

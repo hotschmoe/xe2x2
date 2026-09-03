@@ -7590,6 +7590,100 @@ VERDICT -> Sibling matches. Eager
   GEMM 5120x2048 vs fused GDN
   kernel.
 
+### 2026-09-03et - K7 GDN q-proj W8A8 card0
+
+CONTEXT -> q-proj 5120x2048. W8A8
+  square M=1 is 44. conv1d 115.
+  delta 308. s2 decode 11.5.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  int8_gemm_w8a8 M=1 n=2048 k=5120
+  heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_q_w8a8.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.031
+  ok=1. 45.344 us. 231 GB/s. vs
+  square 44. Not N-linear.
+
+VERDICT -> q-proj W8A8 is 45 us
+  card0, same class as 5120
+  square. Under conv 115 and
+  delta 308. Rank us.
+
+### 2026-09-03eu - K7 GDN v-proj W8A8 card1
+
+CONTEXT -> v-proj 5120x6144. 3x
+  q N. Napkin 3x 44 ~132.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  int8_gemm_w8a8 M=1 n=6144 k=5120
+  heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_v_w8a8.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.059
+  ok=1. 46.306 us. 679 GB/s. vs
+  q 45 vs napkin 132.
+
+VERDICT -> v-proj W8A8 is 46 us
+  card1, not 3x q. Launch class
+  like square 44. Rank us.
+
+### 2026-09-03ev - K7 GDN v-proj sibling card0
+
+CONTEXT -> card1 v-proj was 46 us.
+  Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_v_w8a8.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.043
+  ok=1. 46.080 us vs card1 46.306.
+  Spread ~0.49%.
+
+VERDICT -> Sibling matches. GDN
+  v-proj W8A8 is 46 us both cards.
+  Rank us.
+
+### 2026-09-03ew - K7 GDN q-proj sibling card1
+
+CONTEXT -> card0 q-proj was 45 us.
+  Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_q_w8a8.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.061
+  ok=1. 58.429 us vs card0 45.344.
+  Spread ~29%. cur 550-2800.
+
+VERDICT -> q-proj clocks disagreed.
+  45-58 us, still the 44-class
+  launch, under conv 115 and
+  delta 308. Do not freeze 45.
+  Rank us. Next: fused ESIMD
+  conv1d vs fused delta.
+
+
 
 
 

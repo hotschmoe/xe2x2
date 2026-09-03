@@ -358,11 +358,14 @@ Eager conv1d K=4 is ~115 us
 launch-bound both cards. Eager
 delta recurrent is 308 us both
 cards (~7x W8A8 44). State 72 MiB
-all layers. Next: split. card0: GDN q-proj
-M=1 5120x2048 W8A8 (pytorch-xpu).
-card1: GDN v-proj M=1 5120x6144
-W8A8. Then a fused conv/delta
-kernel to beat 115 / 308. Loop
+all layers. GDN q-proj W8A8 M=1
+5120x2048 is 45-58 us (clocks).
+v-proj 5120x6144 is 46 us both
+cards (2026-09-03ev). Mixer
+leftover, not projections. Next:
+split. card0: ESIMD GDN conv1d K=4
+(beat 115). card1: ESIMD GDN
+delta recurrent (beat 308). Loop
 every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 2-4 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -373,11 +376,10 @@ and overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. GDN q/v proj M=1 (5120x2048 /
-   5120x6144) vs s2 decode 11.5
-   and W8A8 44.
-2. Fused ESIMD conv1d or delta to
-   beat eager 115 / 308 us.
+1. ESIMD GDN conv1d K=4 C=2048
+   T=1 (eager 115, launch-bound).
+2. ESIMD GDN delta 48x128x128
+   (eager 308). New TUs.
 Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
