@@ -38,14 +38,16 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--n", type=int, required=True)
     p.add_argument("--k", type=int, default=5120)
+    p.add_argument("--m", type=int, default=1)
     p.add_argument("--name", default="proj")
     p.add_argument("--spin", type=int, default=512)
     args = p.parse_args()
     n = args.n
     k = args.k
+    m = args.m
     print(
         "CONFIG backend=pytorch-xpu on sycl+l0 op=int8_gemm_w8a8",
-        "arm", args.name, "m=1 n", n, "k", k,
+        "arm", args.name, "m", m, "n", n, "k", k,
         "heat=M64 spin", args.spin,
         "torch", torch.__version__,
         "ZE_AFFINITY_MASK", os.environ.get("ZE_AFFINITY_MASK"),
@@ -69,7 +71,7 @@ def main() -> int:
     torch.xpu.synchronize()
     print("spin_done n", args.spin, flush=True)
 
-    a, a_s, b, b_s = make(1, n, k)
+    a, a_s, b, b_s = make(m, n, k)
     y = torch.ops._xpu_C.int8_gemm_w8a8(a, a_s, b, b_s, torch.float16, None)
     torch.xpu.synchronize()
     ref = (a.cpu().float() * a_s.cpu().float()) @ (
@@ -90,7 +92,7 @@ def main() -> int:
     gbs = (k * n / 1e9) / (us * 1e-6)
     print("arm,m,n,k,us,GBs,cosine,max_abs,ok", flush=True)
     print(
-        f"{args.name},1,{n},{k},{us:.3f},{gbs:.3f},{cos:.6f},{mx:.5g},{ok}",
+        f"{args.name},{m},{n},{k},{us:.3f},{gbs:.3f},{cos:.6f},{mx:.5g},{ok}",
         flush=True,
     )
     return 0

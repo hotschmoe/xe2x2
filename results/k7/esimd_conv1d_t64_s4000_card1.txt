@@ -1,0 +1,21 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4827049455444 energy2=pkg:2559611928039 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4763808504211 energy2=pkg:2648357219116 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=gdn_conv1d_t spin=4000 T=64 k=4 C=2048
+eager T=64 ~115. decode T=1 4.4.
+=== esimd conv1d T=64 C=2048 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=gdn_conv1d_t dtype=f16 T=64 VL=16 wg=16 C=2048 warmup=50 iters=40 card=1 spin=4000 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,c,t,kconv,event_us,wait_host_us,pipe_host_us,GBs,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2048,64,4,9.771,24.171,10.161,53.21,1.000000,0,1,9.791,9.583,10.000
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=2800 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4827069452697 energy2=pkg:2559623462585 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4763832557373 energy2=pkg:2648372593566 temp2_mC=55000

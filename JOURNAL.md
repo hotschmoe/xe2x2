@@ -8022,6 +8022,62 @@ VERDICT -> Sibling matches. Packed
   us. Next: packed qkv M=64 vs
   conv T=64.
 
+### 2026-09-03fj - K7 packed qkv W8A8 M=64 card0
+
+CONTEXT -> M=1 packed qkv is 96
+  us. W8A8 M=64 square 46. 3x
+  napkin ~138.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  int8_gemm_w8a8 M=64 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_qkv_w8a8_m64.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.062
+  ok=1. 142.053 us. 369 GB/s. vs
+  M=1 96 vs square M=64 46 vs 3x
+  46 ~138.
+
+VERDICT -> Packed qkv M=64 is 142
+  us card0, ~1.48x M=1 96, wash
+  vs 3x 46. One-card. Do not
+  freeze 142. Rank us.
+
+### 2026-09-03fk - K7 ESIMD conv1d T=64 card1
+
+CONTEXT -> eager T=64 ~115.
+  decode T=1 4.4. First T>1 conv.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_conv1d_t.
+  gpu-run --card 1. C=2048 T=64
+  k=4 f16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t64.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  event 9.771 pipe_host 10.161.
+  53 GB/s. act=cur=2800
+  throttle=0. vs eager 115 vs
+  decode 4.4.
+
+VERDICT -> ESIMD conv T=64 is
+  10.2 us pipe_host card1 at
+  2800, ~11x eager 115, ~2.3x
+  decode T=1. Not T-linear.
+  One-card. Do not freeze 10.2
+  until sibling. Rank pipe_host.
+  Next: sibling swap.
+
+
 
 
 

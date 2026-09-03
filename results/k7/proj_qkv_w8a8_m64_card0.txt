@@ -1,0 +1,18 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4827003744812 energy2=pkg:2559585915832 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4763762158325 energy2=pkg:2648329996643 temp2_mC=53000
+CONFIG backend=pytorch-xpu on sycl+l0 card=0 op=int8_gemm_w8a8 gdn_qkv m=64 n=10240 k=5120
+M=1 packed qkv 96. W8A8 M=64 square 46. 3x napkin ~138.
+CONFIG backend=pytorch-xpu on sycl+l0 op=int8_gemm_w8a8 arm gdn_qkv_m64 m 64 n 10240 k 5120 heat=M64 spin 512 torch 2.13.0+xpu ZE_AFFINITY_MASK 0
+spin_done n 512
+arm,m,n,k,us,GBs,cosine,max_abs,ok
+gdn_qkv_m64,64,10240,5120,142.053,369.080,1.000004,0.062485,1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1967 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4827544099426 energy2=pkg:2559896245666 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4764265981933 energy2=pkg:2648607225891 temp2_mC=55000
