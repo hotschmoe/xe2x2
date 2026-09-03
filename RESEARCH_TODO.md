@@ -362,19 +362,21 @@ all layers. GDN q-proj W8A8 M=1
 5120x2048 is 45-58 us (clocks).
 v-proj 5120x6144 is 46 us both
 cards (2026-09-03ev). ESIMD fused
-conv1d is 4.35 us pipe_host card0
-at 1700 (2026-09-03ex), ~26x
-eager, cosine=1. ESIMD fused
-delta is 7.09 us pipe_host card1
-at 2800 (2026-09-03ey), ~43x
-eager, 450 GB/s. One-card. Do
-not freeze. Next: sibling swap.
-card0: ESIMD delta. card1: ESIMD
-conv1d. Loop every 5m. Do not
-drop below 5m: M=256 FFN spin=512
-already 2-4 min GPU, and
-overlapping fires serialize on
-gpu-run.
+conv1d is ~4.4 us pipe_host both
+cards at 1400-1700 (2026-09-03fa),
+~26x eager, cosine=1. Do not
+freeze 4.4 as 2800. ESIMD fused
+delta is 7.1 us pipe_host both
+cards at 2800 (2026-09-03ez),
+~43x eager, 450 GB/s. Mixer
+4.4+7.1 ~11.5 us under W8A8 46.
+Leftover is qkvz. Next: split.
+card0: GDN o-proj W8A8 M=1
+6144x5120. card1: fuse q+k+v
+conv1d one launch. Loop every
+5m. Do not drop below 5m:
+M=256 FFN spin=512 already 2-4 min GPU,
+and overlapping fires serialize on gpu-run.
 
 
 ## 10-hour remaining (ruthless)
@@ -382,10 +384,10 @@ gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling ESIMD GDN conv1d
-   card1 (card0 4.35 us at 1700).
-2. Sibling ESIMD GDN delta
-   card0 (card1 7.09 us at 2800).
+1. GDN o-proj W8A8 M=1
+   6144x5120 (vs v-proj 46).
+2. Fuse q+k+v conv1d one
+   launch (beat 3x 4.4).
 Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

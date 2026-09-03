@@ -7746,6 +7746,65 @@ VERDICT -> ESIMD delta is 7.09 us
   7.09 until sibling. Rank
   pipe_host. Next: sibling swap.
 
+### 2026-09-03ez - K7 ESIMD GDN delta sibling card0
+
+CONTEXT -> card1 delta was 7.09
+  us pipe_host at 2800, cosine=1
+  max_abs=0.015625. Sibling swap.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta. gpu-run --card 0.
+  nv=48 dv=128 dk=128. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.015625
+  cosine_o=1 max_abs_o=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 7.825 pipe_host 7.028
+  vs card1 7.093. 455 GB/s.
+  Spread ~0.9%.
+
+VERDICT -> Sibling matches. ESIMD
+  delta is 7.1 us pipe_host both
+  cards at 2800. ~43x eager 308.
+  Rank pipe_host.
+
+### 2026-09-03fa - K7 ESIMD GDN conv1d sibling card1
+
+CONTEXT -> card0 conv1d was 4.35
+  us pipe_host at 1700. Sibling.
+  Clocks not 2800 last time.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d. gpu-run --card 1.
+  T=1 k=4 f16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  C=2048 event 1.799 pipe_host
+  4.500 act=cur=1400. C=6144
+  pipe_host 5.000 at 2167. vs
+  card0 4.350 at 1700. Spread
+  ~3.4%. vs eager 115.
+
+VERDICT -> Sibling matches the
+  4.4 us class both cards. Short
+  kernel, clocks 1400-1700 not
+  2800. Do not freeze 4.4 as a
+  2800 floor. Mixer 4.4+7.1 ~11.5
+  us under W8A8 46. Rank
+  pipe_host. Next: o-proj vs
+  fused qkv conv.
+
+
 
 
 
