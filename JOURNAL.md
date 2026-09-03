@@ -7914,6 +7914,63 @@ VERDICT -> Sibling matches. GDN
   Rank us. Next: packed qkv
   W8A8 vs fuse conv+delta.
 
+### 2026-09-03ff - K7 GDN packed qkv W8A8 card0
+
+CONTEXT -> q+k+v N=10240 K=5120
+  one GEMM vs 3x 46 ~138. v-proj
+  n=6144 is 46.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  int8_gemm_w8a8 M=1 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_qkv_w8a8.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.043
+  ok=1. 95.783 us. 547 GB/s. vs
+  3x 46 ~138 vs v-proj 46. cur
+  end 2400.
+
+VERDICT -> Packed qkv W8A8 is 96
+  us card0, ~1.44x 3 sequential
+  138, ~2.08x v-proj 46. Not
+  launch-class 46. One-card. Do
+  not freeze 96. Rank us.
+
+### 2026-09-03fg - K7 ESIMD mixer conv+delta card1
+
+CONTEXT -> conv 4.4 + delta 7.1
+  = 11.5. First mixer fuse.
+  Packed C=10240 then 48-head
+  delta, q/k repeat 16->48.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer.
+  gpu-run --card 1. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=
+  0.000122 cosine_o=1 max_abs_o=0
+  ok=1. event 9.758 pipe_host
+  8.229. act=cur=2800 throttle=0.
+  vs 11.5.
+
+VERDICT -> Mixer is 8.23 us
+  pipe_host card1 at 2800, ~1.40x
+  the 11.5 sum. Conv hides under
+  delta. One-card. Do not freeze
+  8.23 until sibling. Rank
+  pipe_host. Next: sibling swap.
+
+
 
 
 

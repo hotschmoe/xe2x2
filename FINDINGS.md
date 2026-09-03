@@ -2408,6 +2408,49 @@ VERDICT -> One launch covers
 Evidence: `results/k7/esimd_conv1d_qkv_s4000_card0.txt`,
   `results/k7/esimd_conv1d_qkv_s4000_card1.txt`.
 
+## Packed qkv W8A8 is 96 us (K7)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. M=1 n=10240 k=5120
+  (q+k+v). int8_gemm_w8a8. Heat
+  M=64 spin=512. Card0. No serve.
+
+RESULT -> cosine=1 max_abs=0.043
+  ok=1. 95.783 us. vs 3x 46 ~138
+  vs v-proj 46.
+
+VERDICT -> Packed qkv is 96 us
+  card0, ~1.44x three sequential
+  GEMMs, ~2.08x v-proj. Not the
+  46 us launch class. One-card.
+  Do not freeze 96. Rank us.
+
+Evidence: `results/k7/proj_qkv_w8a8_card0.txt`.
+
+## ESIMD mixer conv+delta is 8.2 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer` AOT
+  `intel_gpu_bmg_g31`. Packed
+  conv C=10240 then 48-head
+  delta, q/k repeat 16->48.
+  Card1. spin=4000. Prior: 4.4+
+  7.1 = 11.5.
+
+RESULT -> cosine=1.0 max_abs=
+  1.22e-4 cosine_o=1 max_abs_o=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 8.229 event 9.758.
+
+VERDICT -> Mixer is 8.23 us
+  pipe_host card1 at 2800, ~1.40x
+  the 11.5 sum. Conv hides under
+  delta. One-card. Do not freeze
+  8.23 until sibling. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3757,7 +3800,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   4.4-4.9 us both cards vs trio
   ~13.8 (~3x). Clocks 1183/2800
   on fused; do not freeze 4.44
-  as 2800.
+  as 2800. Packed qkv W8A8 is 96
+  us card0 vs 3x 46 ~138. Mixer
+  conv+delta is 8.23 us card1 at
+  2800 vs 11.5. One-card each.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/fe
+# K7 GDN inventory 2026-09-03ep/fg
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -121,3 +121,32 @@ Fused 4.4-4.9 class. Spread ~9%
 
 K7 next: packed qkv W8A8 vs
 fuse conv+delta.
+
+## Packed qkv W8A8 card0 (2026-09-03ff)
+
+backend pytorch-xpu on sycl+l0.
+M=1 n=10240 k=5120. heat M=64
+spin=512. cosine=1 ok=1.
+
+| arm | n | k | card0 us |
+|---|---:|---:|---:|
+| qkv | 10240 | 5120 | 95.783 |
+
+~1.44x 3 sequential 138. ~2.08x
+v-proj 46. One-card.
+
+## ESIMD mixer conv+delta card1 (2026-09-03fg)
+
+backend sycl+l0, AOT gdn_mixer.
+spin=4000. cosine=1 max_abs=
+1.22e-4 cosine_o=1 ok=1.
+act=cur=2800 throttle=0.
+
+| arm | pipe_host us | event us |
+|---|---:|---:|
+| mixer | 8.229 | 9.758 |
+
+~1.40x the 11.5 sum. One-card.
+
+K7 next: sibling swap. card0
+mixer, card1 packed qkv.
