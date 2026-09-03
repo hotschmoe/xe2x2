@@ -373,7 +373,7 @@ throttle=0.
 New M=256 floor 1203 us both cards.
 ~3.07x M=64. ~9.4x s8.
 
-## closed-form LUT 4x8 A-db M=64 card1 (2026-09-03am)
+## closed-form LUT 4x8 A-db M=64 (2026-09-03am/an)
 
 `nibble_lut_scf_db48`: exp/mant shift on
 the 4x8 A-db tile. cosine=1.0 max_abs=0.
@@ -382,9 +382,25 @@ dpas.8x8 rW:b rA:b, grf 128, no SLM.
 
 | shape | card | pipe_host_us | merge | scf decode | s8 | napkin |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 331.665 | 392.4 | 134.8 | 75 | 335 |
 | 64 x 5120 | 1 | 331.554 | 392.4 | 134.8 | 75 | 335 |
 
-~1.18x merge. Napkin held. One-card.
+New floor 331.6 us both cards. ~1.18x
+merge. Napkin held. Still ~4.42x s8.
+
+## closed-form LUT 4x8 A-db M=256 card1 (2026-09-03ao)
+
+Same `nibble_lut_scf_db48`, M=256 N=K=5120.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | pipe_host_us | M=64 | merge | s8 | compose |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 1089.132 | 331.6 | 1203 | 128 | 194.9 |
+
+~3.28x M=64. ~1.10x merge 1203. Napkin
+1021 missed ~6.7%. One-card. Do not freeze
+1089 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

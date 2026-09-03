@@ -4077,3 +4077,63 @@ VERDICT -> Closed-form 4x8 LUT is a real
   held. Still ~4.42x s8 75. One-card. Do
   not freeze 332 us until card0. Rank us.
   Next: sibling scf 4x8 vs scf 4x8 M=256.
+
+### 2026-09-03an - K6 closed-form LUT 4x8 A-db M=64 sibling card0
+
+CONTEXT -> card1 closed-form 4x8 M=64 was
+  331.6 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_scf_db48_m64.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card0: event 330.823 us, pipe_host
+  331.665 vs card1 331.554 vs merge 392.4
+  vs s8 75 vs W8A8 46. Spread ~0.03%.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  closed-form LUT floor 331.6 us at 2800
+  both cards. ~1.18x merge 392.4, still
+  ~4.42x s8 75. Rank us.
+
+### 2026-09-03ao - K6 closed-form LUT 4x8 A-db M=256 card1
+
+CONTEXT -> scf 4x8 is 331.6 us at M=64.
+  merge LUT M=256 is 1203. s8 4-acc 128.
+  compose 194.9. Napkin 331.6*3.08 ~1021.
+  Prefill on the M=64 scf tile. One-card.
+  Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=256 N=K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_scf_db48_m256.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card1: event 1069.130 us, pipe_host
+  1089.132 vs M=64 331.6 vs merge 1203 vs
+  s8 128 vs compose 194.9 vs W8A8 75 vs
+  napkin 1021. Ratio 1089/331.6 ~3.28x.
+  min/max 1008.1-1127.7.
+
+VERDICT -> Closed-form LUT M=256 is 1089
+  us at 2800, ~3.28x M=64, ~1.10x merge
+  1203, ~8.51x s8 128. Napkin 1021 missed
+  ~6.7%. One-card. Do not freeze 1089 us
+  until card0. Rank us. Next: sibling scf
+  M=256 vs scf M=64 N=17408.
