@@ -174,9 +174,13 @@ nvfp4_gemm_w4a16 M=1 K=17408 is 101 us
 both cards (2026-09-03bh), ~2.92x
 square, beats s8 261.6, throttle=1.
 Qwen FFN w4a16 decode map is closed.
-nvfp4_gemm_w4a16 M=64 N=17408 is 139 us
-card1 (2026-09-03bi), ~3.74x square,
-beats s8 338.9, act=2300/2800. One-card.
+nvfp4_gemm_w4a16 M=64 N=17408 is 142 us
+both cards (2026-09-03bj), ~3.82x square,
+beats s8 338.9, act 2050-2300/2800.
+nvfp4_gemm_w4a16 M=64 K=17408 is 128 us
+card1 (2026-09-03bk), ~3.44x square,
+~K-linear, beats s8 374.7, act=2350-2400.
+One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -189,8 +193,8 @@ lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nvfp4_gemm_w4a16
-M=64 N=17408 (act=2300 last). card1:
-held-clock nvfp4_gemm_w4a16 M=64 K=17408.
+M=64 K=17408 (act=2350 last). card1:
+held-clock nvfp4_gemm_w4a16 M=256 N=17408.
 Loop every 5m.
 
 ## After P0: kernel workstreams (parallelizable)

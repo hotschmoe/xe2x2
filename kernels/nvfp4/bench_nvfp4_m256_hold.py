@@ -44,7 +44,8 @@ def main() -> int:
     card = int(os.environ.get("ZE_AFFINITY_MASK") or "0")
     spin = int(os.environ.get("NVFP4_SPIN") or "512")
     m = 256
-    n = k = 5120
+    n = int(os.environ.get("NVFP4_N") or "5120")
+    k = int(os.environ.get("NVFP4_K") or "5120")
     print(
         "CONFIG backend=pytorch-xpu on sycl+l0 op=nvfp4_gemm_w4a16",
         "torch", torch.__version__,

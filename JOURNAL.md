@@ -4770,3 +4770,72 @@ VERDICT -> Wide-N w4a16 M=64 is 139 us at
   not 2800. One-card. Do not freeze until
   card0. Rank us. Next: sibling w4a16
   M=64 N=17408 vs w4a16 M=64 K=17408.
+
+### 2026-09-03bj - K6 nvfp4_gemm_w4a16 M=64 N=17408 sibling card0
+
+CONTEXT -> card1 w4a16 M=64 N=17408 was
+  139 us at act=2300/2800. Sibling swap.
+  A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. spin=512 of M=64 then us_bench.
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m64_wide_hold.sh 0 512
+  ```
+
+RESULT -> out bf16 [64,17408]. timed
+  act=2050 cur=2800 throttle=0. us_bench
+  folded 144.451 vs card1 138.903 vs
+  square 37.1 vs M=1 N=17408 97 vs s8
+  338.9 vs s4 94.7 vs compose 326.9 vs
+  LUT 880 vs napkin 104. Spread ~4.0%.
+  f8scale 141.560 vs card1 138.595,
+  act=2100 cur=2800.
+
+VERDICT -> Sibling matches. New w4a16
+  M=64 wide-N floor 142 us both cards,
+  cur=2800, act 2050-2300. ~3.82x square
+  (napkin 104 missed), beats s8 338.9
+  and compose 326.9, loses to s4 94.7.
+  Act not 2800. Rank us.
+
+### 2026-09-03bk - K6 nvfp4_gemm_w4a16 M=64 K=17408 card1
+
+CONTEXT -> w4a16 M=64 square is 37.1 us.
+  M=1 K=17408 is 101 (~2.92x). N-wide
+  142. s8 374.7. s4 106.0. compose 403.4.
+  LUT 1125. Napkin 37.1*101/34.7 ~108.
+  FFN-down prefill. A=bf16. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. spin=512 of M=64 then us_bench.
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m64_k17408_hold.sh 1 512
+  ```
+
+RESULT -> out bf16 [64,5120]. timed
+  act=2350-2400 cur=2800 throttle=0.
+  us_bench folded 127.793 vs square 37.1
+  vs M=1 K=17408 101 vs N-wide 142 vs
+  s8 374.7 vs s4 106.0 vs compose 403.4
+  vs LUT 1125 vs napkin 108. Ratio
+  127.8/37.1 ~3.44x. ~K-linear (37.1*
+  17408/5120 ~126). f8scale 129.001,
+  act=2450-2400 cur=2800.
+
+VERDICT -> Wide-K w4a16 M=64 is 128 us
+  at act=2350-2400/2800 card1, ~3.44x
+  square (napkin 108 missed, K-linear
+  held), beats s8 374.7 and compose
+  403.4, loses to s4 106.0. Act not
+  2800. One-card. Do not freeze until
+  card0. Rank us. Next: sibling w4a16
+  M=64 K=17408 vs w4a16 M=256 N=17408.
