@@ -2216,6 +2216,33 @@ VERDICT -> NT=4 is 307 us pipe_host
 
 Evidence: `results/k2/s2w48m4_m256_n4_s512_card1.txt`.
 
+## s2 4-acc A-db is a wash at M=256 (K2)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s2_w48m4db`.
+  RC=8 4-acc k64 A-db wg 4x8 k128
+  pack=4. M=256 N=K=5120. Both
+  cards. NT=2 spin=512. Named
+  clock 2800. Never E2M1. Prior:
+  no-db 37.4; s4 A-db 51.9 tax.
+
+RESULT -> ocloc 128x `dpas.8x8`
+  rW:s2 rA:s2, grf 128. cosine=1.0
+  max_abs=0. timed act=cur=2800
+  throttle=0. M=256 pipe_host
+  37.138/37.274 vs no-db 37.4.
+  Spread ~0.37%.
+
+VERDICT -> A-db is 37.2 us pipe_host
+  at 2800 both cards, a wash vs
+  no-db 37.4 (not s4's tax). Stop
+  A-db on s2 4-acc. Floor stays
+  37.4. Rank pipe_host.
+
+Evidence: `results/k2/s2w48m4db_m256_n2_s512_card0.txt`,
+  `results/k2/s2w48m4db_m256_n2_s512_card1.txt`,
+  `results/k2/s2w48m4db_dpas_lines.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3540,7 +3567,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   card0, occupancy pad, loses to
   4x8 20. Stop 4-acc at M=64. s2
   4-acc NT=4 is 307 us card1,
-  ~8.2x NT=2. Stop NT=4. s2 4x8
+  ~8.2x NT=2. Stop NT=4. s2 4-acc
+  A-db M=256 is 37.2 us both cards,
+  wash vs no-db 37.4. Stop A-db.
+  s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
   W8A8 248 (~1.45x), loses to s4

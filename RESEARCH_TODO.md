@@ -337,6 +337,10 @@ as M=256, loses to 4x8 20 (~1.86x).
 Stop 4-acc at M=64. s2 4-acc NT=4
 M=256 is 307 us card1 (2026-09-03em)
 at 2800, ~8.2x NT=2. Stop NT=4.
+s2 4-acc A-db M=256 is 37.2 us
+both cards (2026-09-03eo) at 2800,
+wash vs no-db 37.4. Stop A-db on
+s2 4-acc. Floor stays 37.4.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -348,12 +352,12 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: both-card s2 4-acc A-db M=256
-(s4 A-db 4-acc was 51.9 tax vs
-48.6; s2 4-acc 37.4). New TU:
-clone dpas_s4_w48m4db to
-dpas_s2_w48m4db. Skip the second
-steal. Loop every 5m. Do not drop below 5m:
+Next: s2 4-acc schedule steals are
+closed (M=64 pad, NT=4 loss, A-db
+wash). persist-s8 GEMM us has no
+TU (VRAM envelope only). Unpark
+K7 GDN inventory (list otherwise
+empty). Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 2-4 min GPU,
 and overlapping fires serialize on gpu-run.
 
@@ -363,12 +367,13 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2 4-acc A-db M=256 (s4 A-db
-   51.9 tax vs 48.6; s2 37.4).
-   New TU. Both-card.
-2. If A-db beats 37.4: FFN N/K.
-   Else stop A-db on s2 4-acc.
-Park: K7 GDN inventory, P2/P3, GRF256
+1. K7 GDN inventory (Qwen3.8 is
+   not plain attn). Docs + dump;
+   GPU only if a kernel TU exists.
+2. persist-s8 GEMM us (no TU;
+   VRAM-only 29.0 GiB). Skip until
+   a kernel is written.
+Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
 

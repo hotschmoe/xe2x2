@@ -1348,4 +1348,22 @@ throttle=0. M=256 pipe_host 307.201
 vs NT=2 37.4. ~8.2x. Stop NT=4.
 One-card.
 
-K2 next: s2 4-acc A-db M=256.
+## s2 4-acc A-db M=256 both cards (2026-09-03en/eo)
+
+dpas_s2_w48m4db RC=8 4-acc k64 A-db
+wg 4x8 k128 pack=4. ocloc 128x
+dpas.8x8 rW:s2 rA:s2, grf 128.
+NT=2 spin=512. cosine=1.0
+max_abs=0. timed 2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | no-db |
+|---|---|---:|---:|---:|
+| 256 x 5120 | 0 | 36.943 | 37.138 | 37.4 |
+| 256 x 5120 | 1 | 37.667 | 37.274 | 37.4 |
+
+37.2 us both cards. Spread ~0.37%.
+Wash vs no-db 37.4. Stop A-db on
+s2 4-acc. Floor stays 37.4.
+
+K2 next: s2 4-acc schedule steals
+closed. persist-s8 GEMM has no TU.

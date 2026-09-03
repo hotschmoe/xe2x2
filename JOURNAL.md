@@ -7423,6 +7423,73 @@ VERDICT -> NT=4 is 307 us pipe_host
   Rank pipe_host. Next: s2 4-acc
   A-db M=256 both-card.
 
+### 2026-09-03en - K2 s2 4-acc A-db M=256 card0
+
+CONTEXT -> s2 4-acc no A-db is
+  37.4. s4 A-db was 51.9 tax vs
+  48.6. First s2 4-acc A-db. IGC
+  s2 [-2,1]. Never E2M1. New
+  geometry: both-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_w48m4db RC=8 4-acc k64
+  A-db wg 4x8 k128 pack=4.
+  gpu-run --card 0. M=256 N=K=5120.
+  NT=2 spin=512.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s2_w48m4db.cpp
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_w48m4db.sh 0 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> COMPILE_OK. ocloc NT=2
+  128x dpas.8x8 rW:s2 rA:s2, grf
+  128, B d8v rd:4, no SLM. check
+  cosine=1 max_abs=0. timed M=256
+  act=cur=2800 throttle=0. event
+  36.943 pipe_host 37.138 vs no-db
+  37.4 vs W8A8 75.
+
+VERDICT -> s2 4-acc A-db is 37.1 us
+  pipe_host at 2800 card0. Numeric
+  closed. Wash vs no-db 37.4 (not
+  a tax, not a steal). Rank
+  pipe_host.
+
+### 2026-09-03eo - K2 s2 4-acc A-db M=256 sibling card1
+
+CONTEXT -> card0 s2 4-acc A-db was
+  37.1 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4db. gpu-run --card 1.
+  M=256 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_w48m4db.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 37.667
+  pipe_host 37.274 vs card0 37.138
+  vs no-db 37.4 vs W8A8 75. Spread
+  ~0.37%.
+
+VERDICT -> Sibling matches. s2
+  4-acc A-db is 37.2 us pipe_host
+  both cards at 2800. Wash vs
+  no-db 37.4. Stop A-db on s2
+  4-acc. Floor stays 37.4 no-db.
+  Rank pipe_host. Next: persist-s8
+  GEMM us still no TU; s2 4-acc
+  schedule steals closed.
+
+
 
 
 
