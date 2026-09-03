@@ -731,5 +731,28 @@ ok=1. pipe_host 21.286 event
 throttle=1. 22 us both. Do not
 freeze 22 as 2800.
 
-K7 next: pack a/b/v T=256 vs
-tile-fused T=1.
+## ESIMD fused delta T=256 slmht pack a/b/v card0 (2026-09-03ho)
+
+backend sycl+l0, AOT
+gdn_delta_slmhtp. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 266.427 event
+267.690. 59.2 GB/s. act 2600-
+2650 cur=2800 throttle=0.
+~1.02x slmht 260. Stop pack
+a/b/v vs slmht.
+
+## ESIMD fused delta T=1 tile-fused card1 (2026-09-03hp)
+
+backend sycl+l0, AOT
+gdn_delta_ht. T=1 spin=4000.
+cosine=1 max_abs=0.03125
+cosine_o=1 max_abs_o=2 ok=1.
+pipe_host 5.542 event 6.437.
+577 GB/s. act=cur=2800
+throttle=0. ~1.28x fused 7.1.
+Do not replace fused 7.1.
+
+K7 next: slmht blk=8 T=256 vs
+T=1 tile-fused scalar hsum.

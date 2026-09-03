@@ -3274,6 +3274,49 @@ VERDICT -> slmht tt unroll T=256
 
 Evidence: `results/k7/esimd_delta_slmhtu_t256_s0_card0.txt`.
 
+## ESIMD slmht pack a/b/v loses to tile-fused T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmhtp` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  SLM a/b plus 16-wide v along Dv.
+  Card0. spin=0. Prior: slmht 260.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  266.427. timed act 2600-2650
+  cur=2800 throttle=0.
+
+VERDICT -> slmht pack a/b/v T=256
+  is 266 us pipe_host card0,
+  ~1.02x slmht 260. Stop pack
+  a/b/v vs slmht. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmhtp_t256_s0_card0.txt`.
+
+## ESIMD tile-fused T=1 is 5.54 us at 2800, numeric looser (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_ht` AOT
+  `intel_gpu_bmg_g31`. T=1 one
+  16-wide acc then one reduce.
+  Card1. spin=4000. Prior: fused
+  7.1, tree hsum 6.09 max_abs_o=2.
+
+RESULT -> cosine=1.0 max_abs
+  0.03125 / 2 ok=1. pipe_host
+  5.542 event 6.437. 577 GB/s.
+  timed act=cur=2800 throttle=0.
+
+VERDICT -> Tile-fused T=1 is 5.54
+  us pipe_host card1 at 2800,
+  ~1.28x fused 7.1. max_abs_o=2
+  vs fused 0. Do not replace
+  fused 7.1. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_ht_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4753,7 +4796,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   T=256 is 276 us card0
   (2026-09-03hm), ~1.06x slmht
   260. Stop inner unroll vs
-  slmht.
+  slmht. pack a/b/v T=256 is
+  266 us card0 (2026-09-03ho),
+  ~1.02x slmht 260. Stop pack
+  a/b/v vs slmht. tile-fused
+  T=1 is 5.54 us card1 at 2800
+  (2026-09-03hp) vs fused 7.1,
+  max_abs_o=2. Do not replace
+  fused 7.1.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
