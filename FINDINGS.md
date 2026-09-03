@@ -2096,6 +2096,36 @@ VERDICT -> s2xs8 4x8 M=256 is 96 us
 Evidence: `results/k2/s2xs8db48_m256_n2_s512_card0.txt`,
   `results/k2/s2xs8db48_m256_n2_s512_card1.txt`.
 
+## ESIMD s2 4-acc M=256 is 37.4 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s2_w48m4`. RC=8
+  4-acc wg 4x8 k128 pack=4. IGC s2
+  [-2,1]. M=256 N=K=5120. Both
+  cards. NT=2 spin=512. Named
+  clock 2800. Never E2M1. Prior:
+  s4 4-acc 48.6; s2 4x8 55.5;
+  W8A8 75; napkin ~29.
+
+RESULT -> ocloc 128x `dpas.8x8`
+  rW:s2 rA:s2, grf 128, B d8v rd:4,
+  no SLM. cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=256 pipe_host 37.409/37.405 vs
+  s4 48.6 vs s2 4x8 55.5 vs W8A8
+  75. Spread ~0.01%.
+
+VERDICT -> New s2 4-acc M=256 floor
+  37.4 us pipe_host at 2800 both
+  cards. New M=256 hand floor.
+  Numeric closed. Beats s4 48.6
+  (~1.30x) and W8A8 75 (~2.01x).
+  Napkin 29 miss. Rank pipe_host.
+
+Evidence: `results/k2/s2w48m4_m256_n2_s512_card0.txt`,
+  `results/k2/s2w48m4_m256_n2_s512_card1.txt`,
+  `results/k2/s2w48m4_dpas_lines.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3404,7 +3434,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   64). s2 4x8 A-db M=256 is 55.5
   us both cards at 2800, beats
   W8A8 75 (~1.35x), loses to s4
-  4-acc 48.6 (~1.14x). s2 4x8
+  4-acc 48.6 (~1.14x). s2 4-acc
+  M=256 is 37.4 us both cards at
+  2800, new M=256 hand floor,
+  beats s4 48.6 (~1.30x) and W8A8
+  75 (~2.01x). s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
   W8A8 248 (~1.45x), loses to s4
@@ -3521,8 +3555,9 @@ scale-to-f16 s8 (34 vs 44 us, and 141.6 vs 158.1
 us at N=17408) and s4 (16.5 vs 44 us), at
 M=64 s4 (33.6 vs 46 us), s2 (20 vs
 46 us), s2xs8 (33.2 vs 46 us), and
-at M=256 s4 (48.6 vs 75 us) and s2
-(55.5 vs 75 us), and at M=256
+at M=256 s4 (48.6 vs 75 us), s2 4x8
+(55.5 vs 75 us), and s2 4-acc
+(37.4 vs 75 us), and at M=256
 N=17408 s2 (171 vs W8A8 248 us;
 throttle=1) and K=17408 s2 (201
 vs W8A8 226 us). s2xs8 M=64

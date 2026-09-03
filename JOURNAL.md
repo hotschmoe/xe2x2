@@ -7171,6 +7171,75 @@ VERDICT -> Sibling matches. s2xs8
   W8A8. Rank pipe_host. Next: s2
   4-acc M=256 both-card.
 
+### 2026-09-03ef - K2 s2 4-acc M=256 card0
+
+CONTEXT -> s4 4-acc is 48.6. s2
+  4x8 55.5. W8A8 75. Napkin
+  48.6*20/33.6 ~29. First s2 on
+  4-acc. IGC s2 [-2,1]. Never
+  E2M1. New geometry: both-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_w48m4 RC=8 4-acc wg 4x8
+  k128 pack=4. gpu-run --card 0.
+  M=256 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s2_w48m4.cpp
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_w48m4.sh 0 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> COMPILE_OK. ocloc NT=2
+  128x dpas.8x8 rW:s2 rA:s2, grf
+  128, B d8v rd:4, no SLM. check
+  cosine=1 max_abs=0. timed M=256
+  act=cur=2800 throttle=0. event
+  36.995 pipe_host 37.409 vs s4
+  48.6 vs s2 4x8 55.5 vs W8A8 75
+  vs napkin 29.
+
+VERDICT -> s2 4-acc M=256 is 37.4
+  us pipe_host at 2800 card0.
+  Numeric closed. Beats s4 48.6
+  (~1.30x), s2 4x8 55.5, and W8A8
+  75 (~2.01x). Napkin 29 miss.
+  New M=256 hand floor. Rank
+  pipe_host.
+
+### 2026-09-03eg - K2 s2 4-acc M=256 sibling card1
+
+CONTEXT -> card0 s2 4-acc M=256
+  was 37.4 us at 2800, cosine=1
+  max_abs=0. New geometry sibling.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4. gpu-run --card 1.
+  M=256 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_w48m4.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 37.755
+  pipe_host 37.405 vs card0 37.409
+  vs s4 48.6 vs s2 4x8 55.5 vs
+  W8A8 75. Spread ~0.01%.
+
+VERDICT -> Sibling matches. New s2
+  4-acc M=256 floor 37.4 us
+  pipe_host both cards at 2800.
+  New M=256 hand floor. Beats s4
+  48.6 (~1.30x) and W8A8 75
+  (~2.01x). Rank pipe_host. Next:
+  s2 4-acc M=256 N=17408 vs
+  K=17408.
+
+
 
 
 

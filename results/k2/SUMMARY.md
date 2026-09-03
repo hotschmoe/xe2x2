@@ -1280,4 +1280,22 @@ mix 123. Loses to s2 55.5 (~1.72x)
 and W8A8 75 (~1.27x). Stop 4x8 mix
 at M=256 prefill vs W8A8.
 
-K2 next: s2 4-acc M=256 both-card.
+## s2 4-acc M=256 both cards (2026-09-03ef/eg)
+
+dpas_s2_w48m4 RC=8 4-acc wg 4x8
+k128 pack=4. ocloc 128x dpas.8x8
+rW:s2 rA:s2, grf 128. NT=2
+spin=512. cosine=1.0 max_abs=0.
+timed 2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4-acc | s2 4x8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 36.995 | 37.409 | 48.6 | 55.5 | 75 |
+| 256 x 5120 | 1 | 37.755 | 37.405 | 48.6 | 55.5 | 75 |
+
+New M=256 hand floor 37.4 us both
+cards. Spread ~0.01%. Beats s4
+48.6 (~1.30x) and W8A8 75 (~2.01x).
+
+K2 next: s2 4-acc M=256 N=17408 vs
+K=17408.
