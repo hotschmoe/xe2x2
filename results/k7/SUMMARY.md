@@ -603,5 +603,31 @@ pipe_host 6.085 event 7.237.
 max_abs_o=2 vs fused 0. Do not
 replace fused 7.1.
 
-K7 next: sibling T=64 vs tree
-hsum T=16.
+## ESIMD fused delta T=16 tree hsum card0 (2026-09-03he)
+
+backend sycl+l0, same
+gdn_delta_slmh. T=16 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 33.801 event
+34.380. 116 GB/s. act=2583
+cur=2800 throttle=1. ~1.72x
+SLM-K 58. Napkin 29. Do not
+freeze 34 as 2800. Sibling
+before promote.
+
+## ESIMD fused delta T=64 tree hsum sibling card1 (2026-09-03hf)
+
+backend sycl+l0, same
+gdn_delta_slmh. T=64 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 124.803 event
+124.950 vs card0 108.823.
+Spread ~15%. act=2450 cur=2800
+throttle=1. Clock spread. 109-
+125 us both. Do not freeze 109
+as 2800.
+
+K7 next: sibling T=16 vs
+tile-fused reduce T=256.

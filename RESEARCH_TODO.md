@@ -495,9 +495,19 @@ before promote. tree hsum T=1
 is 6.09 us card1 (2026-09-03hd)
 at 2800, ~1.16x fused 7.1.
 max_abs_o=2 vs fused 0. Do not
-replace fused 7.1. Next: split.
-card0: sibling T=64. card1:
-tree hsum T=16. Loop every 5m.
+replace fused 7.1. tree hsum
+T=16 is 34 us card0
+(2026-09-03he), ~1.72x SLM-K
+58, throttle=1. Do not freeze
+34 as 2800. Sibling before
+promote. tree hsum T=64 is
+109-125 us both cards
+(2026-09-03hc/hf). Clock
+spread 15% (2450 vs 2800). Do
+not freeze 109 as 2800. Next:
+split. card0: tile-fused
+reduce T=256. card1: sibling
+T=16. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -508,15 +518,16 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling tree hsum T=64
-   (109 us at 2800; ~1.97x 214).
-2. tree hsum T=16
-   (SLM-K 58; napkin ~29 if 2x).
+1. sibling tree hsum T=16
+   (34 us; ~1.72x 58).
+2. tile-fused reduce T=256
+   (426 leftover; one 128-sum).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
+tree hsum T=1,
 inner unroll, SLM f32, SLM db,
 SLM LUT / u4+sign / skip-hi
 kernel, persist-s8 GEMM us.

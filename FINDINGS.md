@@ -3106,26 +3106,31 @@ VERDICT -> SLM-K T=16 is 58 us
 Evidence: `results/k7/esimd_delta_slmk_t16_s0_card1.txt`,
   `results/k7/esimd_delta_slmk_t16_s4000_card0.txt`.
 
-## ESIMD tree hsum T=64 is 109 us at 2800 (K7)
+## ESIMD tree hsum T=64 is 109-125 us (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_delta_slmh`. T=64
-  blk=16. Card0. spin=0. Prior:
-  SLM-K T=64 214 at 2800.
+  blk=16. Both cards. card0
+  spin=0, card1 spin=4000.
+  Prior: SLM-K T=64 214 at 2800.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  108.823. timed act=cur=2800
-  throttle=0.
+  108.823 / 124.803. Spread
+  ~15%. card0 act=cur=2800
+  throttle=0. card1 act=2450
+  throttle=1.
 
-VERDICT -> Tree hsum T=64 is 109
-  us pipe_host card0 at 2800,
-  ~1.97x SLM-K 214. Napkin 107.
-  T-linear vs 426. One-card.
-  Sibling before promote. Rank
-  pipe_host.
+VERDICT -> Tree hsum T=64 is
+  109-125 us pipe_host both
+  cards. Clock spread, not a
+  kernel split. ~1.97x SLM-K 214
+  at card0 2800. New leftover
+  class. Do not freeze 109 as
+  2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmh_t64_s0_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmh_t64_s0_card0.txt`,
+  `results/k7/esimd_delta_slmh_t64_s4000_card1.txt`.
 
 ## ESIMD tree hsum T=1 does not replace fused 7.1 (K7)
 
@@ -3151,6 +3156,27 @@ VERDICT -> Tree hsum T=1 is 6.09
   pipe_host.
 
 Evidence: `results/k7/esimd_delta_h_s4000_card1.txt`.
+
+## ESIMD tree hsum T=16 is 34 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmh`. T=16
+  blk=16. Card0. spin=4000.
+  Prior: SLM-K T=16 58.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  33.801. timed act=2583
+  cur=2800 throttle=1.
+
+VERDICT -> Tree hsum T=16 is 34
+  us pipe_host card0, ~1.72x
+  SLM-K 58. throttle=1. Do not
+  freeze 34 as 2800. One-card.
+  Sibling before promote. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmh_t16_s4000_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4602,7 +4628,19 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   is 58 us both cards
   (2026-09-03gz/ha), near
   T-linear 53. throttle=1. Do
-  not freeze 58 as 2800.
+  not freeze 58 as 2800. tree
+  hsum T=64 is 109-125 us both
+  cards (2026-09-03hc/hf). Clock
+  spread 15%. Do not freeze 109
+  as 2800. tree hsum T=1 is 6.09
+  us card1 (2026-09-03hd) at
+  2800, ~1.16x fused 7.1.
+  max_abs_o=2. Do not replace
+  fused 7.1. tree hsum T=16 is
+  34 us card0 (2026-09-03he),
+  ~1.72x SLM-K 58, throttle=1.
+  Do not freeze 34 as 2800.
+  Sibling before promote.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
