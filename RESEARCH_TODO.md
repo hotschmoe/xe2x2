@@ -442,10 +442,15 @@ freeze 847 as 2800. Row-block
 rb=4 is 1034 us card1
 (2026-09-03gj) at 2800. rb=8 is
 2060 us card0 (2026-09-03gl) at
-2800, ~2x rb=4. Stop rb=8. Next:
-split. card0: SLM-K+rb=4.
-card1: SLM-K blk=32. Loop
-every 5m.
+2800, ~2x rb=4. Stop rb=8.
+SLM-K+rb=4 is 999 us card0
+(2026-09-03gm) at 2800, loses to
+SLM-K 847. Stop combine. SLM-K
+blk=32 is 832 us card1
+(2026-09-03gn), ~1.02x blk=16,
+throttle=1. Next: split. card0:
+sibling blk=32. card1: SLM-K
+blk=64. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -456,15 +461,16 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. SLM-K+rb=4 T=256
-   (847 leftover; rb=4 1034).
-2. SLM-K blk=32 T=256
-   (blk=16 847-858).
+1. sibling SLM-K blk=32 T=256
+   (card1 832, throttle=1).
+2. SLM-K blk=64 T=256
+   (blk=32 832 vs blk=16 847).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
-WY, rb=8, SLM LUT / u4+sign /
-skip-hi kernel, persist-s8 GEMM us.
+WY, rb=8, SLM-K+rb=4, SLM LUT /
+u4+sign / skip-hi kernel,
+persist-s8 GEMM us.
 
 ## After P0: kernel workstreams (parallelizable)
 

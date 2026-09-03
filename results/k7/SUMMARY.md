@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/gl
+# K7 GDN inventory 2026-09-03ep/gn
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -410,5 +410,29 @@ event 2058.990. 7.7 GB/s.
 ~2x rb=4 1034, ~2.4x SLM-K 847.
 Stop rb=8.
 
-K7 next: SLM-K+rb=4 vs SLM-K
-blk=32.
+## ESIMD fused delta T=256 SLM-K+rb=4 card0 (2026-09-03gm)
+
+backend sycl+l0, AOT
+gdn_delta_slmk_rb4. T=256 blk=16
+rb=4 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=2.4e-4 ok=1. timed
+act=cur=2800 throttle=0.
+pipe_host 998.817 event 998.307.
+15.8 GB/s. ~1.18x SLM-K 847.
+Stop combine vs SLM-K.
+
+## ESIMD fused delta T=256 SLM-K blk=32 card1 (2026-09-03gn)
+
+backend sycl+l0, AOT
+gdn_delta_slmk32. T=256 blk=32
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 831.953 event
+824.901. 19.0 GB/s. act 2783-
+2750 throttle=1. ~1.02x blk=16
+847. Do not freeze 832. Sibling
+before promote.
+
+K7 next: sibling blk=32 vs
+SLM-K blk=64.
