@@ -478,6 +478,58 @@ VERDICT -> New E2M1 two-term wide-K floor
 Evidence: `results/k6/e2m1sc_k17408_n2_s4000_card0.txt`,
   `results/k6/e2m1sc_k17408_n2_s4000_card1.txt`.
 
+## E2M1 two-term 8x2-N loses at M=64 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `compose_e2m1_sc`. Same RC=4 8x2-N tile,
+  M=64 N=K=5120. Card0 only, NT=2, spin=512.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  217.92 vs M=1 28.5 vs s4 4x8 33.6 vs s8
+  75 vs W8A8 46.
+
+VERDICT -> Decode-tile compose is ~6.5x s4
+  4x8 at M=64. Not a prefill floor. One-card.
+
+Evidence: `results/k6/e2m1sc_m64_n2_s512_card0.txt`.
+
+## E2M1 two-term 8x2-N loses at M=256 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_sc`. M=256 N=K=5120. Both
+  cards, NT=2, spin=512.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2667/2683 cur=2800 throttle=1. M=256
+  pipe_host 612.68/601.18 vs M=1 28.5 vs s4
+  4-acc 48.6 vs s8 128 vs W8A8 75. Spread
+  ~1.9%.
+
+VERDICT -> ~12.4x s4 4-acc, ~8.0x W8A8.
+  throttle=1 both cards. Stop 8x2-N compose
+  at prefill. Keep 28.5 us as decode-only.
+
+Evidence: `results/k6/e2m1sc_m256_n2_s512_card0.txt`,
+  `results/k6/e2m1sc_m256_n2_s512_card1.txt`.
+
+## NVFP4 merge LUT loses at M=64 on 8x2-N (K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `nibble_lut_sc`. Packed E2M1, simd LUT,
+  VNNI4, s8 DPAS. M=64 N=K=5120. Card1 only,
+  NT=2, spin=512. Never bitcast.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64 pipe_host
+  645.63 vs M=1 158 vs s8 4x8 75 vs W8A8 46.
+
+VERDICT -> Decode-tile LUT is ~8.6x s8 4x8
+  at M=64. Not a prefill floor. One-card.
+  Do not freeze 646 us.
+
+Evidence: `results/k6/sc_m64_n2_s512_card1.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1604,7 +1656,12 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   (2026-09-03e) vs s4 16.5 vs s8 34, A=s4.
   Wide-N is 103.5 us both cards (~3.63x, not
   s4's 1.80x). Wide-K is 193.6 us both cards
-  (~6.79x); s4 53.4 and W8A8 155 beat it.
+  (~6.79x vs s4 53.4). 8x2-N compose at M=64
+  is 217.9 us card0 (loss vs s4 33.6) and at
+  M=256 is ~607 us both cards (loss vs s4
+  48.6, throttle=1). 8x2-N LUT at M=64 is
+  646 us card1 (loss vs s8 75). Stop this
+  tile at prefill.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

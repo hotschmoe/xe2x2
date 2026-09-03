@@ -3069,3 +3069,109 @@ VERDICT -> Sibling matches. New E2M1 two-term
   ~6.79x square, K-hostile. Native s4 53.4 and
   oneDNN W8A8 155 both beat this at FFN-down.
   Qwen FFN compose decode map is closed. Rank us.
+
+### 2026-09-03k - K3/K6 E2M1 two-term M=64 card0
+
+CONTEXT -> compose 8x2-N is 28.5 us at M=1.
+  s4 4x8 A-db is 33.6 us at M=64. Prefill on
+  the decode tile. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. NT=2 U=16 spin=512.
+  M=64 N=K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_sc_m64.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card0: event 217.974 us, pipe_host 217.915
+  vs M=1 28.5 vs s4 33.6 vs s8 75 vs W8A8 46.
+  Ratio 217.9/28.5 ~7.65x.
+
+VERDICT -> 8x2-N compose loses hard at M=64:
+  ~6.5x s4 4x8, ~4.7x W8A8. Decode tile is not
+  a prefill floor. One-card. Do not freeze.
+  Rank us.
+
+### 2026-09-03l - K3/K6 E2M1 two-term M=256 card1
+
+CONTEXT -> compose M=64 8x2-N was 217.9 us.
+  s4 4-acc is 48.6 us at M=256. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=512.
+  M=256 N=K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_sc_m256.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2683
+  cur=2800 throttle=1.
+  M=256 card1: event 603.057 us, pipe_host 601.181
+  vs M=1 28.5 vs s4 48.6 vs s8 128 vs W8A8 75.
+  Ratio 601/28.5 ~21.1x.
+
+VERDICT -> 8x2-N compose loses harder at M=256:
+  ~12.4x s4 4-acc, ~8.0x W8A8. throttle=1.
+  One-card. Do not freeze 601 us. Stop this
+  tile at prefill. Rank us. Next: sibling
+  M=256 vs nibble_lut_sc M=64.
+
+### 2026-09-03m - K3/K6 E2M1 two-term M=256 sibling card0
+
+CONTEXT -> card1 compose M=256 8x2-N was
+  601 us at cur=2800 throttle=1. Sibling swap.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_sc_m256.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=2667
+  cur=2800 throttle=1.
+  M=256 card0: event 610.969 us, pipe_host
+  612.683 vs card1 601.181 vs s4 48.6 vs s8
+  128 vs W8A8 75. Spread ~1.9%.
+
+VERDICT -> Sibling matches the loss. 8x2-N
+  compose at M=256 is ~607 us both cards,
+  throttle=1. Stop this tile at prefill.
+  Keep 28.5 us decode-only. Rank us.
+
+### 2026-09-03n - K6 nibble LUT M=64 card1
+
+CONTEXT -> fused LUT is 158 us at M=1 on
+  8x2-N. s8 4x8 A-db is 75 us at M=64.
+  Prefill on the decode LUT tile. One-card.
+
+CONFIG -> sycl+l0, standalone nibble_lut_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=512.
+  M=64 N=K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_sc_m64.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=64 card1: event 651.839 us, pipe_host
+  645.630 vs M=1 158 vs s8 75 vs W8A8 46.
+  min/max 575-807.
+
+VERDICT -> 8x2-N LUT loses at M=64 (~8.6x
+  s8 4x8, ~4.1x its own M=1). Decode tile is
+  not a prefill floor for the s8-A spoof
+  either. One-card. Do not freeze 646 us.

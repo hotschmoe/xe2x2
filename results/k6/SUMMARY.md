@@ -161,3 +161,40 @@ max_abs=0. timed act=cur=2800 throttle=0.
 New wide-K floor 193.6 us both cards.
 ~6.79x square, K-hostile. Qwen FFN compose
 decode map closed.
+
+## E2M1 two-term M=64 8x2-N card0 (2026-09-03k)
+
+Same decode tile, M=64 N=K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | M=1 | s4 4x8 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 217.915 | 28.5 | 33.6 | 75 | 46 |
+
+~6.5x s4 4x8. Loss. One-card.
+
+## E2M1 two-term M=256 8x2-N card1 (2026-09-03l)
+
+Same tile, M=256 N=K=5120. cosine=1.0
+max_abs=0. timed act=2683 cur=2800
+throttle=1.
+
+| shape | card | pipe_host_us | M=1 | s4 4-acc | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 601.181 | 28.5 | 48.6 | 128 | 75 |
+
+~12.4x s4 4-acc. Sibling card0 pipe 612.683
+(2026-09-03m), throttle=1. Stop 8x2-N
+compose at prefill.
+
+## nibble LUT M=64 8x2-N card1 (2026-09-03n)
+
+`nibble_lut_sc` M=64 N=K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | M=1 | s8 4x8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 64 x 5120 | 1 | 645.630 | 158 | 75 | 46 |
+
+~8.6x s8 4x8. Loss. One-card. Stop 8x2-N
+LUT at prefill too.
