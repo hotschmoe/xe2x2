@@ -345,16 +345,32 @@ throttle=0.
 New wide-N floor 1032 us both cards.
 ~2.63x square vs s4 2.81x. ~3.05x s8.
 
-## nibble LUT 4x8 A-db M=64 K=17408 card1 (2026-09-03ai)
+## nibble LUT 4x8 A-db M=64 K=17408 (2026-09-03ai/aj)
 
 Same tile, N=5120 K=17408. cosine=1.0
 max_abs=0. timed act=cur=2800 throttle=0.
 
 | shape | card | pipe_host_us | 5120 | s8 K | s4 | compose |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 0 | 1332.410 | 392.4 | 374.7 | 106.0 | 403.4 |
 | 64 x 5120 x 17408 | 1 | 1332.672 | 392.4 | 374.7 | 106.0 | 403.4 |
 
-K-linear ~3.40x. ~3.56x s8. One-card.
+New wide-K floor 1333 us both cards.
+K-linear ~3.40x. ~3.56x s8. Qwen FFN LUT
+M=64 map closed.
+
+## nibble LUT 4x8 A-db M=256 card1 (2026-09-03ak)
+
+Same `nibble_lut_db48`, M=256 N=K=5120.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | pipe_host_us | M=64 | s8 | compose | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 1207.283 | 392.4 | 128 | 194.9 | 75 |
+
+~3.08x M=64 vs napkin 4x. ~9.4x s8.
+One-card.
 
 ## 12-idea sprint (2026-09-03ae)
 
