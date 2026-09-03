@@ -8687,6 +8687,76 @@ VERDICT -> ESIMD chunk/WY C=16
   as a floor. Rank pipe_host.
   Next: chunk C=64 vs fused.
 
+### 2026-09-03gg - K7 ESIMD fused delta T=256 hold retry card1
+
+CONTEXT -> fv/fw fused T=256 was
+  1100-1109 us pipe_host,
+  throttle=1 act=2617-2650.
+  Held-clock retry. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_t. gpu-run
+  --card 1. T=256 nv=48. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_t256_hold.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 1088.060 pipe_host
+  1085.686. 14.5 GB/s. spin_done
+  act=2683 cur=2800 throttle=1.
+  timed act=2683 throttle=1. vs
+  fw 1099.
+
+VERDICT -> Hold retry still
+  throttle=1. ESIMD fused delta
+  T=256 is 1086 us pipe_host
+  card1, ~1.3% under fw 1099.
+  Cannot hold 2800. Do not freeze
+  1086 as 2800. Prefill leftover.
+  Rank pipe_host.
+
+### 2026-09-03gh - K7 ESIMD chunk/WY delta T=256 C=64 card0
+
+CONTEXT -> C=16 3210 us. fused
+  1086-1109 throttle=1. FLA
+  default C=64. Napkin beats
+  C=16 and fused. New TU
+  gdn_delta_chunk64. spin=0:
+  C=64 ~95 ms, spin=4000 would
+  serialize past 5m.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_chunk64.
+  gpu-run --card 0. T=256 C=64
+  nv=48. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_chunk64_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=3.1e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 95413.974 pipe_host
+  95419.883. 0.17 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  C=16 3210 (~29.7x) vs fused
+  1086 (~87.9x).
+
+VERDICT -> ESIMD chunk/WY C=64
+  T=256 is 95420 us pipe_host
+  card0 at 2800, numeric closed,
+  ~88x fused 1086, ~30x C=16.
+  Napkin miss. Stop C=64 vs
+  fused. Stop this WY path.
+  One-card. Rank pipe_host.
+  Next: fused T=256 SLM-K.
+
+
 
 
 

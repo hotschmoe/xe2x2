@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/gf
+# K7 GDN inventory 2026-09-03ep/gh
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -345,6 +345,29 @@ event 3199.857. 4.91 GB/s.
 ~2.92x fused 1100. Stop C=16
 vs fused. One-card.
 
-K7 next: chunk/WY C=64 T=256 vs
-fused delta T=256 held-clock
-retry.
+## ESIMD fused delta T=256 hold retry card1 (2026-09-03gg)
+
+backend sycl+l0, same
+gdn_delta_t. T=256 spin=4000.
+cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 1085.686 event
+1088.060. act=2683 cur=2800
+throttle=1. vs fw 1099. Cannot
+hold 2800. Do not freeze 1086
+as 2800.
+
+## ESIMD chunk/WY delta T=256 C=64 card0 (2026-09-03gh)
+
+backend sycl+l0, AOT
+gdn_delta_chunk64. T=256 C=64
+spin=0. cosine=1 max_abs=3.1e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. timed act=cur=2800
+throttle=0. pipe_host 95419.883
+event 95413.974. 0.17 GB/s.
+~88x fused 1086, ~30x C=16.
+Stop C=64. Stop this WY path.
+
+K7 next: fused T=256 SLM-K vs
+fused T=256 row-block.

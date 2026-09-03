@@ -428,11 +428,16 @@ cards (2026-09-03gd/ge) at 2800,
 ESIMD chunk/WY C=16 T=256 is
 3210 us card1 (2026-09-03gf) at
 2800, cosine=1, ~2.92x fused
-1100. Stop C=16 vs fused. Next:
-split. card0: chunk/WY C=64
-T=256. card1: fused delta T=256
-held-clock retry (throttle=1).
-Loop every 5m.
+1100. Stop C=16 vs fused. Fused
+delta T=256 hold retry is 1086
+us card1 (2026-09-03gg), still
+throttle=1. Chunk/WY C=64 T=256
+is 95420 us card0 (2026-09-03gh)
+at 2800, ~88x fused 1086. Stop
+C=64. Stop this WY path. Next:
+split. card0: fused T=256 SLM-K
+(no WY). card1: fused T=256
+row-block steal. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -443,15 +448,15 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. chunk/WY C=64 T=256
-   (C=16 lost 2.92x vs fused 1100).
-2. fused delta T=256 held-clock
-   retry (throttle=1, 1100 leftover).
+1. fused T=256 SLM-K
+   (no WY; leftover 1086 throttle=1).
+2. fused T=256 row-block
+   (serial S, different WG map).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
-T=256 (T=64 mixer loses), C=16 WY,
-SLM LUT / u4+sign / skip-hi kernel,
-persist-s8 GEMM us.
+T=256 (T=64 mixer loses), C=16/C=64
+WY, SLM LUT / u4+sign / skip-hi
+kernel, persist-s8 GEMM us.
 
 ## After P0: kernel workstreams (parallelizable)
 

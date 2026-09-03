@@ -2729,6 +2729,49 @@ VERDICT -> Chunk/WY C=16 is 3210
 
 Evidence: `results/k7/esimd_delta_chunk_t256_s4000_card1.txt`.
 
+## ESIMD fused delta T=256 stays throttle=1 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_t`. T=256 nv=48
+  card1 hold retry. spin=4000.
+  Prior: fv/fw 1100-1109
+  throttle=1.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  1085.686. timed act=2683
+  cur=2800 throttle=1.
+
+VERDICT -> Hold retry still
+  throttle=1. Fused T=256 is
+  1086 us pipe_host card1, not
+  2800. Prefill leftover. Do not
+  freeze 1086 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_t256_hold_s4000_card1.txt`.
+
+## ESIMD chunk/WY C=64 loses worse than C=16 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_chunk64`
+  AOT `intel_gpu_bmg_g31`. T=256
+  C=64. Card0. spin=0. Prior:
+  C=16 3210, fused 1086.
+
+RESULT -> cosine=1.0 max_abs
+  3.1e-5 / 2.4e-4 ok=1. pipe_host
+  95419.883. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> Chunk/WY C=64 is
+  95420 us pipe_host card0 at
+  2800, ~88x fused 1086, ~30x
+  C=16. Stop C=64. Stop this WY
+  path vs fused. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_chunk64_t256_s0_card0.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4099,9 +4142,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   7.1 not 64x. Do not freeze 265
   as 2800. ESIMD delta T=256 is
   1100-1109 us both cards,
-  throttle=1, ~4.1x T=64. Prefill
-  leftover. Do not freeze 1100 as
-  2800. ESIMD mixer T=64 is
+  throttle=1, ~4.1x T=64. Hold
+  retry 1086 us card1 still
+  throttle=1 (2026-09-03gg). Do
+  not freeze 1086 as 2800. ESIMD mixer T=64 is
   395-399 us both cards,
   throttle=1, ~1.45x sequential
   ~275. Stop two-kernel packed
@@ -4122,7 +4166,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   T=256 is 3210 us card1 at 2800
   (2026-09-03gf), cosine=1,
   ~2.92x fused 1100. Stop C=16
-  vs fused.
+  vs fused. ESIMD chunk/WY C=64
+  T=256 is 95420 us card0 at
+  2800 (2026-09-03gh), ~88x
+  fused 1086, ~30x C=16. Stop
+  C=64. Stop this WY path.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
