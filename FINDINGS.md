@@ -1826,47 +1826,54 @@ VERDICT -> New s2 4x8 A-db M=64 floor
 Evidence: `results/k2/s2db48_m64_n2_s512_card0.txt`,
   `results/k2/s2db48_m64_n2_s512_card1.txt`.
 
-## s2 4x8 A-db M=64 N=17408 is 53.1 us card0 (K2)
+## s2 4x8 A-db M=64 N=17408 is 53.1 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s2_db48`. M=64 N=17408 K=5120.
-  Card0. NT=2 spin=512. Named clock
-  2800. Prior: square 20; s4 94.7;
-  mix 129; W8A8 202; napkin ~68.
+  Both cards. NT=2 spin=512. Named
+  clock 2800. Prior: square 20; s4
+  94.7; mix 129; W8A8 202; napkin
+  ~68.
 
 RESULT -> cosine=1.0 max_abs=0. timed
   act=cur=2800 throttle=0. M=64
-  pipe_host 53.079 vs square 20 vs s4
-  94.7 vs mix 129 vs W8A8 202.
-  ~2.65x square.
+  pipe_host 53.079/52.859 vs square
+  20 vs s4 94.7 vs mix 129 vs W8A8
+  202. Spread ~0.41%. ~2.65x square.
 
-VERDICT -> Wide-N s2 4x8 beats W8A8
-  (~3.81x), mix, and s4. Napkin 68
-  beat. One-card. Do not freeze 53.1
-  us until card1. Rank pipe_host.
+VERDICT -> New s2 4x8 M=64 N=17408
+  floor 53.1 us pipe_host at 2800
+  both cards. Beats W8A8 (~3.81x),
+  mix, and s4. Rank pipe_host.
 
-Evidence: `results/k2/s2db48_m64_n17408_n2_s512_card0.txt`.
+Evidence: `results/k2/s2db48_m64_n17408_n2_s512_card0.txt`,
+  `results/k2/s2db48_m64_n17408_n2_s512_card1.txt`.
 
-## s2 4x8 A-db M=64 K=17408 is 62.5 us card1 (K2)
+## s2 4x8 A-db M=64 K=17408 is 64 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, same
   `dpas_s2_db48`. M=64 N=5120 K=17408.
-  Card1. NT=2 spin=512. Named clock
-  2800. Prior: square 20; s4 106.0;
-  mix 144.7; W8A8 181; napkin ~68.
+  Both cards. NT=2 spin=512. Named
+  clock 2800. Prior: square 20; s4
+  106.0; mix 144.7; W8A8 181; napkin
+  ~68.
 
 RESULT -> cosine=1.0 max_abs=0. timed
   act=cur=2800 throttle=0. M=64
-  pipe_host 62.540 vs square 20 vs s4
-  106.0 vs mix 144.7 vs W8A8 181.
-  ~3.13x square.
+  pipe_host 64.044/62.540 vs square
+  20 vs s4 106.0 vs mix 144.7 vs
+  W8A8 181. Spread ~2.4%. ~3.20x
+  square.
 
-VERDICT -> Wide-K s2 4x8 beats W8A8
-  (~2.89x), mix, and s4. One-card.
-  Do not freeze 62.5 us until card0.
-  Rank pipe_host.
+VERDICT -> New s2 4x8 M=64 K=17408
+  floor 64 us pipe_host at 2800 both
+  cards. Beats W8A8 (~2.83x), mix,
+  and s4. Qwen FFN s2 M=64 map is
+  closed (20 / 53.1 / 64). Rank
+  pipe_host.
 
-Evidence: `results/k2/s2db48_m64_k17408_n2_s512_card1.txt`.
+Evidence: `results/k2/s2db48_m64_k17408_n2_s512_card0.txt`,
+  `results/k2/s2db48_m64_k17408_n2_s512_card1.txt`.
 
 ## ESIMD s2xs8 decode mix is 14.1 us both cards (K2)
 
@@ -3191,11 +3198,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   is 20 us both cards at 2800, beats
   s4 33.6 (~1.68x) and W8A8 46
   (~2.21x). New M=64 hand floor. s2
-  4x8 M=64 N=17408 is 53.1 us card0
-  at 2800, beats W8A8 202 (~3.81x).
-  s2 4x8 M=64 K=17408 is 62.5 us
-  card1 at 2800, beats W8A8 181
-  (~2.89x). One-card.
+  4x8 M=64 N=17408 is 53.1 us both
+  cards at 2800, beats W8A8 202
+  (~3.81x). s2 4x8 M=64 K=17408 is
+  64 us both cards at 2800, beats
+  W8A8 181 (~2.83x). Qwen FFN s2
+  M=64 map is closed (20 / 53.1 /
+  64).
   ESIMD s2xs8 decode
   mix is 14.1 us both cards at 2800
   (beats s8 34, loses to s2xs2 11.5).

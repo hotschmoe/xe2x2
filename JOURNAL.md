@@ -6656,6 +6656,66 @@ VERDICT -> Wide-K s2 4x8 is 62.5 us
   Rank pipe_host. Next: sibling
   N-wide vs sibling K-wide.
 
+### 2026-09-03dp - K2 s2 4x8 A-db M=64 K=17408 sibling card0
+
+CONTEXT -> card1 s2 4x8 K=17408 was
+  62.5 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48. gpu-run --card 0.
+  M=64 N=5120 K=17408. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_db48_k17408.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 63.703 pipe_host 64.044 vs
+  card1 62.540 vs square 20 vs s4
+  106.0 vs mix 144.7 vs W8A8 181.
+  Spread ~2.4%. ~3.20x square.
+
+VERDICT -> Sibling matches. New s2
+  4x8 M=64 K=17408 floor 64 us
+  pipe_host both cards at 2800.
+  Beats s4 106.0, mix 144.7, and
+  W8A8 181 (~2.83x). Rank
+  pipe_host.
+
+### 2026-09-03dq - K2 s2 4x8 A-db M=64 N=17408 sibling card1
+
+CONTEXT -> card0 s2 4x8 N=17408 was
+  53.1 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48. gpu-run --card 1.
+  M=64 N=17408 K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 52.646 pipe_host 52.859 vs
+  card0 53.079 vs square 20 vs s4
+  94.7 vs mix 129 vs W8A8 202.
+  Spread ~0.41%. ~2.65x square.
+
+VERDICT -> Sibling matches. New s2
+  4x8 M=64 N=17408 floor 53.1 us
+  pipe_host both cards at 2800.
+  Beats s4 94.7, mix 129, and W8A8
+  202 (~3.81x). Qwen FFN s2 M=64
+  map is closed (20 / 53.1 / 64).
+  Rank pipe_host. Next: s2 4x8 M=256
+  vs s2xs8 4x8 M=64.
+
 
 
 

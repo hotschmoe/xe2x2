@@ -1130,7 +1130,7 @@ spread ~1.8%, pipe ~5.2%. Beats s4
 33.6 (~1.68x) and W8A8 46 (~2.21x).
 New M=64 hand floor.
 
-## s2 4x8 A-db M=64 N=17408 card0 (2026-09-03dn)
+## s2 4x8 A-db M=64 N=17408 both cards (2026-09-03dq)
 
 Same dpas_s2_db48. NT=2 spin=512.
 cosine=1.0 max_abs=0. timed 2800
@@ -1139,12 +1139,13 @@ throttle=0.
 | shape | card | event_us | pipe_host_us | s4 | mix | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
 | 64 x 17408 x 5120 | 0 | 52.359 | 53.079 | 94.7 | 129 | 202 |
+| 64 x 17408 x 5120 | 1 | 52.646 | 52.859 | 94.7 | 129 | 202 |
 
-53.1 us at 2800 card0. ~2.65x
-square, under napkin 68. Beats s4,
-mix, W8A8 202 (~3.81x). One-card.
+New floor 53.1 us both cards.
+Spread ~0.41%. ~2.65x square. Beats
+s4, mix, W8A8 202 (~3.81x).
 
-## s2 4x8 A-db M=64 K=17408 card1 (2026-09-03do)
+## s2 4x8 A-db M=64 K=17408 both cards (2026-09-03dp)
 
 Same dpas_s2_db48. NT=2 spin=512.
 cosine=1.0 max_abs=0. timed 2800
@@ -1152,11 +1153,12 @@ throttle=0.
 
 | shape | card | event_us | pipe_host_us | s4 | mix | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 0 | 63.703 | 64.044 | 106.0 | 144.7 | 181 |
 | 64 x 5120 x 17408 | 1 | 62.099 | 62.540 | 106.0 | 144.7 | 181 |
 
-62.5 us at 2800 card1. ~3.13x
-square. Beats s4, mix, W8A8 181
-(~2.89x). One-card.
+New floor 64 us both cards. Spread
+~2.4%. ~3.20x square. Beats s4,
+mix, W8A8 181 (~2.83x). Qwen FFN
+s2 M=64 map closed (20 / 53.1 / 64).
 
-K2 next: sibling N-wide vs sibling
-K-wide.
+K2 next: s2 4x8 M=256 vs s2xs8 4x8.
