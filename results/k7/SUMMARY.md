@@ -513,5 +513,28 @@ ok=1. pipe_host 856.296 event
 2783 throttle=1. Wash vs SLM-K
 847-858. Stop inner unroll.
 
-K7 next: SLM f32 k/q T=256 vs
-SLM double-buffer T=256.
+## ESIMD fused delta T=256 SLM f32 k/q card0 (2026-09-03gw)
+
+backend sycl+l0, AOT
+gdn_delta_slmf32. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 867.995 event
+860.399. 18.2 GB/s. act 2800-
+2767 throttle=1. ~1.02x SLM-K
+847. Stop f32 SLM vs half.
+
+## ESIMD fused delta T=256 SLM double-buffer card1 (2026-09-03gx)
+
+backend sycl+l0, AOT
+gdn_delta_slmdb. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 842.973 event
+833.992. 18.7 GB/s. act 2783-
+2733 throttle=1. Wash vs SLM-K
+847-858. Do not freeze 843 as
+2800. Stop double-buffer.
+
+K7 next: tree hsum T=256 vs
+SLM-K T=16.

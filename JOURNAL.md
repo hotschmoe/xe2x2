@@ -9201,6 +9201,66 @@ VERDICT -> ESIMD inner unroll
   Next: SLM f32 k/q vs SLM
   double-buffer T=256.
 
+### 2026-09-03gw - K7 ESIMD fused delta T=256 SLM f32 k/q card0
+
+CONTEXT -> SLM-K 847 leftover.
+  Napkin convert k/q once to f32
+  in SLM. spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmf32.
+  gpu-run --card 0. T=256 blk=16.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmf32_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 860.399 pipe_host
+  867.995. 18.2 GB/s. timed
+  act 2800-2767 throttle=1. vs
+  SLM-K 847-858 (~1.02x).
+
+VERDICT -> ESIMD SLM f32 k/q
+  T=256 is 868 us pipe_host
+  card0, ~1.02x SLM-K 847.
+  Napkin miss. Stop f32 SLM vs
+  half. Rank pipe_host.
+
+### 2026-09-03gx - K7 ESIMD fused delta T=256 SLM double-buffer card1
+
+CONTEXT -> SLM-K 847 leftover.
+  Napkin ping-pong SLM, one
+  barrier per blk. spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmdb.
+  gpu-run --card 1. T=256 blk=16.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmdb_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 833.992 pipe_host
+  842.973. 18.7 GB/s. timed
+  act 2783-2733 throttle=1. vs
+  SLM-K 847-858.
+
+VERDICT -> ESIMD SLM db T=256 is
+  843 us pipe_host card1,
+  throttle=1, wash vs SLM-K
+  847-858. Do not freeze 843 as
+  2800. Stop double-buffer vs
+  SLM-K. Rank pipe_host. Next:
+  tree hsum T=256 vs SLM-K T=16.
+
 
 
 

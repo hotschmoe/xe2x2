@@ -3012,6 +3012,49 @@ VERDICT -> Inner unroll T=256 is
 
 Evidence: `results/k7/esimd_delta_slmku_t256_s0_card1.txt`.
 
+## ESIMD SLM f32 k/q loses to SLM-K T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmf32` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  k/q converted to f32 in SLM.
+  Card0. spin=0. Prior: SLM-K
+  847-858.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  867.995. timed act 2800-2767
+  throttle=1.
+
+VERDICT -> SLM f32 k/q is 868 us
+  pipe_host card0, ~1.02x SLM-K
+  847. Stop f32 SLM vs half.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmf32_t256_s0_card0.txt`.
+
+## ESIMD SLM double-buffer washes vs T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmdb` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  ping-pong k/q SLM. Card1.
+  spin=0. Prior: SLM-K 847-858.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  842.973. timed act 2783-2733
+  throttle=1.
+
+VERDICT -> SLM db is 843 us
+  pipe_host card1, throttle=1,
+  wash vs SLM-K 847-858. Do not
+  freeze 843 as 2800. Stop
+  double-buffer vs SLM-K. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmdb_t256_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4447,6 +4490,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   is 856 us card1 (2026-09-03gv),
   wash vs SLM-K 847-858,
   throttle=1. Stop inner unroll.
+  SLM f32 k/q T=256 is 868 us
+  card0 (2026-09-03gw), ~1.02x
+  SLM-K 847. Stop f32 SLM.
+  SLM db T=256 is 843 us card1
+  (2026-09-03gx), throttle=1,
+  wash vs 847-858. Stop
+  double-buffer.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

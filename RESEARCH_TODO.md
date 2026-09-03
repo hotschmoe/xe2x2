@@ -472,9 +472,15 @@ at decode. inner unroll T=256
 is 856 us card1 (2026-09-03gv),
 wash vs SLM-K 847-858,
 throttle=1. Stop inner unroll.
-Next: split. card0: SLM f32
-k/q T=256. card1: SLM
-double-buffer T=256. Loop
+SLM f32 k/q T=256 is 868 us
+card0 (2026-09-03gw), ~1.02x
+SLM-K 847. Stop f32 SLM. SLM
+db T=256 is 843 us card1
+(2026-09-03gx), throttle=1,
+wash vs 847-858. Stop
+double-buffer. Next: split.
+card0: tree hsum T=256.
+card1: SLM-K T=16. Loop
 every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -486,18 +492,18 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. SLM f32 k/q T=256
-   (convert once; 847 leftover).
-2. SLM double-buffer T=256
-   (overlap fill+compute).
+1. tree hsum T=256
+   (scalar hsum16 leftover).
+2. SLM-K T=16
+   (one blk; napkin T-linear ~53).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
-inner unroll, SLM LUT /
-u4+sign / skip-hi kernel,
-persist-s8 GEMM us.
+inner unroll, SLM f32, SLM db,
+SLM LUT / u4+sign / skip-hi
+kernel, persist-s8 GEMM us.
 
 ## After P0: kernel workstreams (parallelizable)
 
