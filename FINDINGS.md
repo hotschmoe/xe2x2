@@ -1395,27 +1395,56 @@ VERDICT -> New s2xs8 decode floor 14.1
 Evidence: `results/k2/s2xs8sc_n2_s4000_card0.txt`,
   `results/k2/s2xs8sc_n2_s4000_card1.txt`.
 
-## K5 producer+GEMM N=17408 is 154 us card1 (K5)
+## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
   WG-256 RMSNorm-quant then RC=4 s8 GEMM.
   NT=2 spin=4000. M=1 N=17408 K=5120.
-  Card1. Named clock 2800.
+  Both cards. Named clock 2800.
 
 RESULT -> timed act=cur=2800 throttle=0.
-  prod 10.818 gemm 142.625 pair_event
-  153.581 pipe_host 154.033 vs square 44
-  vs s8 GEMM 141.6 vs W8A8 158.1 vs
-  napkin 151. cosine=1.0 max_abs=0. M=4
-  pipe 155.938. Extra ~11 us over GEMM.
+  card0 prod 10.846 gemm 143.529 pair
+  154.505 pipe_host 156.354. card1 prod
+  10.818 gemm 142.625 pair 153.581
+  pipe_host 154.033 vs square 44 vs s8
+  GEMM 141.6 vs W8A8 158.1 vs napkin
+  151. cosine=1.0 max_abs=0. M=4 tracks.
+  Spread ~1.5%. Extra ~11 us over GEMM.
 
-VERDICT -> Wide-N pair is N-linear. The
-  producer tax stays ~11 us (K=5120), not
-  N. Beats W8A8 158.1. One-card. Do not
-  freeze 154 us until card0. Rank
-  pipe_host.
+VERDICT -> New producer+GEMM N=17408
+  floor 155 us pipe_host at 2800 both
+  cards. ~3.52x square, N-linear. The
+  producer tax stays ~11 us (K=5120),
+  not N. Beats W8A8 158.1. Numeric
+  closed. Rank pipe_host.
 
-Evidence: `results/k5/prod_n17408_n2_s4000_card1.txt`.
+Evidence: `results/k5/prod_n17408_n2_s4000_card0.txt`,
+  `results/k5/prod_n17408_n2_s4000_card1.txt`.
+
+## K5 producer+GEMM K=17408 is 294 us card1 (K5)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s8_prod`. NT=2 spin=4000.
+  M=1 N=5120 K=17408. Card1. Named
+  clock 2800. Napkin prod~35 + 262 ~297.
+
+RESULT -> timed act=cur=2800 throttle=0.
+  prod 33.099 gemm 261.068 pair_event
+  294.305 pipe_host 294.453 vs square 44
+  vs N-wide 155 vs s8 GEMM 261.6 vs
+  W8A8 155.3 vs napkin 297. cosine=
+  0.999995 max_abs=0.064 ok=1. M=4
+  pipe 295.423. Extra ~33 us over GEMM.
+
+VERDICT -> Wide-K pair is 294 us at
+  2800 card1. ~6.68x square. Producer
+  tax is K-linear (~33 us); GEMM
+  matches s8 261.6. Loses to W8A8
+  155.3 (~1.90x). Napkin 297 hit.
+  One-card. Do not freeze 294 us until
+  card0. Rank pipe_host.
+
+Evidence: `results/k5/prod_k17408_n2_s4000_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2661,9 +2690,12 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ~1.43x s4 16.5). ESIMD s2xs8 decode
   mix is 14.1 us both cards at 2800
   (beats s8 34, loses to s2xs2 11.5).
-  K5 producer+GEMM N=17408 is 154 us
-  card1 (prod ~11 + gemm 143, beats
-  W8A8 158.1). One-card.
+  K5 producer+GEMM N=17408 is 155 us
+  both cards (prod ~11 + gemm 143,
+  beats W8A8 158.1). K5 producer+GEMM
+  K=17408 is 294 us card1 (prod ~33 +
+  gemm 261, loses to W8A8 155.3).
+  One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
@@ -2733,7 +2765,11 @@ still true for INT8 s8 at M=64
 (4-acc wg 4x8 128 vs 8-row 4x8 228 vs 6-acc 384-count
   210 vs A-db 4-acc 135 vs K4 W8A8 75).
 Decode quant: producer+GEMM 44 us beats fusev 72; extra
-~10 us over GEMM-only 34. Remaining
+~10 us over GEMM-only 34. N-wide pair
+155 us both cards (beats W8A8 158.1).
+K-wide pair 294 us card1 (loses to
+W8A8 155.3; producer tax K-linear).
+Remaining
 hypotheses: decode cannot use INT2, PP=2 cannot win decode,
 we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are

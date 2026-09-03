@@ -5436,3 +5436,71 @@ VERDICT -> Wide-N producer+GEMM is 154
   154 us until card0. Rank pipe_host.
   Next: sibling producer N=17408 vs
   producer K=17408.
+
+### 2026-09-03cd - K5 producer+GEMM M=1 N=17408 sibling card0
+
+CONTEXT -> card1 producer+GEMM N=17408 was
+  154 us at 2800, cosine=1 max_abs=0.
+  Extra ~11 us over GEMM. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8_prod RC=4 NT=2.
+  gpu-run --card 0. M=1 and M=4
+  N=17408 K=5120. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_prod_wide.sh 0 2 4000
+  ```
+
+RESULT -> timed act=cur=2800 throttle=0.
+  M=1 prod 10.846 gemm 143.529 pair_event
+  154.505 pipe_host 156.354 vs card1
+  154.033 vs square 44 vs s8 GEMM 141.6
+  vs W8A8 158.1. cosine=1.000 max_abs=0.
+  M=4 pipe 155.764. Spread ~1.5%. Extra
+  ~11 us over GEMM.
+
+VERDICT -> Sibling matches. New
+  producer+GEMM N=17408 floor 155 us
+  pipe_host both cards at 2800. ~3.52x
+  square, N-linear. Extra is still the
+  ~11 us producer (K=5120), not N.
+  Beats W8A8 158.1. Numeric closed.
+  Rank pipe_host.
+
+### 2026-09-03ce - K5 producer+GEMM M=1 K=17408 card1
+
+CONTEXT -> Square pair is 44 us (prod
+  ~10 + gemm ~33). N-wide pair 155.
+  s8 GEMM K=17408 is 261.6. W8A8 155.3.
+  Napkin prod 10*17408/5120~35 + 262
+  ~297. Producer is over K. One-card.
+
+CONFIG -> backend sycl+l0, dpas_s8_prod
+  RC=4 NT=2. gpu-run --card 1. M=1 and
+  M=4 N=5120 K=17408. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_prod_k17408.sh 1 2 4000
+  ```
+
+RESULT -> timed act=cur=2800 throttle=0.
+  M=1 prod 33.099 gemm 261.068 pair_event
+  294.305 pipe_host 294.453 vs square 44
+  vs N-wide 155 vs s8 GEMM 261.6 vs
+  W8A8 155.3 vs napkin 297. cosine=
+  0.999995 max_abs=0.064. M=4 pipe
+  295.423 tracks. Extra ~33 us over
+  GEMM, K-linear. ok=1.
+
+VERDICT -> Wide-K producer+GEMM is 294
+  us pipe_host at 2800 card1. ~6.68x
+  square. Extra is the ~33 us producer
+  (K-linear), GEMM matches s8 261.6.
+  Loses to W8A8 155.3 (~1.90x). Napkin
+  297 hit. One-card. Do not freeze 294
+  us until card0. Rank pipe_host. Next:
+  sibling producer K=17408 vs mixed
+  s8xs4 numeric oracle.

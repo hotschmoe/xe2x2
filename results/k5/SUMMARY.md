@@ -78,7 +78,7 @@ NT=2 spin=4000. timed 2800. cosine=1.0 max_abs=0.015625.
 Beats fusev 72 us. Extra ~10 us over GEMM-only 34.
 Keep two-kernel producer+GEMM.
 
-## producer+GEMM M=1 N=17408 card1 (2026-09-03cc)
+## producer+GEMM M=1 N=17408 both cards (2026-09-03cd)
 
 Same dpas_s8_prod. NT=2 spin=4000. timed
 act=cur=2800 throttle=0. cosine=1.0
@@ -86,12 +86,30 @@ max_abs=0 (M=1) / 0.0078125 (M=4).
 
 | shape | card | prod_us | gemm_us | pair_event | pipe_host |
 |---|---|---:|---:|---:|---:|
+| 1 x 17408 x 5120 | 0 | 10.846 | 143.529 | 154.505 | 156.354 |
 | 1 x 17408 x 5120 | 1 | 10.818 | 142.625 | 153.581 | 154.033 |
+| 4 x 17408 x 5120 | 0 | 10.807 | 143.003 | 153.940 | 155.764 |
 | 4 x 17408 x 5120 | 1 | 10.828 | 143.437 | 154.401 | 155.938 |
 
-~3.48x square 44. Extra still ~11 us
-(K=5120). Beats W8A8 158.1. One-card.
-Do not freeze 154 us.
+New floor 155 us both cards. ~3.52x
+square 44. Spread ~1.5%. Extra still
+~11 us (K=5120). Beats W8A8 158.1.
 
-K5 next: sibling producer N=17408 vs
-producer K=17408.
+## producer+GEMM M=1 K=17408 card1 (2026-09-03ce)
+
+Same dpas_s8_prod. NT=2 spin=4000. timed
+act=cur=2800 throttle=0. cosine=0.999995
+max_abs=0.064 ok=1.
+
+| shape | card | prod_us | gemm_us | pair_event | pipe_host |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 1 | 33.099 | 261.068 | 294.305 | 294.453 |
+| 4 x 5120 x 17408 | 1 | 33.870 | 260.320 | 294.320 | 295.423 |
+
+~6.68x square 44. Extra ~33 us
+(K-linear). GEMM matches s8 261.6.
+Loses to W8A8 155.3 (~1.90x). Napkin
+297 hit. One-card. Do not freeze 294 us.
+
+K5 next: sibling producer K=17408 vs
+mixed s8xs4 numeric oracle.
