@@ -1107,5 +1107,30 @@ max_abs_o=9.8e-4 ok=1. pipe_host
 cur=2800 throttle=1. 59-60 us
 both. Do not freeze 60 as 2800.
 
-K7 next: sibling mixer-slmht
-T=16 vs conv T=16 C=10240.
+## ESIMD conv T=16 C=10240 card0 (2026-09-03is)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=16 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 5.710 event
+5.242. 129 GB/s. act=1650
+cur=1617 throttle=0. T-linear
+vs T=64 10.5. seq ~28 vs mixer
+31. Do not freeze 5.7 as 2800.
+Sibling hold.
+
+## ESIMD mixer-slmht T=16 sibling card1 (2026-09-03it)
+
+backend sycl+l0, same
+gdn_mixer_slmht. T=16 C=10240
+nv=48 blk=16 spin=4000. cosine=1
+max_abs=3.1e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+31.184 event 32.039 vs card0
+31.295. Spread ~0.4%. act=2750
+cur=2800 throttle=1. 31 us
+both. T-map blk=16 closed. Do
+not freeze 31 as 2800.
+
+K7 next: conv T=16 C=10240 hold
+vs conv T=32 C=10240.

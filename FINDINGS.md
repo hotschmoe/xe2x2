@@ -3823,28 +3823,54 @@ VERDICT -> Mixer-slmht T=32 is
 Evidence: `results/k7/esimd_mixer_slmht_t32_s4000_card0.txt`,
   `results/k7/esimd_mixer_slmht_t32_s4000_card1.txt`.
 
-## ESIMD mixer-slmht T=16 is 31 us card0 (K7)
+## ESIMD mixer-slmht T=16 is 31 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_mixer_slmht`. T=16
-  C=10240 blk=16. Card0.
+  C=10240 blk=16. Both cards.
   spin=4000. Prior: T=32 60.
   slmht T=16 22. Napkin ~29.
 
 RESULT -> cosine=1.0 max_abs
   3.1e-5 / 9.8e-4 ok=1. pipe_host
-  31.295 event 31.188. timed
-  act=2733 cur=2800 throttle=1.
+  31.295 / 31.184. Spread ~0.4%.
+  timed act 2733 / 2750 cur=2800
+  throttle=1.
 
 VERDICT -> Mixer-slmht T=16 is
-  31 us pipe_host card0, napkin
-  29, ~1.92x T=32 60, ~1.42x
-  slmht 22. throttle=1. Do not
-  freeze 31 as 2800. Sibling
-  before citing the map. Rank
+  31 us pipe_host both cards,
+  napkin 29, ~1.42x slmht 22.
+  throttle=1. T-map blk=16
+  closed (16/32/64/128/256). Do
+  not freeze 31 as 2800. Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_mixer_slmht_t16_s4000_card0.txt`.
+Evidence: `results/k7/esimd_mixer_slmht_t16_s4000_card0.txt`,
+  `results/k7/esimd_mixer_slmht_t16_s4000_card1.txt`.
+
+## ESIMD conv T=16 C=10240 is 5.7 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. T=16
+  C=10240 k=4. Card0. spin=4000.
+  Prior: T=64 C=10240 10.5.
+  slmht T=16 22. mixer-slmht
+  T=16 31.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 5.710 event
+  5.242. 129 GB/s. timed
+  act=1650 cur=1617 throttle=0.
+
+VERDICT -> Conv T=16 C=10240 is
+  5.7 us pipe_host card0 at
+  1650, T-linear vs T=64 10.5.
+  seq ~28 vs mixer 31 (~1.12x).
+  Clocks not held. Do not freeze
+  5.7 as 2800. Sibling hold.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t16_c10240_s4000_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5453,7 +5479,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   mixer-slmht T=16 is 31 us
   card0 (2026-09-03iq), napkin
   29. throttle=1. Do not freeze
-  31 as 2800.
+  31 as 2800. mixer-slmht T=16
+  is 31 us both cards
+  (2026-09-03iq/it), throttle=1.
+  T-map blk=16 closed. Do not
+  freeze 31 as 2800. conv T=16
+  C=10240 is 5.7 us card0
+  (2026-09-03is) at 1650. seq
+  ~28 vs mixer 31. Do not freeze
+  5.7 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
