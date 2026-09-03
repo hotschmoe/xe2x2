@@ -2537,6 +2537,31 @@ VERDICT -> Packed qkv M=256 is
 Evidence: `results/k7/proj_qkv_w8a8_m256_card0.txt`,
   `results/k7/proj_qkv_w8a8_m256_card1.txt`.
 
+## ESIMD delta T=64 is 265-271 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_t` AOT
+  `intel_gpu_bmg_g31`. T=64 nv=48
+  dv=128 dk=128 f16. S float in
+  GRF across T. L2-norm q/k.
+  Both cards. spin=4000. Prior:
+  decode T=1 7.1, napkin 64x ~454.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  271.249/264.906. Spread ~2.4%.
+  timed act 2583/2633-2650
+  cur=2800 throttle=1 both.
+
+VERDICT -> Prefill delta T=64 is
+  265-271 us pipe_host both cards,
+  ~37x decode T=1 not 64x. Not HBM
+  (24 GB/s). Do not freeze 265 as
+  2800. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_t64_s4000_card0.txt`,
+  `results/k7/esimd_delta_t64_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3898,7 +3923,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ESIMD conv T=256 is 37.7 us
   both cards at 2800, ~3.72x T=64.
   Packed qkv M=256 is 164 us both
-  cards, ~1.17x M=64.
+  cards, ~1.17x M=64. ESIMD conv
+  T=256 C=6144 is 38.0 us card0
+  at 2800, wash vs C=2048 37.7
+  not 3x; one-card, do not freeze.
+  ESIMD delta T=64 is 265-271 us
+  both cards, throttle=1, ~37x
+  decode 7.1 not 64x. Do not
+  freeze 265 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

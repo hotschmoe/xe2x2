@@ -8234,6 +8234,98 @@ VERDICT -> Sibling matches. ESIMD
   Rank pipe_host. Next: conv
   C=6144 T=256 vs delta T=64.
 
+### 2026-09-03fr - K7 ESIMD conv1d T=256 C=6144 card0
+
+CONTEXT -> C=2048 T=256 is 37.7.
+  v-channels C=6144. Napkin 3x
+  ~113. Eager v T=256 ~115.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. C=6144 T=256 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t256_c6144.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 37.630 pipe_host 38.010.
+  167 GB/s. vs C=2048 37.7 vs
+  eager 115.
+
+VERDICT -> ESIMD conv T=256 C=6144
+  is 38.0 us pipe_host card0 at
+  2800, wash vs C=2048 37.7 not
+  3x. Occupancy. One-card. Do not
+  freeze 38.0 until sibling. Rank
+  pipe_host.
+
+### 2026-09-03fs - K7 ESIMD delta T=64 card1
+
+CONTEXT -> decode T=1 7.1. Napkin
+  64x ~454. First T>1 delta. New
+  TU gdn_delta_t. Unnormalized
+  /50 fill NaN'd; L2-norm q/k.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_t.
+  gpu-run --card 1. T=64 nv=48
+  dv=128 dk=128 f16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_t64.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 266.430 pipe_host
+  264.906. 24 GB/s. act=2633-2650
+  cur=2800 throttle=1. vs decode
+  7.1 vs napkin 454.
+
+VERDICT -> ESIMD delta T=64 is
+  265 us pipe_host card1, ~37x
+  T=1 not 64x. throttle=1. Do not
+  freeze 265 as 2800. Rank
+  pipe_host. Next: sibling
+  (throttle=1).
+
+### 2026-09-03ft - K7 ESIMD delta T=64 sibling card0
+
+CONTEXT -> card1 delta T=64 was
+  265 us pipe_host throttle=1.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_t. gpu-run
+  --card 0. T=64. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_t64.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 271.950 pipe_host
+  271.249 vs card1 264.906.
+  Spread ~2.4%. act=2583 cur=2800
+  throttle=1.
+
+VERDICT -> Sibling matches. ESIMD
+  delta T=64 is 265-271 us
+  pipe_host both cards.
+  throttle=1 both. Do not freeze
+  265 as 2800. ~37x decode 7.1
+  not 64x. Rank pipe_host. Next:
+  conv C=6144 sibling vs delta
+  T=256.
+
+
 
 
 

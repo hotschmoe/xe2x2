@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/fq
+# K7 GDN inventory 2026-09-03ep/ft
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -212,5 +212,38 @@ spin=512. cosine=1 ok=1.
 164 us both. Spread ~0.12%.
 ~1.17x M=64.
 
-K7 next: conv T=256 C=6144 vs
-delta T=64.
+## ESIMD conv1d T=256 C=6144 card0 (2026-09-03fr)
+
+backend sycl+l0, same
+gdn_conv1d_t. C=6144 T=256
+spin=4000. cosine=1 max_abs=0
+ok=1. timed act=cur=2800
+throttle=0.
+
+| card | pipe_host us | event us |
+|---|---:|---:|
+| 0 | 38.010 | 37.630 |
+
+38.0 us card0 at 2800. Wash vs
+C=2048 37.7 not 3x. Occupancy.
+One-card. Do not freeze 38.0.
+
+## ESIMD delta T=64 both cards (2026-09-03fs/ft)
+
+backend sycl+l0, AOT gdn_delta_t.
+T=64 nv=48 dv=128 dk=128.
+spin=4000. cosine=1 max_abs=
+1.5e-5 cosine_o=1 max_abs_o=
+2.4e-4 ok=1. cur=2800 throttle=1.
+
+| card | pipe_host us | event us | act |
+|---|---:|---:|---:|
+| 0 | 271.249 | 271.950 | 2583 |
+| 1 | 264.906 | 266.430 | 2633 |
+
+265-271 us both. Spread ~2.4%.
+~37x decode 7.1 not 64x. Do not
+freeze 265 as 2800.
+
+K7 next: conv C=6144 sibling vs
+delta T=256.
