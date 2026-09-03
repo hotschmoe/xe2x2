@@ -5945,3 +5945,63 @@ VERDICT -> GPTQ serving decode is 29.9
   Do not freeze 29.9 us until card0.
   Rank pipe_host. Next: sibling GPTQ
   decode vs s8xs4 M=64.
+
+### 2026-09-03ct - K6 GPTQ s4 RC=4 decode sibling card0
+
+CONTEXT -> card1 GPTQ s4 decode was
+  29.9 us at 2800, cosine=1 max_abs=0.
+  New serving sibling.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s4_gptq_sc. gpu-run
+  --card 0. NT=2 spin=4000. M=1 and
+  M=4 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4_sc_dec.sh 0 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 29.424 pipe_host 29.955 vs card1
+  29.850 vs s4 16.5 vs s8xs4 22.1 vs
+  s8 34 vs W8A8 44. cosine=1.000
+  max_abs=6e-8. M=4 pipe 29.899. Spread
+  ~0.4%.
+
+VERDICT -> Sibling matches. New GPTQ
+  s4 decode floor 29.9 us pipe_host
+  both cards at 2800. ~1.81x s4.
+  Numeric closed. Rank pipe_host.
+
+### 2026-09-03cu - K2 s8xs4 RC=4 M=64 card1
+
+CONTEXT -> s8xs4 M=1 is 22.1. s4 4x8
+  M=64 is 33.6. s8 75. W8A8 46.
+  compose 8x2-N M=64 was 217.9 a loss.
+  Decode tile at prefill. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s8xs4_sc RC=4 NT=2. gpu-run
+  --card 1. M=64 N=K=5120. spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_sc_m64.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 112.865 pipe_host 114.146 vs
+  M=1 22.1 vs s4 4x8 33.6 vs s8 75 vs
+  W8A8 46 vs compose 217.9. ~5.16x
+  M=1.
+
+VERDICT -> Decode-tile s8xs4 at M=64
+  is 114 us pipe_host at 2800 card1.
+  Numeric closed. Loses to s4 33.6,
+  s8 75, W8A8 46. Beats compose 217.9.
+  Stop 8x2-N s8xs4 at prefill. One-card.
+  Rank pipe_host. Next: GPTQ wide-N vs
+  s8xs4 4x8 A-db M=64.

@@ -656,7 +656,7 @@ Partial s32 per group then * scale.
 Numeric closed both cards (2026-09-03cn).
 Do not rank us.
 
-## GPTQ s4 RC=4 decode card1 (2026-09-03cs)
+## GPTQ s4 RC=4 decode both cards (2026-09-03ct)
 
 dpas_s4_gptq_sc. Real down_proj 5120
 s4 + g128 f16. NT=2 spin=4000. timed
@@ -664,10 +664,13 @@ s4 + g128 f16. NT=2 spin=4000. timed
 
 | shape | card | event_us | pipe_host_us | s4 | s8 | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 29.424 | 29.955 | 16.5 | 34 | 44 |
 | 1 x 5120 | 1 | 29.448 | 29.850 | 16.5 | 34 | 44 |
+| 4 x 5120 | 0 | 29.404 | 29.899 | 16.5 | 34 | 44 |
 | 4 x 5120 | 1 | 29.417 | 29.890 | 16.5 | 34 | 44 |
 
-29.9 us at 2800 card1. ~1.81x s4.
-Beats s8 34 and W8A8 44. One-card.
+New floor 29.9 us both cards. ~1.81x
+s4. Spread ~0.4%. Beats s8 34 and
+W8A8 44.
 
-K6 next: sibling GPTQ s4 decode.
+K6 next: GPTQ N=17408 decode.

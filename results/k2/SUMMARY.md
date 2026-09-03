@@ -1035,5 +1035,18 @@ New floor 73.2 us both cards. ~3.31x
 square. Spread ~0.02%. Qwen FFN s8xs4
 decode map closed (22.1 / 38.6 / 73.2).
 
-K2 next: s8xs4 M=64. GPTQ decode is
-K6.
+## s8xs4 RC=4 M=64 card1 (2026-09-03cu)
+
+Same decode tile. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4x8 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 1 | 112.865 | 114.146 | 33.6 | 75 | 46 |
+
+114 us at 2800 card1. ~5.16x M=1.
+Loses to s4/s8/W8A8. Stop 8x2-N at
+prefill. One-card.
+
+K2 next: s8xs4 4x8 A-db M=64.

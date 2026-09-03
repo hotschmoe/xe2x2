@@ -1135,28 +1135,48 @@ VERDICT -> New s8xs4 K=17408 floor
 Evidence: `results/k2/s8xs4sc_k17408_n2_s4000_card0.txt`,
   `results/k2/s8xs4sc_k17408_n2_s4000_card1.txt`.
 
-## GPTQ s4 RC=4 decode is 29.9 us card1 (K6)
+## GPTQ s4 RC=4 decode is 29.9 us both cards (K6)
 
 CONFIG -> backend `sycl+l0`, standalone
   `dpas_s4_gptq_sc`. RC=4 NT=2 gs=128.
   Real GPTQ down_proj 5120x5120 s4 +
   g128 f16 scales. M=1 and M=4 5120.
-  Card1. Named clock 2800. Never E2M1.
+  Both cards. Named clock 2800. Never
+  E2M1.
 
 RESULT -> cosine=1.0 max_abs=6e-8.
   timed act=cur=2800 throttle=0. M=1
-  pipe_host 29.850 vs s4 16.5 vs s8xs4
-  22.1 vs s8 34 vs W8A8 44. M=4 pipe
-  29.890. ~1.81x native s4.
+  pipe_host 29.955/29.850 vs s4 16.5
+  vs s8xs4 22.1 vs s8 34 vs W8A8 44.
+  M=4 tracks. Spread ~0.4%. ~1.81x
+  native s4.
 
-VERDICT -> First serving-shaped GPTQ
-  s4 decode is 29.9 us pipe_host at
-  2800 card1, numeric closed. Beats s8
-  and W8A8, loses to s4 16.5. Scale
-  tax ~13 us. One-card. Do not freeze
-  29.9 us until card0. Rank pipe_host.
+VERDICT -> New GPTQ s4 decode floor
+  29.9 us pipe_host at 2800 both cards.
+  Beats s8 and W8A8, loses to s4 16.5.
+  Scale tax ~13 us. Rank pipe_host.
 
-Evidence: `results/k6/gptq_s4sc_n2_s4000_card1.txt`.
+Evidence: `results/k6/gptq_s4sc_n2_s4000_card0.txt`,
+  `results/k6/gptq_s4sc_n2_s4000_card1.txt`.
+
+## s8xs4 8x2-N loses at M=64 (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s8xs4_sc`. M=64 N=K=5120.
+  Card1. NT=2 spin=512. Named clock
+  2800.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64
+  pipe_host 114.146 vs M=1 22.1 vs s4
+  4x8 33.6 vs s8 75 vs W8A8 46 vs
+  compose 217.9. ~5.16x M=1.
+
+VERDICT -> Decode-tile mix is ~3.4x
+  s4 4x8 at M=64. Not a prefill floor.
+  Stop 8x2-N s8xs4 at prefill. One-card.
+
+Evidence: `results/k2/s8xs4sc_m64_n2_s512_card1.txt`.
 
 ## 256-entry product LUT GEMV is a numeric-closed loss (K6)
 
@@ -2876,8 +2896,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   s8xs4 K=17408 is 73.2 us both cards
   (~3.31x square). Qwen FFN s8xs4
   decode map is closed. GPTQ s4 RC=4
-  decode is 29.9 us card1 (~1.81x s4
-  16.5).
+  decode is 29.9 us both cards (~1.81x
+  s4 16.5). s8xs4 8x2-N M=64 is 114 us
+  card1, a loss vs s4 33.6.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
