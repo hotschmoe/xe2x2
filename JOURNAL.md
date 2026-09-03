@@ -2851,3 +2851,112 @@ RESULT -> cosine=1.0 max_abs=0 both cards.
 VERDICT -> k64 combined load is a small loss
   (~1.07x). Keep two k32 packed loads. Numeric
   closed. Rank us. Next: vectorized unpack.
+
+### 2026-09-03c - K6 vectorized two-launch unpack card0
+
+CONTEXT -> scalar unpack_sc is 265 us pipe at
+  2800 vs fused LUT 158. Steal simd nibble
+  decode on the unpack kernel, same two-launch
+  Transformed s8 GEMM. One-card.
+
+CONFIG -> sycl+l0, standalone nibble_unpack_scv,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. NT=2 U=16 spin=4000.
+  ESIMD 16-wide unpack. Never bitcast s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_unpackv.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 54.945 us (GEMM only),
+  pipe_host 314.721 vs scalar unpack 265 vs LUT
+  158 vs s8ctrl 34.291. M=4 tracks (pipe 314.387).
+
+VERDICT -> Vectorized two-launch unpack loses to
+  scalar unpack (~1.19x) and to fused LUT
+  (~2.0x). Numeric closed. One-card. Do not
+  freeze. Keep fused 158 us LUT. Rank pipe.
+
+### 2026-09-03d - K3/K6 E2M1 two-term s4 decode card1
+
+CONTEXT -> K3 two-term w_lo+8*w_hi was closed on
+  the square tile. Steal onto the RC=4 8x2-N
+  decode tile. A is s4. Never bitcast. Napkin:
+  two s4 dpas ~2x 16.5 = 33 us. One-card.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=4000.
+  Two packed s4 B planes. Fill E2M1 split.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_sc.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 28.250 us, pipe_host 28.544
+  vs s4 16.5 vs s8 34 vs W8A8 44 vs LUT 158.
+  Ratio 28.5/16.5 ~1.73x, under 2x napkin.
+  M=4 tracks (pipe 28.549).
+
+VERDICT -> Overflow-split E2M1 on two s4 DPAS is
+  a real 28.5 us at 2800, under s8 34 and W8A8
+  44, with A=s4. Numeric closed. One-card. Do
+  not freeze 28.5 us until card0. Rank us.
+  Next: sibling compose_e2m1_sc vs sibling
+  unpackv.
+
+### 2026-09-03e - K3/K6 E2M1 two-term s4 sibling card0
+
+CONTEXT -> card1 compose_e2m1_sc was 28.54 us
+  at 2800, numeric closed, A=s4. Sibling swap
+  to close the overflow-split decode floor.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_sc.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 28.203 us, pipe_host 28.520
+  vs card1 28.544 vs s4 16.5 vs s8 34 vs W8A8
+  44. Spread ~0.08%. M=4 pipe 28.685.
+
+VERDICT -> Sibling matches. New E2M1 two-term
+  s4 decode floor 28.5 us at 2800 both cards.
+  ~1.73x native s4. A is s4, not the s8-A LUT
+  contract. Rank us.
+
+### 2026-09-03f - K6 vectorized unpack sibling card1
+
+CONTEXT -> card0 nibble_unpack_scv was 314.7 us
+  at 2800, a loss. Sibling swap.
+
+CONFIG -> sycl+l0, standalone nibble_unpack_scv,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. Same NT=2 U=16 spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_unpackv.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: pipe_host 314.444 vs card0 314.721
+  vs scalar 265 vs LUT 158 vs s8ctrl 34.061.
+  Spread ~0.09%. M=4 tracks.
+
+VERDICT -> Sibling matches. Vectorized unpack
+  is 314.6 us both cards, a loss. Stop this
+  unpack path. Keep fused 158 us LUT for s8-A.

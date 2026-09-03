@@ -368,7 +368,8 @@ VERDICT -> Naive two-launch unpack is ~1.67x
   the 158 us in-register LUT. s8ctrl matches
   the 34 us s8 tile, so the tax is unpack, not
   DPAS. throttle=1 is part of this control.
-  Vectorized unpack is still open. Rank pipe.
+  Vectorized unpack is a loss (314.7 us
+  card0). Rank pipe.
 
 Evidence: `results/k6/unpack_n2_s4000_card0.txt`,
   `results/k6/unpack_n2_s4000_card1.txt`.
@@ -392,6 +393,48 @@ VERDICT -> Combining the two packed loads is a
 
 Evidence: `results/k6/sck_n2_s4000_card0.txt`,
   `results/k6/sck_n2_s4000_card1.txt`.
+
+## Vectorized two-launch unpack loses to scalar unpack (K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `nibble_unpack_scv`. Same two-launch as
+  `nibble_unpack_sc`, ESIMD 16-wide simd nibble
+  decode. Both cards, NT=2, spin=4000.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1 pipe_host
+  314.72/314.44 vs scalar 265 vs fused LUT
+  158 vs s8ctrl 34.3/34.1. M=4 tracks.
+  Spread ~0.09%.
+
+VERDICT -> Vectorizing the unpack kernel is a
+  loss (~1.19x scalar, ~2.0x fused LUT) both
+  cards. Stop this unpack path. Keep fused
+  158 us LUT as the NVFP4 s8-A spoof floor.
+
+Evidence: `results/k6/unpackv_n2_s4000_card0.txt`,
+  `results/k6/unpackv_n2_s4000_card1.txt`.
+
+## E2M1 two-term s4 decode is 28.5 us at 2800 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `compose_e2m1_sc`. RC=4 8x2-N tile, A is s4,
+  B is E2M1 split to two s4 planes, acc =
+  acc_lo + 8*acc_hi. Never bitcast. Both cards,
+  NT=2, spin=4000. Prior: 2x s4 16.5 ~33 us.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1 pipe_host
+  28.52/28.54 vs s4 16.5 vs s8 34 vs W8A8 44
+  vs LUT 158. M=4 tracks. Spread ~0.08%.
+
+VERDICT -> New overflow-split E2M1 floor 28.5
+  us at 2800 both cards. ~1.73x native s4,
+  under s8 and W8A8. A is s4, not the s8-A
+  LUT contract. Rank us.
+
+Evidence: `results/k6/e2m1sc_n2_s4000_card0.txt`,
+  `results/k6/e2m1sc_n2_s4000_card1.txt`.
 
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
@@ -1512,7 +1555,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   iselect table is 1022 us (cr), a loss; stop gather tables.
   Scalar two-launch unpack is 265 us (2026-09-03a), a loss
   vs 158; s8ctrl 34.5. k64 combined load is 169 us
-  (2026-09-03b), a small loss. Keep two k32 merge LUT.
+  (2026-09-03b), a small loss. Vectorized unpack is
+  314.6 us both cards (2026-09-03f), a loss. Keep
+  two k32 merge LUT as the s8-A spoof. E2M1
+  two-term s4 decode is 28.5 us both cards
+  (2026-09-03e) vs s4 16.5 vs s8 34, A=s4.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

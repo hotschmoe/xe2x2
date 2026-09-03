@@ -85,11 +85,15 @@ tables. Scalar two-launch unpack is 265 us
 both cards (2026-09-03a), ~1.67x the 158 us
 LUT; s8ctrl 34.5; throttle=1. k64 combined
 load is 169 us both cards (2026-09-03b), a
-small loss. Keep two k32 merge LUT.
-Next: split. card0: vectorized unpack on the
-decode tile. card1: E2M1 overflow-split
-two-term s4 compose on the same tile (K3
-cross). Loop every 20m.
+small loss. Vectorized unpack is 314.6 us
+both cards (2026-09-03f), a loss vs scalar
+265 and LUT 158. Stop that unpack path.
+E2M1 two-term s4 decode is 28.5 us both
+cards (2026-09-03e) vs s4 16.5 vs s8 34,
+A=s4. Keep fused 158 us LUT for s8-A.
+Next: split. card0: compose_e2m1_sc N=17408.
+card1: compose_e2m1_sc K=17408. Loop every
+20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

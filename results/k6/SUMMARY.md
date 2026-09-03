@@ -99,3 +99,34 @@ cosine=1.0 max_abs=0. timed act=cur=2800 throttle=0.
 | 1 x 5120 | 1 | 169.144 | 158 |
 
 Small loss. Keep two k32 loads. Floor stays 158 us.
+
+## Vectorized two-launch unpack card0 (2026-09-03c)
+
+`nibble_unpack_scv`: ESIMD 16-wide unpack then
+Transformed s8 GEMM. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | scalar unpack | fused LUT | s8ctrl |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 314.721 | 265 | 158 | 34.291 |
+| 4 x 5120 | 0 | 314.387 | 265 | 158 | 33.968 |
+
+Loss vs scalar (~1.19x) and fused LUT (~2.0x).
+Sibling card1 pipe 314.444 (2026-09-03f).
+Stop this unpack path. Keep fused 158 us.
+
+## E2M1 two-term s4 decode (2026-09-03d/e)
+
+`compose_e2m1_sc`: A s4, two s4 B planes,
+acc_lo+8*acc_hi. cosine=1.0 max_abs=0.
+timed act=cur=2800 throttle=0. Never bitcast.
+
+| shape | card | pipe_host_us | s4 | s8 | W8A8 | LUT |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 28.520 | 16.5 | 34 | 44 | 158 |
+| 1 x 5120 | 1 | 28.544 | 16.5 | 34 | 44 | 158 |
+| 4 x 5120 | 0 | 28.685 | 16.5 | 34 | 44 | 158 |
+| 4 x 5120 | 1 | 28.549 | 16.5 | 34 | 44 | 158 |
+
+New floor 28.5 us both cards. ~1.73x native
+s4, under s8 and W8A8. A is s4.
