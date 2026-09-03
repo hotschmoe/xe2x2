@@ -2789,3 +2789,65 @@ VERDICT -> iselect table is a loss (~6.46x
   GRF gather tables on this tile. Keep the
   merge-chain simd LUT. Rank us. Next:
   two-launch unpack control on the decode tile.
+
+### 2026-09-03a - K6 two-launch unpack on decode tile both cards
+
+CONTEXT -> nibble_lut_sc merge LUT is 158 us at
+  2800. Two-launch unpack was the fast spoof at
+  1024^3. Serving-shape control: unpack packed
+  E2M1 to s8 each iter, then Transformed s8 GEMM
+  on the RC=4 tile. Never bitcast s4. Napkin:
+  unpack of 25 MiB s8 B plus 34 us GEMM.
+
+CONFIG -> sycl+l0, standalone nibble_unpack_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0 || --card 1. NT=2 U=16
+  spin=4000. Scalar 1-byte unpack then s8 GEMM.
+  Same fill/scales as cq.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_unpack.sh 0 2 4000
+  gpu-run --card 1 kernels/nvfp4/run_k6_unpack.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0 both cards.
+  timed cur=2800 throttle=1 (act 2733-2783).
+  M=1 two-launch pipe_host 266.10/263.31 vs
+  fused LUT 158 vs s8ctrl 34.55/35.24 vs s8 34.
+  M=4 tracks. Spread ~1%. Rank pipe, not the
+  55 us gemm-only event.
+
+VERDICT -> Naive two-launch unpack loses to
+  the 158 us in-register LUT (~1.67x). s8ctrl
+  34.5 confirms the GEMM is still the 34 us
+  tile; the tax is scalar unpack. throttle=1
+  is part of this control. Vectorized unpack
+  still open. Rank us.
+
+### 2026-09-03b - K6 one packed load per k64 both cards
+
+CONTEXT -> nibble_lut_sc does two k32 packed
+  loads + LUTs per k64. Steal: one height-32
+  packed load, merge LUT width 512, two VNNI4
+  dpas. No iselect. Same tile.
+
+CONFIG -> sycl+l0, standalone nibble_lut_sck,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0 || --card 1. NT=2 U=16
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_sck.sh 0 2 4000
+  gpu-run --card 1 kernels/nvfp4/run_k6_sck.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0 both cards.
+  timed act=cur=2800 throttle=0.
+  M=1 pipe_host 169.02/169.14 vs two-k32 LUT
+  158. M=4 tracks. Spread ~0.07%.
+
+VERDICT -> k64 combined load is a small loss
+  (~1.07x). Keep two k32 packed loads. Numeric
+  closed. Rank us. Next: vectorized unpack.

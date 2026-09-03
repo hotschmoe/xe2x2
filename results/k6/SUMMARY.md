@@ -74,3 +74,28 @@ act=cur=2800 throttle=0.
 | 1 x 5120 | 1 | 1021.884 | 158 |
 
 ~6.46x merge LUT. Stop iselect tables. Keep merge.
+
+## Two-launch scalar unpack (2026-09-03a)
+
+`nibble_unpack_sc`: unpack then Transformed s8 GEMM.
+cosine=1.0 max_abs=0 both cards. timed cur=2800
+throttle=1.
+
+| shape | card | pipe_host_us | s8ctrl | fused LUT |
+|---|---|---:|---:|---:|
+| 1 x 5120 | 0 | 266.098 | 34.546 | 158 |
+| 1 x 5120 | 1 | 263.306 | 35.242 | 158 |
+
+Naive unpack loses ~1.67x to fused LUT. Rank pipe.
+
+## k64 packed load (2026-09-03b)
+
+`nibble_lut_sck`: one height-32 packed load per k64.
+cosine=1.0 max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | two-k32 LUT |
+|---|---|---:|---:|
+| 1 x 5120 | 0 | 169.017 | 158 |
+| 1 x 5120 | 1 | 169.144 | 158 |
+
+Small loss. Keep two k32 loads. Floor stays 158 us.

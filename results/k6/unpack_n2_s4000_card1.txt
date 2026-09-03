@@ -1,0 +1,40 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:2960589454162 energy2=pkg:1595860242797 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:2884086795898 energy2=pkg:1654129235778 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=nibble_unpack_sc two_launch nt=2 spin=4000 heat=none out=f16 never_bitcast_s4
+nibble_lut_sc M=1 5120 is 158 us. Two-launch unpack then Transformed s8 GEMM.
+=== unpack_sc nt=2 spin=4000 m=1 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_unpack_sc two_launch never_bitcast_s4 packedB=K/2 dtype=s8xE2M1->f16_scaled RC=4 NT=2 unroll=16 dpas=64 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=1 spin=4000 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,25.416,81.205,58.862,0.0103,0.645,1.000000,0,1,25.416,25.416,25.416
+s8ctrl_pipe_host_us,64.934
+spin_done n=4000 act=2783 cur=2800 power=D0 throttle=1
+timed_begin act=2783 cur=2800 power=D0 throttle=1
+timed_end act=2783 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,1,5120,5120,55.378,278.462,263.306,0.9467,236.687,1.000000,0,1,55.365,54.167,56.979
+s8ctrl_pipe_host_us,35.242
+=== unpack_sc nt=2 spin=4000 m=4 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_unpack_sc two_launch never_bitcast_s4 packedB=K/2 dtype=s8xE2M1->f16_scaled RC=4 NT=2 unroll=16 dpas=64 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=1 spin=4000 heat=none
+timed_begin act=2750 cur=2750 power=D0 throttle=0
+timed_end act=2750 cur=2750 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,3.750,38.162,19.788,0.0699,4.369,1.000000,0,1,3.750,3.750,3.750
+s8ctrl_pipe_host_us,16.512
+spin_done n=4000 act=2767 cur=2800 power=D0 throttle=1
+timed_begin act=2767 cur=2800 power=D0 throttle=1
+timed_end act=2783 cur=2800 power=D0 throttle=1
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,4,5120,5120,55.159,279.166,264.411,3.8020,237.626,1.000000,0,1,55.104,53.854,56.354
+s8ctrl_pipe_host_us,34.587
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:2960746650695 energy2=pkg:1595947557495 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:2884656092163 energy2=pkg:1654521841552 temp2_mC=60000

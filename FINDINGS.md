@@ -351,6 +351,48 @@ VERDICT -> iselect table is ~6.46x the merge LUT.
 Evidence: `results/k6/sct_n2_s4000_card0.txt`,
   `results/k6/sct_n2_s4000_card1.txt`.
 
+## Two-launch scalar unpack loses to 158 us LUT (K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `nibble_unpack_sc`. Packed E2M1 unpack to s8
+  each iter (1 byte / WI), then Transformed s8
+  GEMM on the RC=4 8x2-N tile. Never bitcast s4.
+  Both cards, NT=2, spin=4000.
+
+RESULT -> cosine=1.0 max_abs=0. timed cur=2800
+  throttle=1. M=1 two-launch pipe_host
+  266.10/263.31 vs fused LUT 158 vs s8ctrl
+  34.55/35.24. M=4 tracks. Spread ~1%.
+
+VERDICT -> Naive two-launch unpack is ~1.67x
+  the 158 us in-register LUT. s8ctrl matches
+  the 34 us s8 tile, so the tax is unpack, not
+  DPAS. throttle=1 is part of this control.
+  Vectorized unpack is still open. Rank pipe.
+
+Evidence: `results/k6/unpack_n2_s4000_card0.txt`,
+  `results/k6/unpack_n2_s4000_card1.txt`.
+
+## One packed load per k64 loses to two k32 loads (K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `nibble_lut_sck`. Same merge LUT as
+  `nibble_lut_sc`, one height-32 packed load
+  per k64. Never bitcast s4. Both cards, NT=2,
+  spin=4000.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1 pipe_host
+  169.02/169.14 vs two-k32 158. M=4 tracks.
+  Spread ~0.07%.
+
+VERDICT -> Combining the two packed loads is a
+  small loss (~1.07x). Keep two k32 loads.
+  Floor stays 158 us.
+
+Evidence: `results/k6/sck_n2_s4000_card0.txt`,
+  `results/k6/sck_n2_s4000_card1.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1468,6 +1510,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   RC=4 8x2-N tile is 158 us at 2800 both cards (cq), numeric
   closed, ~4.65x s8 34. Packed E2M1 stays in HBM. 16-entry
   iselect table is 1022 us (cr), a loss; stop gather tables.
+  Scalar two-launch unpack is 265 us (2026-09-03a), a loss
+  vs 158; s8ctrl 34.5. k64 combined load is 169 us
+  (2026-09-03b), a small loss. Keep two k32 merge LUT.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

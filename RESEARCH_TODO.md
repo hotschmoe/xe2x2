@@ -81,10 +81,15 @@ at 2800, cosine=1 max_abs=0, ~4.65x s8 34.
 Packed E2M1 stays in HBM. Never bitcast s4.
 iselect 16-entry table LUT is 1022 us both
 cards (cr), a loss vs merge 158. Stop gather
-tables. Next: split. card0: two-launch unpack
-control on the same decode tile. card1: LUT
-once per k64 (one packed load, no iselect).
-Loop every 20m.
+tables. Scalar two-launch unpack is 265 us
+both cards (2026-09-03a), ~1.67x the 158 us
+LUT; s8ctrl 34.5; throttle=1. k64 combined
+load is 169 us both cards (2026-09-03b), a
+small loss. Keep two k32 merge LUT.
+Next: split. card0: vectorized unpack on the
+decode tile. card1: E2M1 overflow-split
+two-term s4 compose on the same tile (K3
+cross). Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
