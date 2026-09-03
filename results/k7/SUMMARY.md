@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/gr
+# K7 GDN inventory 2026-09-03ep/gt
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -450,18 +450,22 @@ ok=1. pipe_host 834.985 event
 2733 throttle=1 at end. Wash vs
 blk=32 832. Stop larger blk.
 
-## ESIMD fused delta T=64 SLM-K card0 (2026-09-03gq)
+## ESIMD fused delta T=64 SLM-K both cards (2026-09-03gq/gs)
 
 backend sycl+l0, same
-gdn_delta_slmk. T=64 blk=16
-spin=0. cosine=1 max_abs=1.5e-5
+gdn_delta_slmk. T=64 blk=16.
+cosine=1 max_abs=1.5e-5
 cosine_o=1 max_abs_o=2.4e-4
-ok=1. timed act=cur=2800
-throttle=0. pipe_host 214.083
-event 213.732. 29.5 GB/s.
-~1.24x fused 265. T-linear vs
-847. Do not freeze 214 until
-sibling.
+ok=1.
+
+| card | spin | pipe_host us | event us | act | thr |
+|---|---:|---:|---:|---:|---:|
+| 0 | 0 | 214.083 | 213.732 | 2800 | 0 |
+| 1 | 4000 | 217.843 | 219.055 | 2750 | 1 |
+
+214-218 us both. Spread ~1.8%.
+~1.23x fused 265. T-linear vs
+847. Do not freeze 214 as 2800.
 
 ## ESIMD fused delta T=256 SLM a/b card1 (2026-09-03gr)
 
@@ -474,5 +478,16 @@ ok=1. pipe_host 853.663 event
 2750 throttle=1. Wash vs SLM-K
 847-858. Stop a/b SLM.
 
-K7 next: sibling SLM-K T=64 vs
-v-prefetch T=256.
+## ESIMD fused delta T=256 v-prefetch card0 (2026-09-03gt)
+
+backend sycl+l0, AOT
+gdn_delta_slmv. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 873.078 event
+866.299. 18.1 GB/s. act 2783-
+2750 throttle=1. ~1.03x SLM-K
+847. Stop v-prefetch vs SLM-K.
+
+K7 next: SLM-K T=1 vs inner
+unroll T=256.

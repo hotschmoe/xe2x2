@@ -2903,26 +2903,30 @@ VERDICT -> SLM-K blk=64 is 835 us
 
 Evidence: `results/k7/esimd_delta_slmk64_t256_s0_card1.txt`.
 
-## ESIMD SLM-K T=64 is 214 us at 2800 (K7)
+## ESIMD SLM-K T=64 is 214-218 us (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_delta_slmk`. T=64
-  blk=16. Card0. spin=0. Prior:
-  fused T=64 265-271 throttle=1,
-  SLM-K T=256 847.
+  blk=16. Both cards. card0
+  spin=0, card1 spin=4000. Prior:
+  fused T=64 265-271 throttle=1.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  214.083. timed act=cur=2800
-  throttle=0.
+  214.083 / 217.843. Spread
+  ~1.8%. card0 act=cur=2800
+  throttle=0. card1 act=2750
+  throttle=1.
 
-VERDICT -> SLM-K T=64 is 214 us
-  pipe_host card0 at 2800, ~1.24x
+VERDICT -> SLM-K T=64 is 214-218
+  us pipe_host both cards, ~1.23x
   fused 265, T-linear vs 847.
-  Do not freeze 214 until sibling.
-  Rank pipe_host.
+  New T=64 leftover class. Do
+  not freeze 214 as 2800. Rank
+  pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmk_t64_s0_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmk_t64_s0_card0.txt`,
+  `results/k7/esimd_delta_slmk_t64_s4000_card1.txt`.
 
 ## ESIMD SLM a/b washes vs SLM-K T=256 (K7)
 
@@ -2943,6 +2947,26 @@ VERDICT -> SLM a/b is 854 us
   k/q-only. Rank pipe_host.
 
 Evidence: `results/k7/esimd_delta_slmab_t256_s0_card1.txt`.
+
+## ESIMD v-prefetch loses to SLM-K T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmv` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  k/q SLM, 16 v in GRF. Card0.
+  spin=0. Prior: SLM-K 847-858.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  873.078. timed act 2783-2750
+  throttle=1.
+
+VERDICT -> v-prefetch is 873 us
+  pipe_host card0, ~1.03x SLM-K
+  847. Stop v-prefetch vs SLM-K.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmv_t256_s0_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4362,13 +4386,16 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   blk=64 is 835 us card1
   (2026-09-03gp), wash vs blk=32.
   Stop larger blk. SLM-K T=64 is
-  214 us card0 at 2800
-  (2026-09-03gq), ~1.24x fused
-  265, T-linear vs 847. Do not
-  freeze 214 until sibling. SLM
-  a/b T=256 is 854 us card1
-  (2026-09-03gr), wash vs 847.
-  Stop a/b SLM.
+  214-218 us both cards
+  (2026-09-03gq/gs), ~1.23x fused
+  265. card0 2800, card1
+  throttle=1. Do not freeze 214
+  as 2800. SLM a/b T=256 is 854
+  us card1 (2026-09-03gr), wash
+  vs 847. Stop a/b SLM.
+  v-prefetch T=256 is 873 us
+  card0 (2026-09-03gt), ~1.03x
+  SLM-K 847. Stop v-prefetch.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

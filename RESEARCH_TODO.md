@@ -458,9 +458,15 @@ Stop larger blk. SLM-K T=64 is
 265, T-linear vs 847. SLM a/b
 T=256 is 854 us card1
 (2026-09-03gr), wash vs 847.
-Stop a/b SLM. Next: split.
-card0: sibling SLM-K T=64.
-card1: v-prefetch T=256. Loop
+Stop a/b SLM. SLM-K T=64 is
+214-218 us both cards
+(2026-09-03gq/gs), ~1.23x fused
+265. Do not freeze 214 as 2800.
+v-prefetch T=256 is 873 us
+card0 (2026-09-03gt), ~1.03x
+SLM-K 847. Stop v-prefetch.
+Next: split. card0: SLM-K T=1.
+card1: inner unroll T=256. Loop
 every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -472,16 +478,18 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling SLM-K T=64
-   (card0 214 at 2800, ~1.24x 265).
-2. v-prefetch T=256
-   (SLM-K 847 leftover; a/b wash).
+1. SLM-K T=1 decode
+   (fused T=1 7.1; slmk needs T%16,
+   so new blk=1 TU).
+2. inner unroll T=256 SLM-K
+   (847 leftover; v-prefetch lost).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
-a/b SLM, SLM LUT / u4+sign /
-skip-hi kernel, persist-s8 GEMM us.
+a/b SLM, v-prefetch, SLM LUT /
+u4+sign / skip-hi kernel,
+persist-s8 GEMM us.
 
 ## After P0: kernel workstreams (parallelizable)
 
