@@ -229,15 +229,14 @@ empty. One question per fire. Split cards.
 
 1. Sibling W8A8 M=64 K=17408 (card1 184
    us, loses to w4a16 130). Then K2 s2
-   decode tile at 5120.
-2. K2 s2 decode tile at 5120 (INT2 silicon
-   is lit, not serving-shaped yet).
-3. K2 s2xs8 serving-shaped (literature mix).
-4. K5 producer+GEMM at FFN N=17408 and
+   decode tile at 5120 (INT2 silicon lit,
+   not serving-shaped yet).
+2. K2 s2xs8 serving-shaped (literature mix).
+3. K5 producer+GEMM at FFN N=17408 and
    K=17408 (decode leftover after 44 us).
-5. Integer GPTQ/AWQ s4 checkpoint through
+4. Integer GPTQ/AWQ s4 checkpoint through
    ESIMD s4 (K6 arm 9, true INT4 XMX).
-6. Mixed s8xs4 numeric oracle (ISA lit,
+5. Mixed s8xs4 numeric oracle (ISA lit,
    no s32 oracle yet).
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
