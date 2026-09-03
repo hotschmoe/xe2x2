@@ -7489,6 +7489,108 @@ VERDICT -> Sibling matches. s2
   GEMM us still no TU; s2 4-acc
   schedule steals closed.
 
+### 2026-09-03ep - K7 GDN conv1d K=4 card0
+
+CONTEXT -> Qwen3.8-27B is GDN
+  hybrid. conv_k=4 key_dim=2048
+  val_dim=6144. First GDN micro.
+  No serve. s2 decode 11.5. W8A8
+  44.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  depthwise conv1d K=4 bf16.
+  T=1/64/256. spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_conv1d.sh 0
+  ```
+
+RESULT -> ok=1. T=1 q 125.283 k
+  114.668 v 116.826. T=64/256
+  stay 112-117. GB/s 0.2 at T=1.
+  cur 550-2800 throttle=0.
+
+VERDICT -> Conv1d is ~115 us
+  launch-bound at 2800-class
+  clocks card0. Not a fat GEMM.
+  Rank us.
+
+### 2026-09-03eq - K7 GDN delta recurrent card1
+
+CONTEXT -> 48 v-heads, S 128x128
+  bf16, 1.5 MiB/layer. Decode
+  fused-recurrent. First delta
+  micro. No serve.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  eager bmm delta update. spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_delta_recurrent.sh 1
+  ```
+
+RESULT -> ok=1. pipe-style host
+  309.042 us. 10.3 GB/s. state
+  72 MiB all 48 layers. cur
+  550-2800 throttle=0.
+
+VERDICT -> Eager delta is 309 us
+  card1, ~7x W8A8 44. State bytes
+  are small; this path is the
+  leftover. Rank us.
+
+### 2026-09-03er - K7 GDN conv1d sibling card1
+
+CONTEXT -> card0 conv1d was ~115
+  us launch-bound. Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_conv1d.sh 1
+  ```
+
+RESULT -> ok=1. T=1 q 117.114 k
+  115.776 v 119.369. T=256 tracks
+  ~115. vs card0 125/115/117.
+  q T=1 spread ~7% (clocks).
+
+VERDICT -> Sibling matches the
+  115 us class. Launch-bound both
+  cards. Rank us.
+
+### 2026-09-03es - K7 GDN delta sibling card0
+
+CONTEXT -> card1 delta was 309 us.
+  Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_delta_recurrent.sh 0
+  ```
+
+RESULT -> ok=1. 306.575 us vs
+  card1 309.042. Spread ~0.8%.
+  10.4 GB/s.
+
+VERDICT -> Sibling matches. Eager
+  GDN delta is 308 us both cards.
+  Conv1d 115 us launch-bound.
+  Naive GDN >> s2 decode 11.5 and
+  W8A8 44. Rank us. Next: qkvz
+  GEMM 5120x2048 vs fused GDN
+  kernel.
+
+
 
 
 

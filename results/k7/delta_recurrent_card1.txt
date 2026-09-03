@@ -1,0 +1,18 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4668364898864 energy2=pkg:2478049017028 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4603828005615 energy2=pkg:2564037952026 temp2_mC=51000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=gdn_delta_recurrent
+48 v-heads 128x128 state. s2 decode 11.5. W8A8 44.
+CONFIG backend=pytorch-xpu sitting on sycl+l0 op=gdn_delta_recurrent dtype=bf16 n_v_heads 48 dk 128 dv 128 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+arm,heads,dv,dk,us,state_bytes,bytes,GBs,ok
+delta_recurrent,48,128,128,309.042,1572864,3182592,10.30,1
+NOTE state_bf16_per_layer_MiB 1.5 x48_gdn_layers_MiB 72.0
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4669518797485 energy2=pkg:2478714256347 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4604964810424 energy2=pkg:2564706164123 temp2_mC=54000

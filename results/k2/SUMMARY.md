@@ -1366,4 +1366,4 @@ Wash vs no-db 37.4. Stop A-db on
 s2 4-acc. Floor stays 37.4.
 
 K2 next: s2 4-acc schedule steals
-closed. persist-s8 GEMM has no TU.
+closed. K7 GDN is the leftover.

@@ -1,0 +1,26 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4670804144165 energy2=pkg:2479373411560 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4606259012329 energy2=pkg:2565385301818 temp2_mC=54000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=depthwise_conv1d_k4
+Qwen3.8 key_dim=2048 val_dim=6144 conv_k=4. s2 4x8 decode 11.5. W8A8 44.
+CONFIG backend=pytorch-xpu sitting on sycl+l0 op=depthwise_conv1d_k4 dtype=bf16 model=qwen3.8-27b H 5120 key_dim 2048 val_dim 6144 conv_k 4 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+INVENTORY layers=64 full_attention_interval=4 gdn_layers=48 full_attn_layers=16
+arm,channels,t,us,bytes,GBs,ok
+conv1d_q,2048,1,117.114,24576,0.21,1
+conv1d_q,2048,64,115.534,540672,4.68,1
+conv1d_q,2048,256,115.485,2113536,18.30,1
+conv1d_k,2048,1,115.776,24576,0.21,1
+conv1d_k,2048,64,116.815,540672,4.63,1
+conv1d_k,2048,256,115.382,2113536,18.32,1
+conv1d_v,6144,1,119.369,73728,0.62,1
+conv1d_v,6144,64,116.006,1622016,13.98,1
+conv1d_v,6144,256,114.514,6340608,55.37,1
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4671946635925 energy2=pkg:2480024136901 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4607432750671 energy2=pkg:2566080781311 temp2_mC=55000

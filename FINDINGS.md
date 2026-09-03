@@ -2243,6 +2243,50 @@ Evidence: `results/k2/s2w48m4db_m256_n2_s512_card0.txt`,
   `results/k2/s2w48m4db_m256_n2_s512_card1.txt`,
   `results/k2/s2w48m4db_dpas_lines.txt`.
 
+## Qwen3.8 GDN conv1d is ~115 us launch-bound (K7)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Qwen3.8-27B dims:
+  key_dim=2048 value_dim=6144
+  conv_k=4. Depthwise conv1d bf16.
+  Both cards. No serve. Short
+  kernels, cur 550-2800,
+  throttle=0.
+
+RESULT -> T=1/64/256 all ~115 us.
+  T=1 q 125.3/117.1, k 114.7/115.8,
+  v 116.8/119.4. GB/s 0.2 at T=1
+  vs 55 at v T=256.
+
+VERDICT -> Eager GDN conv1d is a
+  ~115 us launch, not a GEMM.
+  Three of these (q,k,v) already
+  dwarf s2 decode 11.5. Rank us.
+
+Evidence: `results/k7/conv1d_card0.txt`,
+  `results/k7/conv1d_card1.txt`,
+  `results/k7/INVENTORY.md`.
+
+## Qwen3.8 GDN delta recurrent is 308 us (K7)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. 48 v-heads, S 128x128
+  bf16 (1.5 MiB/layer, 72 MiB x48).
+  Eager bmm fused-recurrent. Both
+  cards. No serve.
+
+RESULT -> 306.575/309.042 us.
+  Spread ~0.8%. ~10 GB/s.
+
+VERDICT -> Eager delta is 308 us
+  both cards, ~7x W8A8 44. State
+  footprint is small; this path
+  is the decode leftover after
+  INT8 projections. Rank us.
+
+Evidence: `results/k7/delta_recurrent_card0.txt`,
+  `results/k7/delta_recurrent_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3570,6 +3614,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ~8.2x NT=2. Stop NT=4. s2 4-acc
   A-db M=256 is 37.2 us both cards,
   wash vs no-db 37.4. Stop A-db.
+  K7 GDN: eager conv1d K=4 is ~115
+  us launch-bound both cards;
+  eager delta recurrent is 308 us
+  both cards (~7x W8A8 44). Decode
+  leftover after INT8 projections.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
