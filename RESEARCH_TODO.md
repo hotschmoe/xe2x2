@@ -573,10 +573,16 @@ card1 (2026-09-03hv) at 2233
 throttle=1, spread ~16% vs 252.
 Clock-linear. Do not freeze 252
 as 2800. spin=4000 throttles
-T=256. Next: split. card0:
-slmht 2-row T=256 spin=0.
-card1: blk=32 T=64. Loop every
-5m.
+T=256. slmht 2-row T=256 is
+327 us card0 at 2800
+(2026-09-03hw), ~1.26x slmht
+260. Stop 2-row vs slmht.
+blk=32 T=64 is 67 us card1
+(2026-09-03hx), wash vs slmht
+67. Stop blk=32 at T=64. Next:
+split. card0: slmht SLM-db
+T=256 spin=0. card1: slmht8
+T=8. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -587,10 +593,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. slmht 2-row T=256
+1. slmht SLM-db T=256
    (260 leftover; spin=0).
-2. slmht blk=32 T=64
-   (67 leftover; does 1.03x scale).
+2. slmht8 T=8
+   (between T=1 7.1 and T=16 22).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
@@ -598,6 +604,7 @@ WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
 tree hsum T=1, tile-fused T=1 reduce,
 T=1 scalar hsum, slmht blk=8,
+slmht 2-row, slmht blk=32 T=64,
 inner unroll, slmht unroll, pack a/b/v,
 packed-o, SLM f32, SLM db,
 SLM LUT / u4+sign / skip-hi

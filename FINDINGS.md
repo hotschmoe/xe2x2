@@ -3455,6 +3455,48 @@ VERDICT -> packed-o T=256 is
 Evidence: `results/k7/esimd_delta_slmhto_t256_s0_card1.txt`,
   `results/k7/esimd_delta_slmhto_t256_s4000_card0.txt`.
 
+## ESIMD slmht 2-row loses to tile-fused T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmht2` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  two i-rows per WI. Card0. spin=0.
+  Prior: slmht 260.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  327.459. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> slmht 2-row T=256 is
+  327 us pipe_host card0 at 2800,
+  ~1.26x slmht 260. Stop 2-row
+  vs slmht. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht2_t256_s0_card0.txt`.
+
+## ESIMD slmht blk=32 T=64 is wash vs blk=16 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht32`. T=64
+  blk=32. Card1. spin=0. Prior:
+  slmht T=64 67, blk=32 T=256
+  ~1.03x.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  66.502 event min 64. timed
+  ramped 550 to 2700 throttle=0.
+
+VERDICT -> blk=32 T=64 is 67 us
+  pipe_host card1, wash vs slmht
+  67. 1.03x does not scale. Do
+  not freeze 67 as 2800. Stop
+  blk=32 at T=64. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht32_t64_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4964,7 +5006,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   us card1 (2026-09-03hv) at
   2233 throttle=1, spread ~16%.
   Clock-linear. Do not freeze
-  252 as 2800.
+  252 as 2800. slmht 2-row T=256
+  is 327 us card0 at 2800
+  (2026-09-03hw), ~1.26x slmht
+  260. Stop 2-row vs slmht.
+  blk=32 T=64 is 67 us card1
+  (2026-09-03hx), wash vs slmht
+  67. Stop blk=32 at T=64.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

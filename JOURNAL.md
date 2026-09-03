@@ -10051,6 +10051,67 @@ VERDICT -> Sibling clock-spread.
   promote. Rank pipe_host.
   Next: slmht 2-row T=256 vs
   blk=32 T=64. spin=0 on T=256.
+
+### 2026-09-03hw - K7 ESIMD fused delta T=256 slmht 2-row card0
+
+CONTEXT -> slmht T=256 260
+  leftover. Napkin two i-rows
+  per WI. spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmht2.
+  gpu-run --card 0. T=256 blk=16.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht2_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 327.638 pipe_host
+  327.459. 48.2 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  slmht 260 (~1.26x).
+
+VERDICT -> ESIMD slmht 2-row
+  T=256 is 327 us pipe_host
+  card0 at 2800, ~1.26x slmht
+  260. Napkin miss. Stop 2-row
+  vs slmht. Rank pipe_host.
+
+### 2026-09-03hx - K7 ESIMD fused delta T=64 slmht blk=32 card1
+
+CONTEXT -> slmht T=64 67.
+  blk=32 T=256 ~1.03x at 2600.
+  Napkin scale. spin=0.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht32. gpu-run
+  --card 1. T=64 blk=32. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmht32_t64.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 155.943 pipe_host
+  66.502. 94.8 GB/s. timed_begin
+  act=cur=550. timed_end
+  act=2700 cur=2800 throttle=0.
+  event min 64. vs slmht T=64 67.
+
+VERDICT -> ESIMD slmht blk=32
+  T=64 is 67 us pipe_host card1,
+  wash vs slmht 67. 1.03x does
+  not scale. Clocks ramped 550
+  to 2700. Do not freeze 67 as
+  2800. Stop blk=32 at T=64.
+  Rank pipe_host. Next: slmht
+  SLM-db T=256 vs slmht8 T=8.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.

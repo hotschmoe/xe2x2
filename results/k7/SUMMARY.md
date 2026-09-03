@@ -830,5 +830,30 @@ cur=2800 throttle=1. Clock-
 linear. Do not freeze 252 as
 2800.
 
-K7 next: slmht 2-row T=256
-spin=0 vs blk=32 T=64.
+## ESIMD fused delta T=256 slmht 2-row card0 (2026-09-03hw)
+
+backend sycl+l0, AOT
+gdn_delta_slmht2. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 327.459 event
+327.638. 48.2 GB/s. act=cur=2800
+throttle=0. ~1.26x slmht 260.
+Stop 2-row vs slmht.
+
+## ESIMD fused delta T=64 slmht blk=32 card1 (2026-09-03hx)
+
+backend sycl+l0, same
+gdn_delta_slmht32. T=64 blk=32
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 66.502 event
+155.943 (ramp). timed_begin
+act=cur=550. timed_end act=2700
+throttle=0. event min 64. Wash
+vs slmht T=64 67. Stop blk=32
+at T=64. Do not freeze 67 as
+2800.
+
+K7 next: slmht SLM-db T=256
+spin=0 vs slmht8 T=8.
