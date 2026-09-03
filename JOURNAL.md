@@ -8183,6 +8183,58 @@ VERDICT -> Packed qkv M=256 is
   not freeze 164. Rank us. Next:
   sibling swap.
 
+### 2026-09-03fp - K7 packed qkv W8A8 M=256 sibling card0
+
+CONTEXT -> card1 packed qkv M=256
+  was 164 us. Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  int8_gemm_w8a8 M=256 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_qkv_w8a8_m256.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.063
+  ok=1. 163.739 us vs card1
+  163.539. Spread ~0.12%.
+
+VERDICT -> Sibling matches. Packed
+  qkv M=256 is 164 us both cards,
+  ~1.17x M=64, ~1.37x 3x 75. Rank
+  us.
+
+### 2026-09-03fq - K7 ESIMD conv1d T=256 sibling card1
+
+CONTEXT -> card0 conv T=256 was
+  37.6 us pipe_host at 2800.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 1. C=2048 T=256.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t256.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 37.229 pipe_host 37.811 vs
+  card0 37.607. Spread ~0.5%.
+
+VERDICT -> Sibling matches. ESIMD
+  conv T=256 is 37.7 us pipe_host
+  both cards at 2800. ~3.72x T=64.
+  Rank pipe_host. Next: conv
+  C=6144 T=256 vs delta T=64.
+
+
 
 
 
