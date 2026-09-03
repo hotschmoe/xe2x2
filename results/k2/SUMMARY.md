@@ -1161,4 +1161,40 @@ New floor 64 us both cards. Spread
 mix, W8A8 181 (~2.83x). Qwen FFN
 s2 M=64 map closed (20 / 53.1 / 64).
 
-K2 next: s2 4x8 M=256 vs s2xs8 4x8.
+## s2 4x8 A-db M=256 both cards (2026-09-03dr/dt)
+
+Same dpas_s2_db48. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4-acc | mix | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 54.943 | 55.453 | 48.6 | 123 | 75 |
+| 256 x 5120 | 1 | 55.438 | 55.497 | 48.6 | 123 | 75 |
+
+New floor 55.5 us both cards.
+Spread ~0.08%. ~2.77x M=64. Beats
+W8A8 75 (~1.35x) and mix 123.
+Loses to s4 4-acc 48.6 (~1.14x).
+
+## s2xs8 4x8 A-db M=64 both cards (2026-09-03ds/du)
+
+dpas_s2xs8_db48 RC=8 wg 4x8 A-db.
+A=s8 B=s2 pack=4 dpas K=32.
+ocloc 64x dpas.8x8 rW:s2 rA:b,
+grf 128, B d8v rd:2. NT=2
+spin=512. cosine=1.0 max_abs=0.
+timed 2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s2 | s8xs4 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 33.182 | 33.152 | 20 | 43.3 | 46 |
+| 64 x 5120 | 1 | 34.094 | 33.200 | 20 | 43.3 | 46 |
+
+New floor 33.2 us both cards.
+Spread ~0.14%. Beats W8A8 46
+(~1.39x) and s8xs4 43.3. Loses to
+s2 20 (~1.66x).
+
+K2 next: s2 4x8 M=256 N=17408 vs
+s2xs8 4x8 M=64 N=17408.

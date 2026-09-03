@@ -280,7 +280,15 @@ s2 4x8 M=64 K=17408 is 64 us both
 cards (2026-09-03dp) at 2800,
 ~3.20x square, beats W8A8 181
 (~2.83x). Qwen FFN s2 M=64 map is
-closed (20 / 53.1 / 64).
+closed (20 / 53.1 / 64). s2 4x8
+A-db M=256 is 55.5 us both cards
+(2026-09-03dt) at 2800, ~2.77x
+M=64, beats W8A8 75 (~1.35x),
+loses to s4 4-acc 48.6 (~1.14x).
+s2xs8 4x8 A-db M=64 is 33.2 us
+both cards (2026-09-03du) at 2800,
+beats W8A8 46 (~1.39x) and s8xs4
+43.3, loses to s2 20 (~1.66x).
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -293,11 +301,11 @@ lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: s2 4x8 A-db
-M=256 (runner
-kernels/esimd_dpas/run_s2_db48_m256.sh).
-card1: s2xs8 4x8 A-db M=64 (binary
-ready; runner
-kernels/esimd_dpas/run_s2xs8_db48.sh).
+M=256 N=17408 (runner
+kernels/esimd_dpas/run_s2_db48_m256_wide.sh).
+card1: s2xs8 4x8 A-db M=64 N=17408
+(runner
+kernels/esimd_dpas/run_s2xs8_db48_wide.sh).
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -307,12 +315,12 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2 4x8 M=256 (square 20, s4
-   4-acc 48.6, mix 123 a loss, W8A8
-   75, napkin ~80).
-2. s2xs8 4x8 M=64 (s2 20, s8 75,
-   mix s8xs4 43.3, W8A8 46, decode
-   s2xs8 14.1).
+1. s2 4x8 M=256 N=17408 (square
+   55.5, s4 140, W8A8 248, napkin
+   ~189).
+2. s2xs8 4x8 M=64 N=17408 (square
+   33.2, s2 53.1, mix 129, W8A8
+   202, napkin ~113).
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
