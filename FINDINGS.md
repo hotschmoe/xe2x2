@@ -2772,6 +2772,48 @@ VERDICT -> Chunk/WY C=64 is
 
 Evidence: `results/k7/esimd_delta_chunk64_t256_s0_card0.txt`.
 
+## ESIMD fused delta T=256 SLM-K is 847 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmk` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  serial S, k/q in SLM. Card0.
+  spin=0. Prior: fused 1086.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  847.280. timed act 2783-2767
+  cur=2800 throttle=1 at end.
+
+VERDICT -> SLM-K T=256 is 847 us
+  pipe_host card0, ~1.28x fused
+  1086. Numeric closed. Do not
+  freeze 847 as 2800. Sibling
+  before promote. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmk_t256_s0_card0.txt`.
+
+## ESIMD fused delta T=256 row-block rb=4 is 1034 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_rowb` AOT
+  `intel_gpu_bmg_g31`. T=256 rb=4.
+  Card1. spin=0. Prior: fused 1086,
+  SLM-K 847.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  1034.092. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> Row-block rb=4 is 1034
+  us pipe_host card1 at 2800,
+  ~1.05x fused 1086, loses to
+  SLM-K 847. One-card. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_rowb_t256_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4170,7 +4212,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   T=256 is 95420 us card0 at
   2800 (2026-09-03gh), ~88x
   fused 1086, ~30x C=16. Stop
-  C=64. Stop this WY path.
+  C=64. Stop this WY path. ESIMD
+  SLM-K T=256 is 847 us card0
+  (2026-09-03gi), ~1.28x fused
+  1086, throttle=1. Do not freeze
+  847. Row-block rb=4 is 1034 us
+  card1 (2026-09-03gj) at 2800,
+  ~1.05x fused, loses to SLM-K.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

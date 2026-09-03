@@ -434,10 +434,15 @@ us card1 (2026-09-03gg), still
 throttle=1. Chunk/WY C=64 T=256
 is 95420 us card0 (2026-09-03gh)
 at 2800, ~88x fused 1086. Stop
-C=64. Stop this WY path. Next:
-split. card0: fused T=256 SLM-K
-(no WY). card1: fused T=256
-row-block steal. Loop every 5m.
+C=64. Stop this WY path. ESIMD
+SLM-K T=256 is 847 us card0
+(2026-09-03gi), ~1.28x fused
+1086, throttle=1. Row-block rb=4
+is 1034 us card1 (2026-09-03gj)
+at 2800, ~1.05x fused. Next:
+split. card0: sibling SLM-K.
+card1: row-block rb=8. Loop
+every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -448,10 +453,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. fused T=256 SLM-K
-   (no WY; leftover 1086 throttle=1).
-2. fused T=256 row-block
-   (serial S, different WG map).
+1. sibling SLM-K T=256
+   (card0 847, throttle=1, ~1.28x).
+2. row-block rb=8 T=256
+   (rb=4 1034 vs SLM-K 847).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
