@@ -532,10 +532,18 @@ promote. tile-fused T=64 is
 67-77 us both cards
 (2026-09-03hi/hl). Clock
 spread 15% (2367 vs 2700). Do
-not freeze 67 as 2800. Next:
-split. card0: inner unroll
-T=256 slmht. card1: sibling
-T=16. Loop every 5m.
+not freeze 67 as 2800. tile-
+fused T=16 is 22 us both cards
+(2026-09-03hk/hn), ~1.56x tree
+hsum 34, spread ~2%. throttle=1.
+Do not freeze 22 as 2800.
+slmht tt unroll T=256 is 276
+us card0 (2026-09-03hm),
+~1.06x slmht 260. Stop inner
+unroll vs slmht. Next: split.
+card0: pack a/b/v T=256.
+card1: tile-fused T=1. Loop
+every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -546,17 +554,17 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling tile-fused T=16
-   (22 us; ~1.56x 34).
-2. inner unroll slmht T=256
-   (260 leftover; tt unroll).
+1. pack a/b/v slmht T=256
+   (260 leftover; scalar a/b/v).
+2. tile-fused T=1 decode
+   (fused 7.1; 8 hsums).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
 tree hsum T=1,
-inner unroll, SLM f32, SLM db,
+inner unroll, slmht unroll, SLM f32, SLM db,
 SLM LUT / u4+sign / skip-hi
 kernel, persist-s8 GEMM us.
 

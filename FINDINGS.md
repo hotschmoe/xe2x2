@@ -3231,27 +3231,48 @@ VERDICT -> Tile-fused T=64 is
 Evidence: `results/k7/esimd_delta_slmht_t64_s0_card0.txt`,
   `results/k7/esimd_delta_slmht_t64_s4000_card1.txt`.
 
-## ESIMD tile-fused T=16 is 22 us (K7)
+## ESIMD tile-fused T=16 is 22 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_delta_slmht`. T=16
-  blk=16. Card0. spin=4000.
+  blk=16. Both cards. spin=4000.
   Prior: tree hsum T=16 34.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  21.712. timed act 2617-2600
-  cur=2800 throttle=1.
+  21.712 / 21.286. Spread ~2%.
+  act 2600 / 2633 cur=2800
+  throttle=1 both.
 
 VERDICT -> Tile-fused T=16 is 22
-  us pipe_host card0, ~1.56x
-  tree hsum 34. Napkin 21.
-  throttle=1. Do not freeze 22
-  as 2800. One-card. Sibling
-  before promote. Rank
+  us pipe_host both cards, ~1.56x
+  tree hsum 34. throttle=1. Do
+  not freeze 22 as 2800. Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmht_t16_s4000_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmht_t16_s4000_card0.txt`,
+  `results/k7/esimd_delta_slmht_t16_s4000_card1.txt`.
+
+## ESIMD slmht tt unroll loses to tile-fused T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmhtu` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  inner tt unrolled. Card0.
+  spin=0. Prior: slmht 260.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  275.567. timed act 2800-2767
+  throttle=1.
+
+VERDICT -> slmht tt unroll T=256
+  is 276 us pipe_host card0,
+  ~1.06x slmht 260. Stop inner
+  unroll vs slmht. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmhtu_t256_s0_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4720,11 +4741,19 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   T=256 is 260-294 us both
   cards (2026-09-03hg/hj). Clock
   spread 13%. Do not freeze 260
-  as 2800. tile-fused T=64 is 67
-  us card0 (2026-09-03hi),
-  napkin 66. Clocks 550 to 2700.
-  Do not freeze 67 as 2800. Hold
-  retry.
+  as 2800. tile-fused T=64 is
+  67-77 us both cards
+  (2026-09-03hi/hl). Clock
+  spread 15%. Do not freeze 67
+  as 2800. tile-fused T=16 is 22
+  us both cards (2026-09-03hk/hn),
+  ~1.56x tree hsum 34, spread
+  ~2%. throttle=1. Do not freeze
+  22 as 2800. slmht tt unroll
+  T=256 is 276 us card0
+  (2026-09-03hm), ~1.06x slmht
+  260. Stop inner unroll vs
+  slmht.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

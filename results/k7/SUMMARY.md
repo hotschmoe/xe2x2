@@ -707,5 +707,29 @@ throttle=1. Clock spread. 67-77
 us both. Do not freeze 67 as
 2800.
 
-K7 next: sibling T=16 vs inner
-unroll slmht T=256.
+## ESIMD fused delta T=256 slmht tt unroll card0 (2026-09-03hm)
+
+backend sycl+l0, AOT
+gdn_delta_slmhtu. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 275.567 event
+272.823. 57.3 GB/s. act 2800-
+2767 throttle=1. ~1.06x slmht
+260. Stop inner unroll vs
+slmht.
+
+## ESIMD fused delta T=16 tile-fused sibling card1 (2026-09-03hn)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=16 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 21.286 event
+23.773 vs card0 21.712. Spread
+~2%. act=2633 cur=2800
+throttle=1. 22 us both. Do not
+freeze 22 as 2800.
+
+K7 next: pack a/b/v T=256 vs
+tile-fused T=1.
