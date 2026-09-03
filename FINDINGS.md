@@ -1255,6 +1255,51 @@ VERDICT -> Decode-tile GPTQ at M=256
 
 Evidence: `results/k6/gptq_s4sc_m256_n2_s512_card1.txt`.
 
+## GPTQ 4x8 A-db loses at M=64 (K6)
+
+CONFIG -> backend `sycl+l0`,
+  `dpas_s4_gptq_db48`. RC=8 wg 4x8
+  A-db gs=128. M=64 N=K=5120. Card0.
+  NT=2 spin=512. Named clock 2800.
+  Prior: 8x2-N 123.5; s4 33.6; mix
+  43.3; W8A8 46; napkin ~61.
+
+RESULT -> cosine=1.0 max_abs=3e-5.
+  timed act=cur=2800 throttle=0. M=64
+  pipe_host 102.936 vs 8x2-N 123.5 vs
+  s4 33.6 vs mix 43.3 vs W8A8 46 vs
+  napkin 61. ~3.06x s4.
+
+VERDICT -> GPTQ 4x8 beats 8x2-N
+  (~1.20x) but is not a prefill
+  floor. Loses to s4, mix, and W8A8
+  (~2.24x). Napkin 61 miss. One-card.
+  Rank pipe_host.
+
+Evidence: `results/k6/gptq_s4db48_m64_n2_s512_card0.txt`.
+
+## GPTQ 4x8 A-db loses at M=256 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s4_gptq_db48`. M=256 N=K=5120.
+  Card1. NT=2 spin=512. Named clock
+  2800. Prior: 8x2-N 355; s4 48.6;
+  mix 123; W8A8 75.
+
+RESULT -> cosine=1.0 max_abs=3e-5.
+  timed act=cur=2800 throttle=0. M=256
+  pipe_host 302.722 vs 8x2-N 355 vs
+  s4 48.6 vs mix 123 vs W8A8 75.
+  ~2.94x M=64.
+
+VERDICT -> GPTQ 4x8 at M=256 beats
+  8x2-N (~1.17x), loses to s4, mix,
+  and W8A8 (~4.04x). Stop GPTQ 4x8
+  at prefill vs W8A8. One-card. Rank
+  pipe_host.
+
+Evidence: `results/k6/gptq_s4db48_m256_n2_s512_card1.txt`.
+
 ## s8xs4 4x8 A-db M=64 is 43.3 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
@@ -3120,7 +3165,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   W8A8 46. GPTQ 8x2-N M=256 is 355
   us card1 throttle=1, a loss vs
   W8A8 75. Stop 8x2-N GPTQ at
-  prefill.
+  prefill. GPTQ 4x8 A-db M=64 is
+  102.9 us card0 at 2800, beats
+  8x2-N 123.5, loses to W8A8 46
+  (~2.24x). GPTQ 4x8 A-db M=256 is
+  303 us card1 at 2800, a loss vs
+  W8A8 75. Stop GPTQ 4x8 at prefill
+  vs W8A8.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

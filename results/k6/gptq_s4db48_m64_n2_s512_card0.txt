@@ -1,0 +1,28 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4396644126464 energy2=pkg:2336338681579 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4330497212890 energy2=pkg:2418099597412 temp2_mC=56000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s4_gptq_db48 nt=2 spin=512 m=64 RC=8 A_db wg=4x8 gptq g128
+GPTQ 8x2-N M=64 123.5 a loss. s4 4x8 33.6. mix 43.3. W8A8 46. Napkin 33.6*1.81 ~61.
+=== dump (CPU) ===
+reuse /mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_down0_5120_sc.bin
+dump_rc=0
+=== gptqdb48 nt=2 spin=512 m=64 n=5120 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4_gptq->f16 RC=8 NT=2 unroll=16 gs=128 wg=4x8_NxM A_double_buffer=1 padM=RC pack=2 a_scale=0.0200 dump_k=5120 dump_n=5120 out=f16 warmup=10 iters=20 card=0 spin=512 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,8,32,1024,68.021,107.134,87.908,0.0077,1.000000,0,1,68.021,68.021,68.021
+spin_done n=512 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,64,5120,5120,102.375,118.592,102.936,32.7760,1.000000,3.0518e-05,1,102.292,101.875,103.646
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4396925685180 energy2=pkg:2336500374511 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4330770525390 energy2=pkg:2418258148498 temp2_mC=49000

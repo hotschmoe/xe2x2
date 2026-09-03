@@ -6470,6 +6470,75 @@ VERDICT -> GPTQ 8x2-N M=256 is 355
   pipe_host. Next: GPTQ 4x8 A-db
   M=64.
 
+### 2026-09-03dj - K6 GPTQ s4 4x8 A-db M=64 card0
+
+CONTEXT -> GPTQ 8x2-N M=64 was 123.5
+  a loss. s4 4x8 33.6. mix 43.3.
+  W8A8 46. Napkin 33.6*1.81 ~61.
+  First GPTQ on 4x8 A-db. One-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s4_gptq_db48 RC=8 wg 4x8 A-db
+  gs=128. gpu-run --card 0. M=64
+  N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4_db48.sh 0 2 512
+  ```
+
+RESULT -> COMPILE_OK prior fire.
+  dump reuse. check cosine=1
+  max_abs=0. timed M=64 act=cur=2800
+  throttle=0. event 102.375
+  pipe_host 102.936 vs 8x2-N 123.5
+  vs s4 33.6 vs mix 43.3 vs W8A8 46
+  vs napkin 61. cosine=1
+  max_abs=3e-5. ~3.06x s4, ~1.20x
+  8x2-N.
+
+VERDICT -> GPTQ 4x8 M=64 is 102.9
+  us pipe_host at 2800 card0.
+  Numeric closed. Beats 8x2-N 123.5,
+  loses to s4 33.6, mix 43.3, and
+  W8A8 46 (~2.24x). Napkin 61 miss.
+  Not a prefill floor. One-card. Do
+  not freeze. Rank pipe_host.
+
+### 2026-09-03dk - K6 GPTQ s4 4x8 A-db M=256 card1
+
+CONTEXT -> GPTQ 8x2-N M=256 was 355.
+  s4 4-acc 48.6. mix 4x8 123 a loss.
+  W8A8 75. Same 4x8 GPTQ tile.
+  One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s4_gptq_db48. gpu-run --card 1.
+  M=256 N=K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_gptq_s4_db48_m256.sh 1 2 512
+  ```
+
+RESULT -> dump reuse. check cosine=1
+  max_abs=0. timed M=256 act=cur=2800
+  throttle=0. event 302.037
+  pipe_host 302.722 vs 8x2-N 355 vs
+  s4 48.6 vs mix 123 vs W8A8 75.
+  cosine=1 max_abs=3e-5. ~2.94x
+  M=64.
+
+VERDICT -> GPTQ 4x8 M=256 is 303 us
+  pipe_host at 2800 card1. Numeric
+  closed. Beats 8x2-N 355, loses to
+  s4 48.6, mix 123, and W8A8 75
+  (~4.04x). Stop GPTQ 4x8 at prefill
+  vs W8A8. One-card. Do not freeze.
+  Rank pipe_host. Next: s2 4x8 A-db
+  M=64 both-card.
+
+
 
 
 

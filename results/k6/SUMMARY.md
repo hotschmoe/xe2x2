@@ -738,4 +738,33 @@ act=2550 cur=2800 throttle=1.
 Loses to s4, s8, W8A8 75. Stop
 8x2-N at M=256 prefill. One-card.
 
-K6 next: GPTQ 4x8 A-db M=64.
+## GPTQ s4 4x8 A-db M=64 card0 (2026-09-03dj)
+
+dpas_s4_gptq_db48 RC=8 wg 4x8 A-db.
+NT=2 spin=512. cosine=1.0
+max_abs=3e-5. timed 2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4x8 | mix | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 102.375 | 102.936 | 33.6 | 43.3 | 46 |
+
+102.9 us at 2800 card0. Beats 8x2-N
+123.5. Loses to s4, mix, W8A8 46
+(~2.24x). Napkin 61 miss. One-card.
+
+## GPTQ s4 4x8 A-db M=256 card1 (2026-09-03dk)
+
+Same dpas_s4_gptq_db48. NT=2
+spin=512. cosine=1.0 max_abs=3e-5.
+timed 2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 4-acc | mix | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 302.037 | 302.722 | 48.6 | 123 | 75 |
+
+303 us at 2800 card1. ~2.94x M=64.
+Beats 8x2-N 355. Loses to s4, mix,
+W8A8 75. Stop GPTQ 4x8 vs W8A8.
+One-card.
+
+K6 next: parked. GPTQ 4x8 lost at prefill. s2 4x8 is K2.

@@ -1113,5 +1113,4 @@ s8 and W8A8 181. Loses to s4 106.0.
 Qwen FFN mix M=64 map closed
 (43.3 / 129 / 144.7).
 
-K2 next: parked on mix M=64 FFN.
-GPTQ 8x2-N prefill is K6.
+K2 next: s2 4x8 A-db M=64 both-card.
