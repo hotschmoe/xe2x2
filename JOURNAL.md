@@ -11118,3 +11118,337 @@ VERDICT -> Sibling matches.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-03jc - K7 ESIMD mixer L2-once T=256 sibling card1
+
+CONTEXT -> card0 L2-once was 327
+  us at 2700-2667. First fuse.
+  Sibling. spin=0. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_l2once. gpu-run
+  --card 1. T=256 C=10240 nv=48
+  blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer_l2once_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 317.284 pipe_host
+  312.274 vs card0 326.779.
+  Spread ~4.4%. timed act
+  2700-2767 cur=2800 throttle=1.
+  vs mixer-slmht 471 vs seq 298
+  vs L2-out 267-271.
+
+VERDICT -> Sibling matches.
+  ESIMD mixer L2-once T=256 is
+  312-327 us pipe_host both
+  cards, 327-class. Beats mixer
+  471, loses to seq 298. Extra
+  launch. Do not freeze 327 as
+  2800. Rank pipe_host. Next:
+  mixer conv-L2 fuse T=256.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jd - K7 ESIMD mixer conv-L2 fuse T=256 card0
+
+CONTEXT -> L2-once 327 is three
+  kernels (conv, L2, packed
+  delta). Drop L2 launch: fuse
+  conv+L2 in one kernel via
+  per-t SLM reduce on q/k, then
+  packed delta. Napkin: L2 free
+  in conv epilogue, ~298.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_convl2.
+  gpu-run --card 0. T=256
+  C=10240 nv=48 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer_convl2_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 357.836 pipe_host
+  358.198. timed act=2700
+  cur=2800 throttle=0. vs
+  L2-once 327 (~1.10x) vs seq
+  298 (~1.20x) vs mixer 471.
+
+VERDICT -> ESIMD mixer conv-L2
+  T=256 is 358 us pipe_host
+  card0, a loss vs L2-once 327
+  and seq 298. Per-t SLM
+  barriers in conv are the tax,
+  not the extra launch. Stop
+  this fuse. Sequential
+  conv+slmht ~298 stays the
+  T=256 leftover. Do not freeze
+  358 as 2800. Rank pipe_host.
+  Next: packed qkv ESIMD s8 vs
+  W8A8 96/140/164.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03je - K7 ESIMD packed qkv s8 M=1 card0
+
+CONTEXT -> oneDNN packed qkv
+  W8A8 M=1 is 96 us. Square s8
+  scale-to-f16 is 34 us at
+  N=5120. Same dpas_s8_sc tile
+  at packed n=10240 k=5120.
+  Napkin N-linear 68 us.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s8_qkv_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 73.078
+  pipe_host 73.945. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 96
+  (~0.77x, a beat) vs square
+  s8 34 (~2.17x, N=2x napkin
+  68).
+
+VERDICT -> ESIMD packed qkv s8
+  M=1 is 73.945 us pipe_host
+  card0 at 2800. Beats oneDNN
+  packed qkv W8A8 96. ~2.17x
+  square s8 34, near N-linear
+  68. Numeric closed. One-card.
+  Rank pipe_host. Next: packed
+  qkv ESIMD s8 M=64 vs W8A8 140.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jf - K7 ESIMD s8 packed qkv M=64 card1
+
+CONTEXT -> oneDNN packed qkv W8A8
+  M=64 is 138-142 us. square s8
+  4x8 A-db is 75 us at N=5120.
+  Napkin N-linear 75*2 ~150 us.
+  Same tile at packed n=10240.
+
+CONFIG -> backend sycl+l0,
+  standalone dpas_s8_sc8db48.
+  gpu-run --card 1. NT=2 U=16
+  spin=512 m=64 n=10240 k=5120
+  wg=4x8 A-db out=f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s8_qkv_m64.sh 1 512
+  ```
+
+RESULT -> cosine=1 max_abs=0
+  ok=1. event 212.604 pipe_host
+  214.369. timed act=cur=2800
+  throttle=0. vs W8A8 138-142
+  (~1.53x) vs square 75 (~2.86x)
+  vs napkin 150.
+
+VERDICT -> ESIMD s8 packed qkv
+  M=64 is 214 us pipe_host
+  card1 at 2800, a loss vs
+  oneDNN 140. Worse than
+  N-linear. One-card. Do not
+  freeze 214 until sibling.
+  Rank pipe_host. Next: sibling
+  M=64 card0 vs packed qkv
+  ESIMD s8 M=256 vs W8A8 164.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jg - K7 ESIMD packed qkv s8 M=1 sibling card1
+
+CONTEXT -> card0 packed qkv s8
+  M=1 was 73.945 us pipe_host
+  at 2800 (2026-09-03je).
+  oneDNN W8A8 96. square s8 34.
+  Sibling hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s8_qkv_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 73.214
+  pipe_host 73.782. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs card0 73.945.
+  Spread ~0.2%. vs W8A8 96
+  (~0.77x) vs square s8 34
+  (~2.17x).
+
+VERDICT -> Sibling matches.
+  Packed qkv s8 M=1 is 74-class
+  us pipe_host both cards at
+  2800. Beats oneDNN packed qkv
+  W8A8 96. Numeric closed.
+  Rank pipe_host. Next: packed
+  qkv ESIMD s8 M=256 vs W8A8
+  164, and sibling M=64 card0.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jh - K7 ESIMD s8 packed qkv M=256 card0
+
+CONTEXT -> oneDNN packed qkv W8A8
+  M=256 is 164 us. square s8
+  4-acc 4x8 is 128 us at N=5120.
+  Napkin N-linear 128*2 ~256 us.
+  Same tile at packed n=10240.
+
+CONFIG -> backend sycl+l0,
+  standalone dpas_s8_sc8w48m4.
+  gpu-run --card 0. NT=2 U=8
+  spin=512 m=256 n=10240 k=5120
+  wg=4x8 4acc out=f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s8_qkv_m256.sh 0 512
+  ```
+
+RESULT -> cosine=1 max_abs=0
+  ok=1. event 272.672 pipe_host
+  274.205. timed act 2733-2717
+  cur=2800 throttle=1. vs W8A8
+  164 (~1.67x) vs square 128
+  (~2.14x) vs napkin 256.
+
+VERDICT -> ESIMD s8 packed qkv
+  M=256 is 274 us pipe_host
+  card0, a loss vs oneDNN 164.
+  Near N-linear 256. Numeric
+  closed. One-card. Stop this
+  tile vs packed qkv 164. Do
+  not freeze 274 as 2800. Rank
+  pipe_host. Do not promote.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03ji - K7 ESIMD mixer conv-L2-register T=256 card0
+
+CONTEXT -> conv-L2 SLM 358 lost
+  to L2-once 327 and seq 298
+  on per-t SLM barriers
+  (2026-09-03jd). Register-head
+  FIR+L2 on Q/K, no per-t SLM
+  barriers, v channel-major,
+  then packed delta. Napkin:
+  L2 free in conv, beat 298.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_convl2r.
+  gpu-run --card 0. T=256
+  C=10240 nv=48 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer_convl2r_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 522.625 pipe_host
+  530.777. timed act 2700-2600
+  cur=2800 throttle=0. vs
+  L2-once 327 (~1.62x) vs seq
+  298 (~1.78x) vs conv-L2 SLM
+  358 (~1.48x) vs mixer 471
+  (~1.13x).
+
+VERDICT -> ESIMD mixer conv-L2r
+  T=256 is 531 us pipe_host
+  card0, a loss vs L2-once 327
+  and seq 298. Worse than
+  conv-L2 SLM 358 and mixer
+  471. Register-head FIR is
+  the tax, not the extra
+  launch. Stop this mapping.
+  One-card is enough. Sequential
+  conv+slmht ~298 stays the
+  T=256 leftover. Do not freeze
+  531 as 2800. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jj - K7 ESIMD s8 o-proj M=1 card1
+
+CONTEXT -> oneDNN o-proj W8A8
+  M=1 is 46-47 us. Square s8
+  scale-to-f16 is 34 us at
+  N=K=5120. Same dpas_s8_sc
+  tile at n=5120 k=6144.
+  Napkin K-linear 34*(6144/5120)
+  ~41 us.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=5120 k=6144. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s8_oproj_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 61.719
+  pipe_host 62.285. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 46-47
+  (~1.33x, a loss) vs square
+  s8 34 (~1.83x, K=1.2x napkin
+  41).
+
+VERDICT -> ESIMD o-proj s8
+  M=1 is 62.285 us pipe_host
+  card1 at 2800, a loss vs
+  oneDNN o-proj W8A8 47.
+  Worse than K-linear 41.
+  Numeric closed. One-card.
+  Stop this tile vs 47. Do
+  not promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

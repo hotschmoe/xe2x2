@@ -1,0 +1,11 @@
+freq_sample t=1788473912.156742711 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473912.244657607 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473912.336160785 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473912.429162580 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473912.520574534 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788473912.606629133 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788473912.693163848 power=D0 act=400 cur=400 throttle=0
+freq_sample t=1788473912.784225183 power=D0 act=2700 cur=2800 throttle=0
+freq_sample t=1788473912.876357761 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473912.967535108 power=D0 act=0 cur=2800 throttle=0
+freq_sample t=1788473913.061366455 power=D0 act=0 cur=2800 throttle=0

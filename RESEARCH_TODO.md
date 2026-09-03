@@ -688,17 +688,45 @@ Do not freeze 271 as 2800.
 mixer L2-out T=256 is 267-271
 us both cards (2026-09-03iy/jb).
 Packed tax ~4%. mixer L2-once
-T=256 is 327 us card0
-(2026-09-03ja), beats mixer 471,
-loses to seq 298. Extra launch.
-Do not freeze 327 as 2800.
-Next: split. card1: sibling
-mixer L2-once T=256. card0:
-mixer conv-L2 fuse T=256.
-Loop every 5m.
+T=256 is 312-327 us both cards
+(2026-09-03ja/jc), beats mixer
+471, loses to seq 298. Extra
+launch. Do not freeze 327 as
+2800.
+mixer conv-L2 fuse T=256 is
+358 us card0 (2026-09-03jd), a
+loss vs L2-once 327. Stop
+per-t SLM L2 in conv. Seq 298
+stays the T=256 leftover.
+packed qkv ESIMD s8 M=1 is
+74 us both cards at 2800
+(2026-09-03je/jg), beats W8A8
+96. packed qkv s8 M=64 is 214
+us card1 (2026-09-03jf) at
+2800, a loss vs W8A8 140.
+Stop 4x8 A-db. packed qkv s8
+M=256 is 274 us card0
+(2026-09-03jh), a loss vs
+W8A8 164. Stop 4-acc 4x8.
+Do not freeze 274 as 2800.
+mixer conv-L2r T=256 is 531 us
+card0 (2026-09-03ji), a loss
+vs L2-once 327 and seq 298.
+Stop register-head FIR.
+o-proj s8 M=1 is 62 us card1
+(2026-09-03jj) at 2800, a loss
+vs W8A8 47. Stop this tile.
+Seq 298 stays the T=256 mixer
+leftover. Decode leftover GEMM
+is packed qkv 74 (hand) plus
+o-proj 47 (oneDNN).
+Next: a prefill packed-qkv
+tile that can beat 140/164, or
+an o-proj tile that can beat
+47.
 Do not drop below 5m: M=256 FFN spin=512
-already 2-4 min GPU, and
-overlapping fires serialize on gpu-run.
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
 
 
 ## 10-hour remaining (ruthless)
@@ -706,11 +734,19 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling mixer L2-once T=256
-   (327 vs mixer 471; first fuse).
-2. mixer conv-L2 fuse T=256
-   (drop L2 launch vs 327).
-Park: P2/P3, GRF256
+1. packed qkv prefill tile that
+   can beat W8A8 140/164 (hand
+   s8 4x8 and 4-acc lost).
+2. o-proj tile that can beat
+   W8A8 47 (dpas_s8_sc lost at
+   62).
+3. split q/v proj vs packed 74.
+Park: conv-L2 per-t SLM (358 vs
+327), conv-L2r (531 vs 327),
+packed qkv s8 M=64 4x8 (214 vs
+140), packed qkv s8 M=256
+4-acc (274 vs 164), o-proj s8
+sc (62 vs 47), P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),
 skip-hi T=256 (330 vs slmht 260),

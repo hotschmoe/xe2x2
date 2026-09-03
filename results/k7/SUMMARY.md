@@ -1230,6 +1230,147 @@ Spread ~1.5%. act 2700-2767
 cur=2800 throttle=1. 267-271 us
 both. Do not freeze 271 as 2800.
 
-K7 next: sibling mixer L2-once
-T=256 vs mixer conv-L2 fuse
+## ESIMD mixer L2-once T=256 sibling card1 (2026-09-03jc)
+
+backend sycl+l0, same
+gdn_mixer_l2once. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+312.274 event 317.284 vs card0
+326.779. Spread ~4.4%. act
+2700-2767 cur=2800 throttle=1.
+312-327 us both. 327-class.
+Beats mixer 471, loses to seq
+298. Extra launch. Do not freeze
+327 as 2800.
+
+K7 next: mixer conv-L2 fuse
 T=256.
+
+## ESIMD mixer conv-L2 fuse T=256 card0 (2026-09-03jd)
+
+backend sycl+l0, standalone
+gdn_mixer_convl2. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+358.198 event 357.836. act=2700
+cur=2800 throttle=0. vs L2-once
+327 (~1.10x) vs seq 298. Per-t
+SLM barriers. Stop this fuse.
+Do not freeze 358 as 2800.
+
+K7 next: packed qkv ESIMD s8
+vs W8A8 96/140/164.
+
+## ESIMD packed qkv s8 M=1 card0 (2026-09-03je)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=10240 k=5120
+NT=2 U=16 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+73.945 event 73.078. timed
+act=cur=2800 throttle=0. vs
+oneDNN packed qkv W8A8 96
+(~0.77x, a beat) vs square s8
+34 (~2.17x, N=2x napkin 68).
+Held 2800. One-card.
+
+K7 next: packed qkv ESIMD s8
+M=64 vs W8A8 140.
+
+## ESIMD packed qkv s8 M=64 card1 (2026-09-03jf)
+
+backend sycl+l0, standalone
+dpas_s8_sc8db48. m=64 n=10240
+k=5120 NT=2 U=16 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 214.369 event
+212.604. timed act=cur=2800
+throttle=0. vs W8A8 138-142
+(~1.53x) vs square 75 (~2.86x)
+vs napkin 150. Loss vs oneDNN.
+Do not freeze 214 until sibling.
+
+K7 next: packed qkv ESIMD s8
+M=256 vs W8A8 164, and sibling
+M=64 card0.
+
+## ESIMD packed qkv s8 M=1 sibling card1 (2026-09-03jg)
+
+backend sycl+l0, same dpas_s8_sc.
+M=1 n=10240 k=5120 NT=2 U=16
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 73.782 event
+73.214 vs card0 73.945. Spread
+~0.2%. timed act=cur=2800
+throttle=0. 74-class both at
+2800. Beats W8A8 96. Held 2800.
+
+K7 next: packed qkv ESIMD s8
+M=256 vs W8A8 164, and sibling
+M=64 card0.
+
+## ESIMD packed qkv s8 M=256 card0 (2026-09-03jh)
+
+backend sycl+l0, standalone
+dpas_s8_sc8w48m4. m=256 n=10240
+k=5120 NT=2 U=8 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 274.205 event
+272.672. timed act 2733-2717
+cur=2800 throttle=1. vs W8A8
+164 (~1.67x) vs square 128
+(~2.14x) vs napkin 256. Loss
+vs oneDNN. Stop this tile vs
+164. Do not freeze 274 as
+2800. One-card. Do not promote.
+
+K7 next: packed qkv M=64/M=256
+still oneDNN. Do not sibling
+the 214/274 losses. o-proj
+still 47. Seq 298 is the T=256
+mixer leftover.
+
+## ESIMD mixer conv-L2-register T=256 card0 (2026-09-03ji)
+
+backend sycl+l0, standalone
+gdn_mixer_convl2r. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+530.777 event 522.625. act
+2700-2600 cur=2800 throttle=0.
+vs L2-once 327 (~1.62x) vs seq
+298 (~1.78x) vs conv-L2 358
+(~1.48x) vs mixer 471 (~1.13x).
+Stop this mapping. One-card.
+Do not freeze 531 as 2800.
+Do not promote.
+
+K7 next: packed qkv M=64/M=256
+still oneDNN. Do not sibling
+the 214/274 losses. o-proj
+still 47. Seq 298 is the T=256
+mixer leftover.
+
+## ESIMD o-proj s8 M=1 card1 (2026-09-03jj)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=5120 k=6144
+NT=2 U=16 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+62.285 event 61.719. timed
+act=cur=2800 throttle=0. vs
+oneDNN o-proj W8A8 46-47
+(~1.33x, a loss) vs square s8
+34 (~1.83x, K=1.2x napkin 41).
+Held 2800. One-card. Stop this
+tile vs 47. Do not promote.
+
+K7 next: packed qkv M=64/M=256
+still oneDNN. Do not sibling
+the 214/274 losses. o-proj
+still 47. Seq 298 is the T=256
+mixer leftover.

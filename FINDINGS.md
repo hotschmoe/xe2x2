@@ -3947,32 +3947,182 @@ VERDICT -> Mixer L2-out T=256 is
 Evidence: `results/k7/esimd_mixer_l2out_t256_s0_card0.txt`,
   `results/k7/esimd_mixer_l2out_t256_s0_card1.txt`.
 
-## ESIMD mixer L2-once T=256 is 327 us card0 (K7)
+## ESIMD mixer L2-once T=256 is 312-327 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_mixer_l2once`.
   Conv, device L2 once per
   (t,kh), packed delta no L2.
-  T=256 blk=16. Card0. spin=0.
-  Prior: mixer-slmht 471, L2-out
-  271, seq ~298.
+  T=256 blk=16. Both cards.
+  spin=0. Prior: mixer-slmht
+  471, L2-out 267-271, seq ~298.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 9.8e-4 ok=1. pipe_host
-  326.779 event 319.096. timed
-  act 2700-2667 cur=2800
-  throttle=0.
+  326.779 / 312.274. Spread
+  ~4.4%. timed act 2700-2667 /
+  2700-2767 cur=2800. card1
+  throttle=1.
 
 VERDICT -> Mixer L2-once T=256 is
-  327 us pipe_host card0, beats
+  312-327 us pipe_host both
+  cards, 327-class. Beats
   mixer-slmht 471 (~1.44x),
-  loses to seq 298 (~1.10x) and
-  conv+l2out ~309. Extra launch.
-  First fuse. Do not freeze 327
-  as 2800. Sibling before
-  promote. Rank pipe_host.
+  loses to seq 298 (~1.10x).
+  Extra launch. Do not freeze
+  327 as 2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_mixer_l2once_t256_s0_card0.txt`.
+Evidence: `results/k7/esimd_mixer_l2once_t256_s0_card0.txt`,
+  `results/k7/esimd_mixer_l2once_t256_s0_card1.txt`.
+
+## ESIMD mixer conv-L2 fuse T=256 loses to L2-once (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_convl2`.
+  Conv+L2 one kernel (per-t SLM
+  reduce on q/k WG=16), packed
+  delta. T=256 blk=16. Card0.
+  spin=0. Prior: L2-once 327,
+  seq ~298.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 9.8e-4 ok=1. pipe_host
+  358.198 event 357.836. timed
+  act=2700 cur=2800 throttle=0.
+
+VERDICT -> Conv-L2 fuse is 358 us
+  pipe_host card0, ~1.10x
+  L2-once 327, ~1.20x seq 298.
+  Per-t SLM barriers tax conv.
+  The extra launch was not the
+  29 us. Stop this fuse. Do not
+  freeze 358 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_convl2_t256_s0_card0.txt`,
+  `results/k7/esimd_mixer_convl2_t256_s0_card0.freq`.
+
+## ESIMD packed qkv s8 M=1 is 74 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N 64x `dpas.8x4`
+  scale-to-f16 as square s8 34.
+  M=1 n=10240 k=5120. NT=2
+  U=16. Both cards. spin=4000.
+  Prior: oneDNN packed qkv
+  W8A8 96, square s8 34.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 73.945 /
+  73.782. Spread ~0.2%. timed
+  act=cur=2800 throttle=0.
+  vs W8A8 96 (~0.77x) vs
+  square s8 34 (~2.17x, N=2x
+  napkin 68).
+
+VERDICT -> Packed qkv s8 M=1 is
+  74-class us pipe_host both
+  cards at 2800, a beat of
+  oneDNN packed qkv W8A8 96.
+  Near N-linear vs square 34.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s8_qkv_m1_s4000_card0.txt`,
+  `results/k7/esimd_s8_qkv_m1_s4000_card1.txt`.
+
+## ESIMD packed qkv s8 M=64 4x8 A-db loses to W8A8 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc8db48`.
+  M=64 n=10240 k=5120. NT=2
+  U=16 A-db. Card1. spin=512.
+  Prior: W8A8 138-142, square
+  s8 75.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 214.369 event
+  212.604. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> 214 us at 2800,
+  ~1.53x W8A8 140. Stop 4x8
+  A-db vs packed qkv M=64.
+  oneDNN stays the floor.
+
+Evidence: `results/k7/esimd_s8_qkv_m64_s512_card1.txt`.
+
+## ESIMD packed qkv s8 M=256 4-acc loses to W8A8 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc8w48m4`.
+  M=256 n=10240 k=5120. NT=2.
+  Card0. spin=512. Prior: W8A8
+  164, square s8 128.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 274.205 event
+  272.672. timed act 2733-2717
+  cur=2800 throttle=1.
+
+VERDICT -> 274 us, ~1.67x W8A8
+  164. Stop 4-acc 4x8 vs packed
+  qkv M=256. Do not freeze 274
+  as 2800. oneDNN stays the
+  floor.
+
+Evidence: `results/k7/esimd_s8_qkv_m256_s512_card0.txt`.
+
+## ESIMD mixer conv-L2-register T=256 loses (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_convl2r`.
+  One WI per q/k head, L2 in
+  registers, v channel-major,
+  packed delta. T=256. Card0.
+  spin=0. Prior: L2-once 327,
+  seq 298, conv-L2 SLM 358.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 9.8e-4 ok=1. pipe_host
+  530.777 event 522.625. timed
+  act 2700-2600 cur=2800
+  throttle=0.
+
+VERDICT -> 531 us, worse than
+  L2-once 327, seq 298, SLM
+  fuse 358, and mixer 471.
+  Register-head occupancy is
+  the tax. Stop this mapping.
+  Seq 298 stays the T=256
+  leftover. Do not freeze 531
+  as 2800.
+
+Evidence: `results/k7/esimd_mixer_convl2r_t256_s0_card0.txt`.
+
+## ESIMD o-proj s8 M=1 loses to W8A8 47 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc`.
+  M=1 n=5120 k=6144. NT=2 U=16.
+  Card1. spin=4000. Prior:
+  W8A8 46-47, square s8 34,
+  napkin ~41.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 62.285 event
+  61.719. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> 62 us at 2800,
+  ~1.33x W8A8 47, worse than
+  K-linear 41. Stop this tile
+  vs o-proj. oneDNN stays the
+  floor.
+
+Evidence: `results/k7/esimd_s8_oproj_m1_s4000_card1.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5616,11 +5766,32 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   mixer L2-out T=256 is 267-271
   us both cards (2026-09-03iy/jb).
   Packed tax ~4%. mixer L2-once
-  T=256 is 327 us card0
-  (2026-09-03ja), beats mixer 471,
-  loses to seq 298. Extra launch.
-  Do not freeze 327 as 2800.
-  Sibling before promote.
+  T=256 is 312-327 us both cards
+  (2026-09-03ja/jc), beats mixer
+  471, loses to seq 298. Extra
+  launch. Do not freeze 327 as
+  2800.
+  mixer conv-L2 fuse T=256 is
+  358 us card0 (2026-09-03jd),
+  ~1.10x L2-once 327. Stop
+  per-t SLM L2 in conv. Seq 298
+  stays the T=256 leftover.
+  packed qkv s8 M=1 is 74 us
+  both cards at 2800
+  (2026-09-03je/jg), beats
+  W8A8 96. packed qkv s8 M=64
+  is 214 us card1 at 2800
+  (2026-09-03jf), ~1.53x W8A8
+  140. Stop 4x8 A-db. packed
+  qkv s8 M=256 is 274 us card0
+  (2026-09-03jh), ~1.67x W8A8
+  164. Stop 4-acc 4x8. mixer
+  conv-L2r T=256 is 531 us
+  card0 (2026-09-03ji). Stop
+  register-head FIR. o-proj s8
+  M=1 is 62 us card1 at 2800
+  (2026-09-03jj), ~1.33x W8A8
+  47. Stop this tile.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
