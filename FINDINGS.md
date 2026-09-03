@@ -3848,29 +3848,52 @@ VERDICT -> Mixer-slmht T=16 is
 Evidence: `results/k7/esimd_mixer_slmht_t16_s4000_card0.txt`,
   `results/k7/esimd_mixer_slmht_t16_s4000_card1.txt`.
 
-## ESIMD conv T=16 C=10240 is 5.7 us card0 (K7)
+## ESIMD conv T=16 C=10240 is 4.8 us card1 at 2800 (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_conv1d_t`. T=16
-  C=10240 k=4. Card0. spin=4000.
-  Prior: T=64 C=10240 10.5.
-  slmht T=16 22. mixer-slmht
-  T=16 31.
+  C=10240 k=4. Both cards.
+  spin=4000. Prior: T=64 C=10240
+  10.5. slmht T=16 22.
+  mixer-slmht T=16 31.
 
 RESULT -> cosine=1.0 max_abs=0
-  ok=1. pipe_host 5.710 event
-  5.242. 129 GB/s. timed
-  act=1650 cur=1617 throttle=0.
+  ok=1. pipe_host 5.710 / 4.833.
+  Spread ~18%. card0 act=1650
+  cur=1617. card1 act=cur=2800
+  throttle=0.
 
 VERDICT -> Conv T=16 C=10240 is
-  5.7 us pipe_host card0 at
-  1650, T-linear vs T=64 10.5.
-  seq ~28 vs mixer 31 (~1.12x).
-  Clocks not held. Do not freeze
-  5.7 as 2800. Sibling hold.
-  Rank pipe_host.
+  4.8 us pipe_host card1 at
+  2800. Card0 5.7 at 1650.
+  Clock-spread. seq ~27 vs mixer
+  31 (~1.16x). Do not freeze 5.7
+  as 2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_conv1d_t16_c10240_s4000_card0.txt`.
+Evidence: `results/k7/esimd_conv1d_t16_c10240_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t16_c10240_s4000_card1.txt`.
+
+## ESIMD conv T=32 C=10240 is 5.9 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. T=32
+  C=10240 k=4. Card0. spin=4000.
+  Prior: T=16 4.8 at 2800, T=64
+  10.5. slmht T=32 39.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 5.937 event
+  5.401. 235 GB/s. timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> Conv T=32 C=10240 is
+  5.9 us pipe_host card0 at
+  2800. seq ~45 vs mixer 60
+  (~1.34x). Sibling before
+  citing the map. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t32_c10240_s4000_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5487,7 +5510,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   C=10240 is 5.7 us card0
   (2026-09-03is) at 1650. seq
   ~28 vs mixer 31. Do not freeze
-  5.7 as 2800.
+  5.7 as 2800. conv T=16 C=10240
+  is 4.8 us card1 at 2800
+  (2026-09-03iv). Card0 5.7 at
+  1650. Clock-spread. seq ~27 vs
+  mixer 31. conv T=32 C=10240 is
+  5.9 us card0 (2026-09-03iu) at
+  2800. seq ~45 vs mixer 60.
+  Sibling before citing the map.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

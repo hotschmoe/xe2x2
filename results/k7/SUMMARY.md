@@ -1132,5 +1132,27 @@ cur=2800 throttle=1. 31 us
 both. T-map blk=16 closed. Do
 not freeze 31 as 2800.
 
-K7 next: conv T=16 C=10240 hold
-vs conv T=32 C=10240.
+## ESIMD conv T=32 C=10240 card0 (2026-09-03iu)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=32 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 5.937 event
+5.401. 235 GB/s. act=cur=2800
+throttle=0. seq ~45 vs mixer
+60. Sibling before citing the
+map.
+
+## ESIMD conv T=16 C=10240 hold card1 (2026-09-03iv)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=16 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 4.833 event
+3.065. 153 GB/s. act=cur=2800
+throttle=0. vs card0 5.710 at
+1650. Spread ~18% clock. 4.8 us
+at 2800. seq ~27 vs mixer 31.
+
+K7 next: sibling conv T=32
+C=10240 vs conv T=128 C=10240.

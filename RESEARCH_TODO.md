@@ -663,9 +663,17 @@ freeze 31 as 2800. conv T=16
 C=10240 is 5.7 us card0
 (2026-09-03is) at 1650. seq
 ~28 vs mixer 31. Do not freeze
-5.7 as 2800. Next: split.
-card1: conv T=16 C=10240 hold.
-card0: conv T=32 C=10240.
+5.7 as 2800. conv T=16 C=10240
+is 4.8 us card1 at 2800
+(2026-09-03iv). Card0 5.7 at
+1650. Clock-spread. seq ~27 vs
+mixer 31. conv T=32 C=10240 is
+5.9 us card0 (2026-09-03iu) at
+2800. seq ~45 vs mixer 60.
+Sibling before citing the map.
+Next: split. card1: sibling
+conv T=32 C=10240. card0: conv
+T=128 C=10240.
 Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -677,10 +685,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. conv T=16 C=10240 hold
-   (5.7 at 1650; seq ~28).
-2. conv T=32 C=10240
-   (seq T=32; slmht 39).
+1. sibling conv T=32 C=10240
+   (5.9 at 2800; seq ~45).
+2. conv T=128 C=10240
+   (T-map; napkin ~20).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),
