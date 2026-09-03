@@ -549,19 +549,35 @@ ok=1. pipe_host 425.689 event
 not freeze 426 as 2800. Sibling
 before promote.
 
-## ESIMD fused delta T=16 SLM-K card1 (2026-09-03gz)
+## ESIMD fused delta T=16 SLM-K both cards (2026-09-03gz/ha)
 
 backend sycl+l0, same
-gdn_delta_slmk. T=16 blk=16
-spin=0. cosine=1 max_abs=1.5e-5
+gdn_delta_slmk. T=16 blk=16.
+cosine=1 max_abs=1.5e-5
 cosine_o=1 max_abs_o=2.4e-4
-ok=1. pipe_host 58.130 event
-200.466 (ramp). timed_begin
-act=cur=550. timed_end
-act=cur=2800 throttle=0.
-event min 57. Near T-linear 53.
-Do not freeze 58 as 2800. Hold
-retry.
+ok=1.
 
-K7 next: T=16 hold vs sibling
-tree hsum T=256.
+| card | spin | pipe_host us | event us | act | thr |
+|---|---:|---:|---:|---:|---:|
+| 1 | 0 | 58.130 | 200.466 | 550-2800 | 0 |
+| 0 | 4000 | 58.600 | 58.286 | 2767 | 1 |
+
+58 us both. Spread ~0.8%. Near
+T-linear 53. Do not freeze 58
+as 2800.
+
+## ESIMD fused delta T=256 tree hsum sibling card1 (2026-09-03hb)
+
+backend sycl+l0, same
+gdn_delta_slmh. T=256 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 477.332 event
+478.950 vs card0 425.689.
+Spread ~12%. act=2417 cur=2800
+throttle=1. Clock spread. 426-
+477 us both. Do not freeze 426
+as 2800.
+
+K7 next: tree hsum T=64 vs
+tree hsum T=1.

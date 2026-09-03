@@ -479,18 +479,18 @@ db T=256 is 843 us card1
 (2026-09-03gx), throttle=1,
 wash vs 847-858. Stop
 double-buffer. tree hsum T=256
-is 426 us card0 (2026-09-03gy),
-~1.99x SLM-K 847, throttle=1.
-New leftover class. Do not
-freeze 426 as 2800. Sibling
-before promote. SLM-K T=16 is
-58 us card1 (2026-09-03gz),
-near T-linear 53. Clocks 550
-to 2800. Do not freeze 58 as
-2800. Next: split. card0:
-T=16 hold. card1: sibling
-tree hsum T=256. Loop
-every 5m.
+is 426-477 us both cards
+(2026-09-03gy/hb), ~1.99x
+SLM-K 847 at card0, throttle=1.
+Clock spread 12% (2417 vs
+2700). Do not freeze 426 as
+2800. SLM-K T=16 is 58 us
+both cards (2026-09-03gz/ha),
+near T-linear 53. throttle=1.
+Do not freeze 58 as 2800.
+Next: split. card0: tree hsum
+T=64. card1: tree hsum T=1.
+Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -501,10 +501,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling tree hsum T=256
-   (426 one-card; ~1.99x 847).
-2. SLM-K T=16 hold
-   (58 us; start 550 not 2800).
+1. tree hsum T=64
+   (SLM-K 214; napkin ~107 if 2x).
+2. tree hsum T=1 decode
+   (fused 7.1; scalar hsum).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
