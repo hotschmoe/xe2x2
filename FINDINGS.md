@@ -1108,25 +1108,48 @@ VERDICT -> New w4a16 M=256 floor 118 us
 Evidence: `results/k6/nvfp4_w4a16_m256hold_card0.txt`,
   `results/k6/nvfp4_w4a16_m256hold_card1.txt`.
 
-## nvfp4_gemm_w4a16 M=1 N=17408 is 97 us card1 (K6)
+## nvfp4_gemm_w4a16 M=1 N=17408 is 97 us both cards (K6)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
   Same v028 so. M=64 heat on same B,
   spin=2000 of M=1 then us_bench M=1
-  N=17408 K=5120. Card1 only.
+  N=17408 K=5120. Both cards.
 
 RESULT -> out bf16 [1,17408]. timed
-  act=2717 cur=2800 throttle=1. Folded
-  97.050 us vs square 34.7 vs s8 141.6
-  vs W8A8 158.1 vs s4 29.5 vs compose
-  103.5 vs napkin 118. f8scale 89.023.
+  act=2700/2717 cur=2800 throttle=1.
+  Folded 97.878/97.050 us vs square 34.7
+  vs s8 141.6 vs W8A8 158.1 vs s4 29.5
+  vs compose 103.5 vs napkin 118. Spread
+  ~0.8%. f8scale 89.449/89.023.
 
-VERDICT -> Wide-N is ~2.80x square, beats
-  s8 141.6 and W8A8 158.1, loses to s4
-  29.5. Throttle=1. One-card. Do not
-  freeze 97 us until card0.
+VERDICT -> New w4a16 M=1 wide-N floor 97
+  us both cards at ~2700/2800, throttle=1.
+  ~2.80x square, beats s8 141.6 and W8A8
+  158.1, loses to s4 29.5. Rank us.
 
-Evidence: `results/k6/nvfp4_w4a16_m1_n17408_hold_card1.txt`.
+Evidence: `results/k6/nvfp4_w4a16_m1_n17408_hold_card0.txt`,
+  `results/k6/nvfp4_w4a16_m1_n17408_hold_card1.txt`.
+
+## nvfp4_gemm_w4a16 M=1 K=17408 is 101 us card1 (K6)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  Same v028 so. M=64 heat on same B,
+  spin=2000 of M=1 then us_bench M=1
+  N=5120 K=17408. Card1 only.
+
+RESULT -> out bf16 [1,5120]. timed
+  act=2750 cur=2800 throttle=1. Folded
+  101.270 us vs square 34.7 vs N=17408 97
+  vs s8 261.6 vs W8A8 155.3 vs s4 53.4 vs
+  compose 193.6 vs napkin 118. f8scale
+  97.931.
+
+VERDICT -> Wide-K is ~2.92x square, beats
+  s8 261.6 (~2.58x) and W8A8 155.3, loses
+  to s4 53.4. Throttle=1. One-card. Do
+  not freeze 101 us until card0.
+
+Evidence: `results/k6/nvfp4_w4a16_m1_k17408_hold_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2334,8 +2357,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards (act 2350-2550/2800,
   ~3.18x M=64, loses to W8A8 75).
   nvfp4_gemm_w4a16 M=1 N=17408 is 97 us
-  card1 (throttle=1, ~2.80x square,
-  beats s8 141.6). One-card.
+  both cards (throttle=1, ~2.80x square,
+  beats s8 141.6). nvfp4_gemm_w4a16 M=1
+  K=17408 is 101 us card1 (throttle=1,
+  ~2.92x square, beats s8 261.6).
+  One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
@@ -2343,7 +2369,8 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   folded / ~39 us f8scale at M=1 5120. Held 2800 both cards:
   34.7 us folded / 37.8 us f8scale. M=64 both cards: 37.1 us
   folded at act 2150-2400/2800. M=256 both cards: 118 us
-  folded at act 2350-2550/2800. M=1 N=17408 card1: 97 us
+  folded at act 2350-2550/2800. M=1 N=17408 both cards:
+  97 us folded, throttle=1. M=1 K=17408 card1: 101 us
   folded, throttle=1. Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
   on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
