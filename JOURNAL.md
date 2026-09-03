@@ -3894,3 +3894,63 @@ VERDICT -> Wide-N LUT is a real 1037 us
   a loss vs s8. One-card. Do not freeze.
   Rank us. Next: sibling LUT N=17408 vs
   LUT M=64 K=17408.
+
+### 2026-09-03ah - K6 nibble LUT 4x8 A-db N=17408 sibling card0
+
+CONTEXT -> card1 LUT M=64 N=17408 was
+  1037 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_db48_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card0: event 1034.781 us, pipe_host
+  1027.424 vs card1 1037.007 vs s8 338.9
+  vs s4 94.7. Spread ~0.9%.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  LUT wide-N floor 1032 us at 2800 both
+  cards. ~2.63x square, ~3.05x s8 338.9.
+  Rank us.
+
+### 2026-09-03ai - K6 nibble LUT 4x8 A-db M=64 K=17408 card1
+
+CONTEXT -> LUT N=17408 is 1032 us (~2.63x).
+  s8 K=17408 is 374.7. s4 106.0 (~3.15x).
+  Napkin K-linear 392.4*17408/5120 ~1334
+  us. FFN-down prefill. One-card. Never
+  bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=64 N=5120
+  K=17408. Packed E2M1 B.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_db48_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 1331.870 us, pipe_host
+  1332.672 vs 5120 392.4 vs N=17408 1032
+  vs s8 374.7 vs s4 106.0 vs compose 403.4
+  vs napkin 1334. Ratio 1332.7/392.4
+  ~3.40x, K-linear. min/max 1329.1-1346.0.
+
+VERDICT -> Wide-K LUT is 1333 us at 2800,
+  K-linear, ~3.56x s8 374.7. Napkin held.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling LUT K=17408 vs
+  LUT M=256.

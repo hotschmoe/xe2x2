@@ -131,8 +131,10 @@ compose on s4 4-acc M=256 is 411 us
 card0 (2026-09-03af), a loss vs 4x8
 compose 194.9 and ~8.46x s4 48.6.
 nibble LUT 4x8 A-db M=64 N=17408 is
-1037 us card1 (2026-09-03ag), ~2.64x
-square vs s8 338.9. One-card.
+1032 us both cards (2026-09-03ah),
+~2.63x square vs s8 338.9. LUT M=64
+K=17408 is 1333 us card1 (2026-09-03ai),
+K-linear ~3.40x vs s8 374.7. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -145,8 +147,8 @@ lights at ~37 us after M=64 heat
 (clocks not held 2800). MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nibble_lut_db48
-M=64 N=17408. card1: nibble LUT M=64
-K=17408 on 4x8 A-db. Loop every 20m.
+M=64 K=17408. card1: nibble_lut_db48 M=256.
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

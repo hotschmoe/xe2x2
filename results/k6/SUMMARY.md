@@ -331,7 +331,7 @@ no SLM. Never bitcast.
 ~8.46x native s4, ~2.11x 4x8 compose.
 One-card. Do not freeze 411 us.
 
-## nibble LUT 4x8 A-db M=64 N=17408 card1 (2026-09-03ag)
+## nibble LUT 4x8 A-db M=64 N=17408 (2026-09-03ag/ah)
 
 Same `nibble_lut_db48`, N=17408 K=5120.
 cosine=1.0 max_abs=0. timed act=cur=2800
@@ -339,10 +339,22 @@ throttle=0.
 
 | shape | card | pipe_host_us | 5120 | s8 N | s4 | compose |
 |---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 | 0 | 1027.424 | 392.4 | 338.9 | 94.7 | 326.9 |
 | 64 x 17408 | 1 | 1037.007 | 392.4 | 338.9 | 94.7 | 326.9 |
 
-~2.64x square vs s4 2.81x. ~3.06x s8.
-One-card.
+New wide-N floor 1032 us both cards.
+~2.63x square vs s4 2.81x. ~3.05x s8.
+
+## nibble LUT 4x8 A-db M=64 K=17408 card1 (2026-09-03ai)
+
+Same tile, N=5120 K=17408. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s8 K | s4 | compose |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 1 | 1332.672 | 392.4 | 374.7 | 106.0 | 403.4 |
+
+K-linear ~3.40x. ~3.56x s8. One-card.
 
 ## 12-idea sprint (2026-09-03ae)
 
