@@ -70,12 +70,19 @@ is closed. s8 decode N=17408 is 141.6 us
 both cards (cj), ~4.16x N=5120 vs s4 29.5.
 s8 decode K=17408 is 261.6 us both cards (cl),
 ~7.69x K-linear vs s4 53.4. Qwen FFN s8 map
-is closed. oneDNN W8A8 M=1 N=17408 is 158 us
-card1 (cm) at 2800 vs hand s8 141.6, pending
-sibling.
-Next: split. card0: sibling oneDNN W8A8 M=1
-N=17408. card1: oneDNN W8A8 M=1 K=17408.
-Loop every 20m.
+is closed. oneDNN W8A8 M=1 N=17408 is 158.1 us
+both cards (cn) at 2800 vs hand s8 141.6.
+oneDNN W8A8 M=1 K=17408 is 155.3 us both
+cards (cp) at 2800 vs hand s8 261.6 (hand
+loses ~1.68x). Qwen FFN oneDNN W8A8 decode
+map is closed. K6 nibble_lut_sc on the s8
+RC=4 decode tile is 158 us both cards (cq)
+at 2800, cosine=1 max_abs=0, ~4.65x s8 34.
+Packed E2M1 stays in HBM. Never bitcast s4.
+Next: split. card0: two-launch unpack control
+on the same decode tile. card1: LUT tax steal
+(LUT once per k64 / fewer merges). Loop every
+20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

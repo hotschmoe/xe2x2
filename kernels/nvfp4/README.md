@@ -19,8 +19,11 @@ s4 is the true INT4 XMX control, not an NVFP4 alias.
   the same reason.
 - `nvfp4_gemm_w4a16` keeps packed nibbles in VRAM and decompresses
   in the JIT. Decode-bandwidth play, not INT4 XMX.
-- Unbuilt: LSC load nibbles -> register LUT to s8 -> `dpas<s8,s8>`
-  -> group-16 e4m3 epilogue. 4-bit HBM, INT8 XMX, E2M1 numerics.
+- Built on 1024^3 (nibble_lut_s8 / _reg / _simd). Serving-shaped
+  decode tile is `nibble_lut_sc`: LSC load packed nibbles -> simd
+  register LUT to s8 -> VNNI4 -> `dpas<s8,s8>` on the K2 RC=4
+  8x2-N scale-to-f16 tile. 4-bit HBM, INT8 XMX, E2M1 numerics.
+  Never bitcast onto s4.
 - True INT4 XMX wants integer s4 weights. ESIMD `dpas<s4,s4>` is
   the door; oneDNN will not open it.
 

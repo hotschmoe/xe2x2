@@ -2634,3 +2634,128 @@ VERDICT -> Held-2800 oneDNN wide-N decode is
   One-card. Do not freeze 158 us until card0.
   Rank us. Next: sibling W8A8 M=1 N=17408 vs
   W8A8 M=1 K=17408.
+
+### 2026-09-02cn - K4 oneDNN W8A8 M=1 N=17408 sibling card0
+
+CONTEXT -> card1 oneDNN W8A8 M=1 N=17408 was
+  158.0 us at 2800. Sibling swap to close the
+  incumbent wide-N decode floor.
+
+CONFIG -> pytorch-xpu on sycl+l0, sglang int8 mtp6
+  `int8_gemm_w8a8` GEMM-only, gpu-run --card 0.
+  Same spin=2000 of M=1, oracle after timed.
+  n=17408 k=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/w8_compare/run_w8_m1hold_wide.sh 0 17408 5120
+  ```
+
+RESULT -> cosine=1.000 max_abs=0.055. timed
+  act=cur=2800 throttle=0.
+  M=1 card0: 158.132 us vs card1 158.006 vs hand
+  s8 141.6 vs s4 29.5 vs K4 sweep 161.
+  Spread ~0.08%.
+
+VERDICT -> Sibling matches. New oneDNN W8A8
+  wide-N decode floor 158.1 us at 2800 both
+  cards. Hand s8 141.6 is ~1.12x this
+  incumbent. Rank us.
+
+### 2026-09-02co - K4 oneDNN W8A8 M=1 K=17408 card1
+
+CONTEXT -> oneDNN W8A8 M=1 N=17408 is 158.1 us.
+  Same B bytes as FFN-down K=17408 N=5120.
+  Hand s8 decode K is 261.6 us (~7.69x). Napkin
+  oneDNN K-linear 44*17408/5120 ~150 us. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, sglang int8 mtp6
+  `int8_gemm_w8a8` GEMM-only, gpu-run --card 1.
+  spin=2000 of M=1, oracle after timed.
+  n=5120 k=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/w8_compare/run_w8_m1hold_wide.sh 1 5120 17408
+  ```
+
+RESULT -> cosine=1.000 max_abs=0.104. timed
+  act=cur=2800 throttle=0.
+  M=1 card1: 155.368 us vs N=17408 158.1 vs hand
+  s8 261.6 vs s4 53.4 vs W8A8 5120 44.
+  Ratio 155.4/44 ~3.53x, near linear.
+
+VERDICT -> oneDNN wide-K decode is 155.4 us on
+  card1, N/K-symmetric with 158.1, unlike hand
+  s8 261.6 vs 141.6. Hand RC=4 8x2-N loses to
+  oneDNN at FFN-down (~1.68x). One-card. Do not
+  freeze 155.4 us until card0. Rank us. Next:
+  sibling W8A8 K=17408 vs serving-shaped NVFP4
+  LUT on the decode tile.
+
+### 2026-09-02cp - K4 oneDNN W8A8 M=1 K=17408 sibling card0
+
+CONTEXT -> card1 oneDNN W8A8 M=1 K=17408 was
+  155.4 us at 2800. Sibling swap to close the
+  incumbent FFN-down decode floor.
+
+CONFIG -> pytorch-xpu on sycl+l0, sglang int8 mtp6
+  `int8_gemm_w8a8` GEMM-only, gpu-run --card 0.
+  Same spin=2000 of M=1, oracle after timed.
+  n=5120 k=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/w8_compare/run_w8_m1hold_wide.sh 0 5120 17408
+  ```
+
+RESULT -> cosine=1.000 max_abs=0.070. timed
+  act=cur=2800 throttle=0.
+  M=1 card0: 155.310 us vs card1 155.368 vs
+  N=17408 158.1 vs hand s8 261.6 vs s4 53.4.
+  Spread ~0.04%.
+
+VERDICT -> Sibling matches. New oneDNN W8A8
+  wide-K decode floor 155.3 us at 2800 both
+  cards. N/K-symmetric with 158.1. Hand s8
+  261.6 loses ~1.68x at FFN-down. Qwen FFN
+  oneDNN W8A8 decode map is closed. Rank us.
+  Next: both-card K6 nibble LUT on the s8
+  decode tile (packed E2M1, never bitcast s4).
+
+### 2026-09-02cq - K6 nibble LUT on s8 decode tile both cards
+
+CONTEXT -> K6 two-launch unpack closed at 1024^3.
+  Scalar in-register LUT lost (2316 us). simd LUT
+  at 1024^3 was clock-bound. Serving-shaped
+  question: packed E2M1 in HBM, simd LUT, VNNI4,
+  then the K2 RC=4 8x2-N s8 tile. Never bitcast
+  s4. Napkin: LUT tax vs s8 34 us; unpack of
+  25 MiB B every token would also lose.
+
+CONFIG -> sycl+l0, standalone nibble_lut_sc, icpx
+  2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0 || --card 1. NT=2 U=16
+  spin=4000. A s8 [-64,64], B random E2M1
+  nibbles packed 2/byte along K. Scales 0.02
+  out f16. M=1 and M=4, N=K=5120. New numeric.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_sc.sh 0 2 4000
+  gpu-run --card 1 kernels/nvfp4/run_k6_sc.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0 both cards.
+  timed act=cur=2800 throttle=0.
+  M=1 pipe_host 158.172/158.178 vs s8 34 vs
+  W8A8 44. M=4 tracks (158.304/158.182).
+  Packed-B 83 GB/s. Spread ~0.004%.
+
+VERDICT -> First serving-shaped NVFP4
+  in-register spoof is numerically closed.
+  Packed E2M1 stays in HBM. Not a us beat of
+  s8 34 (~4.65x) or W8A8 44. LUT tax, not
+  HBM. "Cannot feed XMX" is false; "as fast
+  as s8" is false. Rank us. Next: two-launch
+  unpack control on this tile vs LUT tax steal.

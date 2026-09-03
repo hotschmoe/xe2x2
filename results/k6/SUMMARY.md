@@ -43,3 +43,21 @@ simd nibble decode + simd VNNI4 select. max_abs=0 both cards.
 Now in the same us class as two-launch unpack+DPAS (84-305).
 Do not freeze a winner without matched clocks. Keep two-launch
 as the robust fast spoof.
+
+## Serving-shaped decode tile (2026-09-02cq)
+
+`nibble_lut_sc`: packed E2M1 B, simd LUT, VNNI4, K2
+RC=4 8x2-N scale-to-f16. Never bitcast s4. NT=2
+spin=4000. cosine=1.0 max_abs=0 both cards.
+timed act=cur=2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 157.760 | 158.172 | 34 | 44 |
+| 1 x 5120 | 1 | 157.773 | 158.178 | 34 | 44 |
+| 4 x 5120 | 0 | 157.768 | 158.304 | 34 | 44 |
+| 4 x 5120 | 1 | 157.805 | 158.182 | 34 | 44 |
+
+New serving-shaped NVFP4 LUT floor 158.2 us at
+2800 both cards. ~4.65x s8 34. Packed-B 83 GB/s
+(LUT tax, not HBM). M=4 tracks. Numeric closed.

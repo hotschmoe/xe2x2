@@ -850,4 +850,20 @@ timed act=cur=2800 throttle=0.
 | 1 x 17408 x 5120 | 1 | 158.006 | 161 | 141.6 | 29.5 |
 
 Hand s8 is ~1.12x this incumbent at 2800.
-One-card. Next: sibling vs W8A8 M=1 K=17408.
+Sibling card0 158.132 us (cn). New oneDNN
+wide-N floor 158.1 us both cards.
+
+## oneDNN W8A8 M=1 K=17408 card1 (2026-09-02co)
+
+pytorch-xpu on sycl+l0, int8_gemm_w8a8 GEMM-only.
+spin=2000 of M=1. cosine=1.000 max_abs=0.104.
+timed act=cur=2800 throttle=0.
+
+| shape | card | us | N=17408 | hand s8 | s4 | 5120 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 1 | 155.368 | 158.1 | 261.6 | 53.4 | 44 |
+
+~3.53x 5120, N/K-symmetric. Hand s8 261.6
+loses ~1.68x. Sibling card0 155.310 us (cp).
+New oneDNN wide-K floor 155.3 us both cards.
+Qwen FFN oneDNN W8A8 decode map closed.

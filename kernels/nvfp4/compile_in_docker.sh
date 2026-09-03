@@ -16,7 +16,7 @@ mkdir -p bin /work/results/k6
 LOG=/work/results/k6/compile.log
 icpx --version | tee "$LOG"
 fail=0
-for src in nibble_lut_s8.cpp nibble_lut_reg.cpp nibble_lut_simd.cpp; do
+for src in nibble_lut_s8.cpp nibble_lut_reg.cpp nibble_lut_simd.cpp nibble_lut_sc.cpp; do
   stem="${src%.cpp}"
   icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O3 -std=c++17 -Wall \
     -o "bin/${stem}" "$src" 2>&1 | tee -a "$LOG"

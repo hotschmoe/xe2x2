@@ -41,13 +41,14 @@ def sample_gt(card: int) -> tuple[int, int, int]:
 
 
 def main() -> int:
-    n, k = 17408, 5120
+    n = int(os.environ.get("W8_N") or "17408")
+    k = int(os.environ.get("W8_K") or "5120")
     card = int(os.environ.get("ZE_AFFINITY_MASK") or "0")
     print(
         "CONFIG backend=pytorch-xpu on sycl+l0 op=int8_gemm_w8a8",
         "torch", torch.__version__,
         "ZE_AFFINITY_MASK", os.environ.get("ZE_AFFINITY_MASK"),
-        "spin=2000 then time M1 n=17408 k=5120 oracle_after_timed=1",
+        f"spin=2000 then time M1 n={n} k={k} oracle_after_timed=1",
         flush=True,
     )
     try:
