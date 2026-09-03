@@ -3179,29 +3179,56 @@ VERDICT -> Tree hsum T=16 is 34
 Evidence: `results/k7/esimd_delta_slmh_t16_s4000_card0.txt`,
   `results/k7/esimd_delta_slmh_t16_s4000_card1.txt`.
 
-## ESIMD tile-fused reduce is 260 us T=256 (K7)
+## ESIMD tile-fused reduce is 260-294 us T=256 (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_delta_slmht` AOT
   `intel_gpu_bmg_g31`. T=256 blk=16
   one 16-wide acc then reduce.
-  Card0. spin=0. Prior: tree
+  Both cards. card0 spin=0,
+  card1 spin=4000. Prior: tree
   hsum 426-477.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  260.132. timed act=2600
-  cur=2800 throttle=0.
+  260.132 / 294.043. Spread
+  ~13%. card0 act=2600
+  throttle=0. card1 act=2283-
+  2300 throttle=1.
 
 VERDICT -> Tile-fused reduce
-  T=256 is 260 us pipe_host
-  card0, ~1.64x tree hsum 426.
-  New leftover class. Do not
-  freeze 260 as 2800. One-card.
-  Sibling before promote. Rank
-  pipe_host.
+  T=256 is 260-294 us pipe_host
+  both cards. Clock spread, not
+  a kernel split. ~1.64x tree
+  hsum 426 at card0. New
+  leftover class. Do not freeze
+  260 as 2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmht_t256_s0_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmht_t256_s0_card0.txt`,
+  `results/k7/esimd_delta_slmht_t256_s4000_card1.txt`.
+
+## ESIMD tile-fused T=64 is 67 us pipe_host (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht`. T=64
+  blk=16. Card0. spin=0. Prior:
+  tree hsum T=64 109.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  66.704 event 154.266 (ramp).
+  timed_begin act=cur=550.
+  timed_end act=2700 throttle=0.
+  event min 64.
+
+VERDICT -> Tile-fused T=64 is 67
+  us pipe_host card0, ~1.63x
+  tree hsum 109, napkin 66.
+  Clocks ramped 550 to 2700. Do
+  not freeze 67 as 2800. Hold
+  retry. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht_t64_s0_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4667,11 +4694,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   SLM-K 58, spread ~0.3%.
   throttle=1. Do not freeze 34
   as 2800. tile-fused reduce
-  T=256 is 260 us card0
-  (2026-09-03hg), ~1.64x tree
-  hsum 426. New leftover class.
-  Do not freeze 260 as 2800.
-  Sibling before promote.
+  T=256 is 260-294 us both
+  cards (2026-09-03hg/hj). Clock
+  spread 13%. Do not freeze 260
+  as 2800. tile-fused T=64 is 67
+  us card0 (2026-09-03hi),
+  napkin 66. Clocks 550 to 2700.
+  Do not freeze 67 as 2800. Hold
+  retry.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

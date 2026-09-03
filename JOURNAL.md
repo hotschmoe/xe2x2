@@ -9588,6 +9588,72 @@ VERDICT -> Sibling matches.
   tile-fused T=256 vs tile-fused
   T=64.
 
+### 2026-09-03hi - K7 ESIMD fused delta T=64 tile-fused reduce card0
+
+CONTEXT -> tree hsum T=64 109.
+  tile-fused T=256 260. Napkin
+  ~66 if 1.64x. spin=0.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht. gpu-run
+  --card 0. T=64 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht_t64.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 154.266 pipe_host
+  66.704. 94.5 GB/s. timed_begin
+  act=cur=550. timed_end
+  act=2700 cur=2800 throttle=0.
+  event min 64. vs tree hsum 109
+  (~1.63x) vs napkin 66.
+
+VERDICT -> ESIMD tile-fused T=64
+  is 67 us pipe_host card0, near
+  napkin 66. Clocks ramped 550
+  to 2700. Do not freeze 67 as
+  2800. Hold retry. Rank
+  pipe_host.
+
+### 2026-09-03hj - K7 ESIMD fused delta T=256 tile-fused sibling card1
+
+CONTEXT -> card0 tile-fused T=256
+  was 260 us pipe_host. New
+  leftover class. Sibling.
+  spin=4000 hold. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmht. gpu-run
+  --card 1. T=256 blk=16.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmht_t256.sh 1 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 296.854 pipe_host
+  294.043 vs card0 260.132.
+  Spread ~13%. 53.7 GB/s. timed
+  act 2283-2300 cur=2800
+  throttle=1. vs tree hsum 426.
+
+VERDICT -> Sibling clock-spread.
+  ESIMD tile-fused T=256 is
+  260-294 us pipe_host both
+  cards. card0 act=2600, card1
+  2283 throttle=1. Do not freeze
+  260 as 2800. New leftover
+  class both cards. Rank
+  pipe_host. Next: T=64 hold vs
+  tile-fused T=16.
+
 
 
 

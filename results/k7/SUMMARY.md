@@ -654,5 +654,32 @@ ok=1. pipe_host 33.683 event
 throttle=1. 34 us both. Do not
 freeze 34 as 2800.
 
-K7 next: sibling tile-fused
-T=256 vs tile-fused T=64.
+## ESIMD fused delta T=64 tile-fused card0 (2026-09-03hi)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=64 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 66.704 event
+154.266 (ramp). timed_begin
+act=cur=550. timed_end act=2700
+throttle=0. event min 64.
+~1.63x tree hsum 109. Napkin
+66. Do not freeze 67 as 2800.
+Hold retry.
+
+## ESIMD fused delta T=256 tile-fused sibling card1 (2026-09-03hj)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=256 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 294.043 event
+296.854 vs card0 260.132.
+Spread ~13%. act 2283-2300
+cur=2800 throttle=1. Clock
+spread. 260-294 us both. Do
+not freeze 260 as 2800.
+
+K7 next: tile-fused T=16 vs
+T=64 hold.
