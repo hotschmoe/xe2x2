@@ -918,20 +918,37 @@ w4a16 142 (~1.42x) both cards and s4
 94.7. Beats hand s8 338.9. Crossover
 holds. Spread ~0.8%. Throttle=1.
 
-## oneDNN W8A8 M=64 K=17408 card1 (2026-09-03bw)
+## oneDNN W8A8 M=64 K=17408 (2026-09-03bw/bx)
 
 Same GEMM-only. spin=512 of M=64.
-cosine=1.000 max_abs=0.124. timed
-act=2733 cur=2800 throttle=1.
+cosine=1.000 max_abs=0.123. timed
+act=2717-2733 cur=2800 throttle=1.
 
 | shape | card | us | square | w4a16 | s8 | s4 | napkin |
 |---|---|---:|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 0 | 177.372 | 46 | 130 | 374.7 | 106.0 | 162 |
 | 64 x 5120 x 17408 | 1 | 184.009 | 46 | 130 | 374.7 | 106.0 | 162 |
 
-~4.00x square. Superlinear. Loses to
-w4a16 130 (~1.42x) and s4 106.0. Beats
-hand s8 374.7. Same crossover. One-card.
-Do not freeze 184 us.
+New wide-K floor 181 us both cards.
+~3.93x square. Superlinear. Loses to
+w4a16 130 (~1.39x) both cards and s4
+106.0. Beats hand s8 374.7. Spread ~3.7%.
+Throttle=1. Qwen FFN W8A8 M=64 map closed.
 
-K2 next: sibling W8A8 M=64 K=17408 vs
-s2 decode tile at 5120.
+## s2 RC=4 8x2-N decode card1 (2026-09-03by)
+
+sycl+l0 standalone AOT. dpas_s2_sc pack=4
+NT=2 spin=4000. IGC s2 [-2,1]. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 1 | 11.096 | 11.474 | 16.5 | 34 | 44 |
+| 4 x 5120 | 1 | 11.083 | 11.458 | 16.5 | 34 | 44 |
+
+COMPILE_OK. ~1.43x s4, ~2.96x s8. Napkin
+8 missed. New dtype. One-card. Do not
+freeze 11.5 us.
+
+K2 next: sibling s2 decode vs s2xs8
+serving-shaped.

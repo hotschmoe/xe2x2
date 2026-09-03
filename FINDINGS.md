@@ -1323,27 +1323,53 @@ VERDICT -> New W8A8 M=64 wide-N floor 202
 Evidence: `results/k2/w8a8_m64_n17408_hold_card0.txt`,
   `results/k2/w8a8_m64_n17408_hold_card1.txt`.
 
-## oneDNN W8A8 M=64 K=17408 is 184 us card1 (K1/K4)
+## oneDNN W8A8 M=64 K=17408 is 181 us both cards (K1/K4)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
   mtp6 `int8_gemm_w8a8` GEMM-only. spin=512
   of M=64 then us_bench M=64 N=5120
-  K=17408. Card1 only. Oracle after timed.
+  K=17408. Both cards. Oracle after timed.
 
 RESULT -> out f16 [64,5120]. timed
-  act=2733 cur=2800 throttle=1. 184.009 us
-  vs square 46 vs N-wide 202 vs w4a16 130
-  vs s8 374.7 vs s4 106.0 vs napkin 162.
-  cosine=1.000 max_abs=0.124. 484 GB/s.
-  ~4.00x square, superlinear vs 156.
+  act=2717-2733 cur=2800 throttle=1.
+  177.372/184.009 us vs square 46 vs
+  N-wide 202 vs w4a16 130 vs s8 374.7 vs
+  s4 106.0 vs napkin 162. Spread ~3.7%.
+  cosine=1.000 max_abs=0.123. 502/484 GB/s.
+  ~3.93x square, superlinear vs 156.
 
-VERDICT -> Wide-K W8A8 M=64 loses to
-  w4a16 130 (~1.42x) and s4 106.0, beats
-  hand s8 374.7. Same crossover as N-wide.
-  Throttle=1. Numeric closed. One-card.
-  Do not freeze 184 us until card0.
+VERDICT -> New W8A8 M=64 wide-K floor 181
+  us both cards at ~2725/2800, throttle=1.
+  Loses to w4a16 130 (~1.39x) both cards
+  and s4 106.0, beats hand s8 374.7. Qwen
+  FFN W8A8 M=64 map is closed. Numeric
+  closed. Rank us.
 
-Evidence: `results/k2/w8a8_m64_k17408_hold_card1.txt`.
+Evidence: `results/k2/w8a8_m64_k17408_hold_card0.txt`,
+  `results/k2/w8a8_m64_k17408_hold_card1.txt`.
+
+## ESIMD s2 decode tile is 11.5 us card1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  icpx AOT `intel_gpu_bmg_g31`. `dpas_s2_sc`
+  RC=4 8x2-N scale-to-f16, pack=4 along K,
+  IGC s2 [-2,1]. NT=2 spin=4000. Card1.
+  Never E2M1 bitcast.
+
+RESULT -> COMPILE_OK. check 4x32x1024
+  cosine=1.0 max_abs=0. timed M=1 5120
+  act=cur=2800 throttle=0. pipe_host
+  11.474 us vs s4 16.5 vs s8 34 vs W8A8
+  44. M=4 pipe 11.458 tracks. ~1.43x s4,
+  ~2.96x s8. Napkin 8 (2x s4) missed.
+
+VERDICT -> First serving-shaped s2 decode
+  lights and is numeric-closed. 11.5 us
+  at 2800 card1. Beats s4, not 2x s4.
+  New dtype. One-card. Do not freeze 11.5
+  us until card0.
+
+Evidence: `results/k2/s2sc_n2_s4000_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2580,9 +2606,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   oneDNN W8A8 M=64 N=17408 is 202 us
   both cards (act=2783/2800, throttle=1,
   ~4.39x square, loses to w4a16 142).
-  oneDNN W8A8 M=64 K=17408 is 184 us
-  card1 (act=2733/2800, throttle=1, ~4.00x
-  square, loses to w4a16 130). One-card.
+  oneDNN W8A8 M=64 K=17408 is 181 us
+  both cards (act~2725/2800, throttle=1,
+  ~3.93x square, loses to w4a16 130).
+  Qwen FFN W8A8 M=64 map is closed.
+  ESIMD s2 RC=4 decode is 11.5 us card1
+  at 2800 (cosine=1 max_abs=0, ~1.43x
+  s4 16.5). New dtype. One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

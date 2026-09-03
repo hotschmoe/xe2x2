@@ -5247,3 +5247,70 @@ VERDICT -> Wide-K W8A8 M=64 is 184 us at
   Do not freeze until card0. Rank us.
   Next: sibling W8A8 M=64 K=17408 vs
   K2 s2 decode tile at 5120.
+
+### 2026-09-03bx - K1/K4 oneDNN W8A8 M=64 K=17408 sibling card0
+
+CONTEXT -> card1 W8A8 M=64 K=17408 was
+  184 us at 2733/2800, throttle=1, lost
+  to w4a16 130. Sibling swap. GEMM-only.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 0.
+  spin=512 of M=64 then us_bench.
+  N=5120 K=17408. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/w8_compare/run_w8_m64_k17408_hold.sh 0 512
+  ```
+
+RESULT -> out f16 [64,5120]. timed
+  act=2733-2717 cur=2800 throttle=1.
+  us_bench 177.372 vs card1 184.009 vs
+  square 46 vs N-wide 202 vs w4a16 130 vs
+  s8 374.7 vs s4 106.0 vs napkin 162.
+  Spread ~3.7%. cosine=1.000 max_abs=0.123.
+  502 GB/s.
+
+VERDICT -> Sibling matches. New W8A8
+  M=64 wide-K floor 181 us both cards at
+  ~2725/2800, throttle=1. ~3.93x square,
+  superlinear vs 156. Loses to w4a16 130
+  (~1.39x) both cards. Qwen FFN W8A8 M=64
+  map is closed. Numeric closed. Rank us.
+
+### 2026-09-03by - K2 s2 RC=4 8x2-N decode tile card1
+
+CONTEXT -> s8 RC=4 decode is 34 us. s4
+  same tile is 16.5 us. W8A8 44. INT2
+  silicon lit on 1024^3. First serving-
+  shaped s2. IGC s2 [-2,1]. Never E2M1
+  bitcast. Napkin ~8 us if 2x s4. One-card.
+
+CONFIG -> backend sycl+l0, standalone
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31.
+  dpas_s2_sc RC=4 NT=2 unroll=16 pack=4
+  along K, scale-to-f16, pad M to RC.
+  gpu-run --card 1. NT=2 spin=4000.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s2_sc.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_sc.sh 1 2 4000
+  ```
+
+RESULT -> COMPILE_OK. check 4x32x1024
+  cosine=1.000 max_abs=0. timed M=1
+  5120 act=cur=2800 throttle=0. event
+  11.096 pipe_host 11.474 vs s4 16.5 vs
+  s8 34 vs W8A8 44. M=4 pipe 11.458
+  tracks. ~1.43x s4, ~2.96x s8. Napkin
+  8 missed.
+
+VERDICT -> First serving-shaped s2 decode
+  is 11.5 us pipe_host at 2800 card1,
+  numeric closed. Beats s4 16.5, not 2x
+  s4. New dtype, one-card. Do not freeze
+  11.5 us until card0. Rank pipe_host.
+  Next: sibling s2 decode vs s2xs8
+  serving-shaped.
