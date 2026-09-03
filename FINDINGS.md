@@ -3106,6 +3106,52 @@ VERDICT -> SLM-K T=16 is 58 us
 Evidence: `results/k7/esimd_delta_slmk_t16_s0_card1.txt`,
   `results/k7/esimd_delta_slmk_t16_s4000_card0.txt`.
 
+## ESIMD tree hsum T=64 is 109 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmh`. T=64
+  blk=16. Card0. spin=0. Prior:
+  SLM-K T=64 214 at 2800.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  108.823. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> Tree hsum T=64 is 109
+  us pipe_host card0 at 2800,
+  ~1.97x SLM-K 214. Napkin 107.
+  T-linear vs 426. One-card.
+  Sibling before promote. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmh_t64_s0_card0.txt`.
+
+## ESIMD tree hsum T=1 does not replace fused 7.1 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_h` AOT
+  `intel_gpu_bmg_g31`. T=1
+  esimd::reduce hsum. Card1.
+  spin=4000. Prior: fused 7.1 at
+  2800.
+
+RESULT -> cosine=1.0 max_abs
+  0.0625 / 2 ok=1. pipe_host
+  6.085 event 7.237. 525 GB/s.
+  timed act=cur=2800 throttle=0.
+  fused max_abs 0.015625 /
+  max_abs_o=0.
+
+VERDICT -> Tree hsum T=1 is 6.09
+  us pipe_host card1 at 2800,
+  ~1.16x fused 7.1. Numeric
+  looser (max_abs_o=2). Do not
+  replace fused 7.1. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_h_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`

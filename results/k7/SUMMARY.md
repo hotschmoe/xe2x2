@@ -579,5 +579,29 @@ throttle=1. Clock spread. 426-
 477 us both. Do not freeze 426
 as 2800.
 
-K7 next: tree hsum T=64 vs
-tree hsum T=1.
+## ESIMD fused delta T=64 tree hsum card0 (2026-09-03hc)
+
+backend sycl+l0, same
+gdn_delta_slmh. T=64 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. timed act=cur=2800
+throttle=0. pipe_host 108.823
+event 109.112. 57.9 GB/s.
+~1.97x SLM-K 214. Napkin 107.
+Sibling before promote.
+
+## ESIMD fused delta T=1 tree hsum card1 (2026-09-03hd)
+
+backend sycl+l0, AOT
+gdn_delta_h. T=1 spin=4000.
+cosine=1 max_abs=0.0625
+cosine_o=1 max_abs_o=2 ok=1.
+timed act=cur=2800 throttle=0.
+pipe_host 6.085 event 7.237.
+525 GB/s. ~1.16x fused 7.1.
+max_abs_o=2 vs fused 0. Do not
+replace fused 7.1.
+
+K7 next: sibling T=64 vs tree
+hsum T=16.

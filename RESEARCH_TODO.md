@@ -488,9 +488,16 @@ Clock spread 12% (2417 vs
 both cards (2026-09-03gz/ha),
 near T-linear 53. throttle=1.
 Do not freeze 58 as 2800.
-Next: split. card0: tree hsum
-T=64. card1: tree hsum T=1.
-Loop every 5m.
+tree hsum T=64 is 109 us card0
+(2026-09-03hc) at 2800, ~1.97x
+SLM-K 214. Napkin 107. Sibling
+before promote. tree hsum T=1
+is 6.09 us card1 (2026-09-03hd)
+at 2800, ~1.16x fused 7.1.
+max_abs_o=2 vs fused 0. Do not
+replace fused 7.1. Next: split.
+card0: sibling T=64. card1:
+tree hsum T=16. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -501,10 +508,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. tree hsum T=64
-   (SLM-K 214; napkin ~107 if 2x).
-2. tree hsum T=1 decode
-   (fused 7.1; scalar hsum).
+1. sibling tree hsum T=64
+   (109 us at 2800; ~1.97x 214).
+2. tree hsum T=16
+   (SLM-K 58; napkin ~29 if 2x).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
