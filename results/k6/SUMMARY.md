@@ -215,3 +215,34 @@ grf 128, no SLM. Never bitcast.
 
 New floor 68.7 us both cards. ~2.04x native
 s4, ~3.17x 8x2-N. Beats s8 75, loses W8A8 46.
+
+## E2M1 two-term 4x8 A-db M=256 card0 (2026-09-03r)
+
+Same tile, M=256 N=K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | M=64 | 8x2-N | s4 4-acc | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 256 x 5120 | 0 | 194.823 | 68.7 | 607 | 48.6 | 128 | 75 |
+| 256 x 5120 | 1 | 195.034 | 68.7 | 607 | 48.6 | 128 | 75 |
+
+~3.12x 8x2-N, ~4.0x s4 4-acc. Sibling
+card1 pipe 195.034 (2026-09-03t). New
+M=256 floor 194.9 us both cards.
+
+## nibble LUT 4x8 A-db M=64 (2026-09-03s/u)
+
+`nibble_lut_db48`: packed E2M1, simd LUT,
+VNNI4, s8 DPAS, RC=8 wg 4x8 A-db.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0. ocloc 64x dpas.8x8 rW:b rA:b,
+packed B not Transformed, grf 128, no SLM.
+Never bitcast.
+
+| shape | card | pipe_host_us | 8x2-N | s8 4x8 | W8A8 | compose |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 392.427 | 656 | 75 | 46 | 68.7 |
+| 64 x 5120 | 1 | 392.443 | 656 | 75 | 46 | 68.7 |
+
+New 4x8 LUT floor 392.4 us both cards.
+~1.67x 8x2-N, still ~5.23x s8 75.

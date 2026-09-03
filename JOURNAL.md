@@ -3273,3 +3273,129 @@ VERDICT -> Sibling matches. New E2M1
   both cards. ~2.04x native s4, ~3.17x
   8x2-N. Beats s8 75, loses to W8A8 46.
   A is s4. Rank us.
+
+### 2026-09-03r - K3/K6 E2M1 two-term 4x8 A-db M=256 card0
+
+CONTEXT -> 4x8 A-db compose is 68.7 us at
+  M=64. 8x2-N compose at M=256 is 607 us
+  throttle=1. s4 4-acc is 48.6. Prefill on
+  the M=64 tile. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  RC=8 NT=2 U=16 spin=512. M=256 N=K=5120.
+  Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_db48_m256.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 193.984 us, pipe_host
+  194.823 vs M=64 68.7 vs 8x2-N 607 vs s4
+  4-acc 48.6 vs s8 128 vs W8A8 75. Ratio
+  194.8/68.7 ~2.84x (M*4). min/max
+  191.9-197.0.
+
+VERDICT -> 4x8 A-db compose at M=256 is a
+  real ~3.12x beat of 8x2-N 607, throttle=0.
+  ~4.0x native s4 4-acc, over W8A8 75. Not
+  the 4-acc tile. One-card. Do not freeze
+  194.8 us until card1. Rank us.
+
+### 2026-09-03s - K6 nibble LUT 4x8 A-db M=64 card1
+
+CONTEXT -> 8x2-N LUT loses at M=64 (656 us
+  vs s8 4x8 75). Steal merge LUT onto the
+  s8 4x8 A-db prefill tile. New geometry.
+  One-card. Never bitcast. Napkin: decode
+  LUT tax 4.65x * 75 ~349 us.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 (64 s8 dpas.8x8), wg 4x8
+  NxM, k64 A ping-pong, packed E2M1 B,
+  simd LUT + VNNI4. spin=512 warmup=10
+  iters=20. M=64 N=K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_db48_m64.sh 1 2 512
+  clang-offload-bundler --unbundle; ocloc disasm -device bmg-g31
+  ```
+
+RESULT -> ocloc: NT=2 64x dpas.8x8 rW:b
+  rA:b, packed B load_block2d d8 (not d8v),
+  store_block2d d16, grf_count 128, no
+  slm_size. cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card1: event 392.375 us, pipe_host
+  392.443 vs 8x2-N 656 vs s8 75 vs W8A8 46
+  vs compose 68.7 vs napkin 349. Ratio
+  392.4/75 ~5.23x. min/max 392.08-392.81.
+
+VERDICT -> 4x8 A-db LUT is a real ~1.67x
+  beat of 8x2-N 656. Still ~5.23x s8 75.
+  Packed E2M1 stays in HBM. One-card. Do
+  not freeze 392 us until card0. Rank us.
+  Next: sibling compose M=256 vs compose
+  on the M=256 4-acc s4 tile.
+
+### 2026-09-03t - K3/K6 E2M1 two-term 4x8 A-db M=256 sibling card1
+
+CONTEXT -> card0 compose_e2m1_db48 M=256 was
+  194.8 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_db48_m256.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card1: event 194.333 us, pipe_host
+  195.034 vs card0 194.823 vs s4 48.6 vs
+  s8 128 vs W8A8 75. Spread ~0.1%.
+
+VERDICT -> Sibling matches. New E2M1
+  two-term 4x8 A-db M=256 floor 194.9 us
+  at 2800 both cards. ~2.84x M=64, ~4.0x
+  s4 4-acc. Beats 8x2-N 607 and s8 128,
+  loses to W8A8 75. A is s4. Rank us.
+
+### 2026-09-03u - K6 nibble LUT 4x8 A-db sibling card0
+
+CONTEXT -> card1 nibble_lut_db48 M=64 was
+  392.4 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_db48_m64.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=64 card0: event 391.786 us, pipe_host
+  392.427 vs card1 392.443 vs 8x2-N 656
+  vs s8 75 vs W8A8 46. Spread ~0.004%.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  LUT floor 392.4 us at 2800 both cards.
+  ~1.67x 8x2-N, still ~5.23x s8 75. Packed
+  E2M1 stays in HBM. Rank us.

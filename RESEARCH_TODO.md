@@ -106,10 +106,16 @@ vs s8 75. Stop 8x2-N LUT at prefill too.
 compose on s4 4x8 A-db M=64 is 68.7 us
 both cards (2026-09-03q), ~2.04x s4 33.6,
 ~3.17x faster than 8x2-N 217.9. Beats s8
-75, loses to W8A8 46. A=s4.
-Next: split. card0: compose_e2m1_db48 M=256.
-card1: nibble LUT on the M=64 4x8 A-db s8
-tile (new geometry). Loop every 20m.
+75, loses to W8A8 46. A=s4. compose 4x8
+A-db M=256 is 194.9 us both cards
+(2026-09-03t), ~3.12x 8x2-N 607, ~4.0x
+s4 4-acc 48.6, loses to W8A8 75. nibble
+LUT on s8 4x8 A-db M=64 is 392.4 us both
+cards (2026-09-03u), ~1.67x 8x2-N 656,
+still ~5.23x s8 75.
+Next: split. card0: compose_e2m1_db48 M=64
+N=17408. card1: compose_e2m1_db48 M=64
+K=17408. Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

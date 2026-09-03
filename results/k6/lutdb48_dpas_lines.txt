@@ -1,0 +1,15 @@
+K6 nibble_lut_db48 ocloc/IGA (CPU unbundle)
+backend sycl+l0 AOT intel_gpu_bmg_g31 RC=8 s8 LUT A-db wg 4x8 f16 M=64 never_bitcast
+  name:            _ZTSN12_GLOBAL__N_118DpasLutDb48Nt4NameE, _ZTSN12_GLOBAL__N_118DpasLutDb48Nt2NameE
+  grf_count:       128, 128, has_dpas:        true, true
+  slm_size: (absent)
+.text._ZTSN12_GLOBAL__N_118DpasLutDb48Nt2NameE.asm dpas.8x8=64 :b=64 slm=0 atomic=0
+  first_dpas: dpas.8x8 (16|M0)         r68:d         r68:d             r17:b             r76.0:b          {Compacted,$3}
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$14} // wr:1+4, rd:0; store_block2d.ugm.d16.a64
+  A load: load_block2d.ugm.d8.a64
+  packed B load: load_block2d.ugm.d8.a64 (not d8v)
+.text._ZTSN12_GLOBAL__N_118DpasLutDb48Nt4NameE.asm dpas.8x8=64 :b=64 slm=0 atomic=0
+  first_dpas: dpas.8x8 (16|M0)         r88:d         r88:d             r17:b             r100.0:b         {Compacted,$3}
+  store: send.ugm (1|M0)          null     r6  r12:4  0x0            0x02000207           {I@1,$0} // wr:1+4, rd:0; store_block2d.ugm.d16.a64
+  A load: load_block2d.ugm.d8.a64
+  packed B load: load_block2d.ugm.d8.a64 (not d8v)

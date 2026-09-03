@@ -556,6 +556,52 @@ Evidence: `results/k6/e2m1db48_m64_n2_s512_card0.txt`,
   `results/k6/e2m1db48_m64_n2_s512_card1.txt`,
   `results/k6/e2m1db48_dpas_lines.txt`.
 
+## E2M1 two-term 4x8 A-db at M=256 is 194.9 us (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_db48`. M=256 N=K=5120.
+  Both cards, NT=2, spin=512. Never
+  bitcast.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=256 pipe_host
+  194.82/195.03 vs M=64 68.7 vs 8x2-N 607
+  vs s4 4-acc 48.6 vs s8 128 vs W8A8 75.
+  Spread ~0.1%.
+
+VERDICT -> New E2M1 two-term 4x8 A-db
+  M=256 floor 194.9 us at 2800 both cards.
+  ~3.12x 8x2-N 607, ~4.0x native s4 4-acc.
+  Beats s8 128, loses to W8A8 75. A is s4.
+  Rank us.
+
+Evidence: `results/k6/e2m1db48_m256_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m256_n2_s512_card1.txt`.
+
+## NVFP4 merge LUT on 4x8 A-db is 392.4 us at M=64 (K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `nibble_lut_db48`. Packed E2M1, simd LUT,
+  VNNI4, s8 DPAS on RC=8 wg 4x8 A-db.
+  M=64 N=K=5120. Both cards, NT=2, spin=512.
+  Never bitcast. Prior: 4.65x * 75 ~349 us.
+
+RESULT -> ocloc 64x `dpas.8x8` rW:b rA:b,
+  packed B not Transformed, grf 128, no SLM.
+  cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. M=64 pipe_host 392.43/392.44
+  vs 8x2-N 656 vs s8 75 vs W8A8 46 vs
+  compose 68.7. Spread ~0.004%.
+
+VERDICT -> New 4x8 A-db LUT floor 392.4 us
+  at 2800 both cards. ~1.67x the decode
+  tile. Still ~5.23x s8 75. Packed E2M1
+  stays in HBM. Rank us.
+
+Evidence: `results/k6/lutdb48_m64_n2_s512_card0.txt`,
+  `results/k6/lutdb48_m64_n2_s512_card1.txt`,
+  `results/k6/lutdb48_dpas_lines.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1690,6 +1736,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   this tile at prefill. compose on s4 4x8
   A-db M=64 is 68.7 us both cards (~2.04x
   s4 33.6, ~3.17x faster than 8x2-N).
+  compose 4x8 A-db M=256 is 194.8 us card0
+  (~3.12x 8x2-N 607, throttle=0). nibble
+  LUT on s8 4x8 A-db M=64 is 392 us card1
+  (~1.67x 8x2-N 656, still ~5.23x s8 75).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.
