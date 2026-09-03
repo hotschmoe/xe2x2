@@ -7804,6 +7804,63 @@ VERDICT -> Sibling matches the
   pipe_host. Next: o-proj vs
   fused qkv conv.
 
+### 2026-09-03fb - K7 GDN o-proj W8A8 card0
+
+CONTEXT -> o-proj value_dim->H
+  6144x5120. v-proj 46. q-proj
+  45-58. Mixer ESIMD 4.4+7.1.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 0.
+  int8_gemm_w8a8 M=1 n=5120
+  k=6144. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_proj_o_w8a8.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0.060
+  ok=1. 46.293 us. 680 GB/s. vs
+  v-proj 46 vs square 44. cur
+  2017-2800 end 2717 throttle=0.
+
+VERDICT -> o-proj W8A8 is 46 us
+  card0, same class as v-proj
+  and square. Not K-linear.
+  One-card. Rank us.
+
+### 2026-09-03fc - K7 ESIMD fused qkv conv1d card1
+
+CONTEXT -> q+k+v = C=10240.
+  One-arm ~4.4. 3x napkin ~13.2.
+  First fuse of conv family.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_conv1d_qkv.
+  gpu-run --card 1. f16 VL=16
+  wg=16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_qkv.sh 1
+  ```
+
+RESULT -> fused cosine=1
+  max_abs=0 ok=1. C=10240 event
+  0.917 pipe_host 4.437. 55 GB/s.
+  act=cur=2800 throttle=0. trio
+  event 2.755 pipe_host 13.449.
+
+VERDICT -> Fused qkv conv is
+  4.44 us pipe_host card1 at
+  2800, same class as one-arm
+  4.4, ~3.03x trio 13.4. Launch
+  bound. One-card. Do not freeze
+  4.44 until sibling. Rank
+  pipe_host. Next: sibling swap.
+
+
 
 
 

@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/fa
+# K7 GDN inventory 2026-09-03ep/fc
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -88,3 +88,34 @@ W8A8 46.
 
 K7 next: o-proj W8A8 vs fused
 qkv conv.
+
+## GDN o-proj W8A8 card0 (2026-09-03fb)
+
+backend pytorch-xpu on sycl+l0.
+M=1 n=5120 k=6144. heat M=64
+spin=512. cosine=1 ok=1.
+
+| arm | n | k | card0 us |
+|---|---:|---:|---:|
+| o | 5120 | 6144 | 46.293 |
+
+Same class as v-proj 46 and
+square 44. One-card.
+
+## ESIMD fused qkv conv1d card1 (2026-09-03fc)
+
+backend sycl+l0, AOT
+gdn_conv1d_qkv. C=10240 T=1
+spin=4000. cosine=1 max_abs=0
+ok=1. act=cur=2800 throttle=0.
+
+| arm | pipe_host us | event us |
+|---|---:|---:|
+| fused | 4.437 | 0.917 |
+| trio | 13.449 | 2.755 |
+
+Fused ~3.03x trio. Same 4.4
+class as one-arm. One-card.
+
+K7 next: sibling swap. card0
+fused qkv, card1 o-proj.

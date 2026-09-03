@@ -370,13 +370,19 @@ delta is 7.1 us pipe_host both
 cards at 2800 (2026-09-03ez),
 ~43x eager, 450 GB/s. Mixer
 4.4+7.1 ~11.5 us under W8A8 46.
-Leftover is qkvz. Next: split.
-card0: GDN o-proj W8A8 M=1
-6144x5120. card1: fuse q+k+v
-conv1d one launch. Loop every
-5m. Do not drop below 5m:
-M=256 FFN spin=512 already 2-4 min GPU,
-and overlapping fires serialize on gpu-run.
+Leftover is qkvz. o-proj W8A8
+M=1 6144x5120 is 46 us card0
+(2026-09-03fb), same class as
+v-proj. Fused qkv conv C=10240
+is 4.44 us pipe_host card1 at
+2800 (2026-09-03fc) vs trio
+13.4. One-card. Do not freeze.
+Next: sibling swap. card0:
+fused qkv conv. card1: o-proj
+W8A8. Loop every 5m. Do not
+drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, and
+overlapping fires serialize on gpu-run.
 
 
 ## 10-hour remaining (ruthless)
@@ -384,10 +390,10 @@ and overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. GDN o-proj W8A8 M=1
-   6144x5120 (vs v-proj 46).
-2. Fuse q+k+v conv1d one
-   launch (beat 3x 4.4).
+1. Sibling fused qkv conv1d
+   card0 (card1 4.44 us at 2800).
+2. Sibling o-proj W8A8 card1
+   (card0 46 us).
 Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
