@@ -10910,3 +10910,70 @@ VERDICT -> Hold matches at 2800.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-03iw - K7 ESIMD conv1d T=128 C=10240 card0
+
+CONTEXT -> T=32 5.9. T=64 10.5.
+  T=256 40.7. Napkin T-linear
+  ~20. slmht T=128 127. seq
+  control. spin=4000.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. T=128 C=10240 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t128_c10240.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=0
+  ok=1. event 19.542 pipe_host
+  19.946. 267 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  napkin 20 vs T=64 10.5
+  (~1.90x) vs T=256 40.7
+  (~2.04x). seq ~147 vs mixer
+  232 (~1.58x).
+
+VERDICT -> ESIMD conv T=128
+  C=10240 is 20 us pipe_host
+  card0 at 2800, napkin 20,
+  T-linear. Sibling before
+  citing the map. Rank
+  pipe_host.
+
+### 2026-09-03ix - K7 ESIMD conv1d T=32 C=10240 sibling card1
+
+CONTEXT -> card0 T=32 was 5.9 us
+  at 2800. Map. Sibling.
+  spin=4000. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 1. T=32 C=10240 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t32_c10240.sh 1 4000
+  ```
+
+RESULT -> cosine=1 max_abs=0
+  ok=1. event 5.406 pipe_host
+  5.771 vs card0 5.937. Spread
+  ~2.8%. timed act=cur=2800
+  throttle=0. 235-241 GB/s. seq
+  ~45 vs mixer 60.
+
+VERDICT -> Sibling matches.
+  ESIMD conv T=32 C=10240 is
+  5.8-5.9 us pipe_host both
+  cards at 2800. seq ~45 vs
+  mixer 60. Rank pipe_host.
+  Next: sibling conv T=128 vs
+  mixer L2-out T=256.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

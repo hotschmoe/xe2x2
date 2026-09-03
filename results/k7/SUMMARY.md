@@ -1154,5 +1154,28 @@ throttle=0. vs card0 5.710 at
 1650. Spread ~18% clock. 4.8 us
 at 2800. seq ~27 vs mixer 31.
 
-K7 next: sibling conv T=32
-C=10240 vs conv T=128 C=10240.
+## ESIMD conv T=128 C=10240 card0 (2026-09-03iw)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=128 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 19.946 event
+19.542. 267 GB/s. act=cur=2800
+throttle=0. Napkin 20. T-linear
+vs T=64 10.5 and T=256 40.7.
+seq ~147 vs mixer 232. Sibling
+before citing the map.
+
+## ESIMD conv T=32 C=10240 sibling card1 (2026-09-03ix)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=32 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 5.771 event
+5.406 vs card0 5.937. Spread
+~2.8%. act=cur=2800 throttle=0.
+5.8-5.9 us both at 2800. seq
+~45 vs mixer 60.
+
+K7 next: sibling conv T=128
+C=10240 vs mixer L2-out T=256.

@@ -3873,27 +3873,51 @@ VERDICT -> Conv T=16 C=10240 is
 Evidence: `results/k7/esimd_conv1d_t16_c10240_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t16_c10240_s4000_card1.txt`.
 
-## ESIMD conv T=32 C=10240 is 5.9 us card0 (K7)
+## ESIMD conv T=32 C=10240 is 5.8-5.9 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_conv1d_t`. T=32
-  C=10240 k=4. Card0. spin=4000.
-  Prior: T=16 4.8 at 2800, T=64
-  10.5. slmht T=32 39.
+  C=10240 k=4. Both cards.
+  spin=4000. Prior: T=16 4.8 at
+  2800, T=64 10.5. slmht T=32
+  39.
 
 RESULT -> cosine=1.0 max_abs=0
-  ok=1. pipe_host 5.937 event
-  5.401. 235 GB/s. timed
-  act=cur=2800 throttle=0.
+  ok=1. pipe_host 5.937 / 5.771.
+  Spread ~2.8%. timed
+  act=cur=2800 throttle=0 both.
 
 VERDICT -> Conv T=32 C=10240 is
-  5.9 us pipe_host card0 at
-  2800. seq ~45 vs mixer 60
-  (~1.34x). Sibling before
-  citing the map. Rank
+  5.8-5.9 us pipe_host both
+  cards at 2800. seq ~45 vs
+  mixer 60 (~1.34x). Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_conv1d_t32_c10240_s4000_card0.txt`.
+Evidence: `results/k7/esimd_conv1d_t32_c10240_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t32_c10240_s4000_card1.txt`.
+
+## ESIMD conv T=128 C=10240 is 20 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. T=128
+  C=10240 k=4. Card0. spin=4000.
+  Prior: T=64 10.5, T=256 40.7.
+  Napkin T-linear ~20. slmht
+  T=128 127.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 19.946 event
+  19.542. 267 GB/s. timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> Conv T=128 C=10240 is
+  20 us pipe_host card0 at 2800,
+  napkin 20, T-linear. seq ~147
+  vs mixer 232 (~1.58x). Sibling
+  before citing the map. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t128_c10240_s4000_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5518,6 +5542,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   5.9 us card0 (2026-09-03iu) at
   2800. seq ~45 vs mixer 60.
   Sibling before citing the map.
+  conv T=32 C=10240 is 5.8-5.9 us
+  both cards (2026-09-03iu/ix) at
+  2800. seq ~45 vs mixer 60.
+  conv T=128 C=10240 is 20 us
+  card0 (2026-09-03iw) at 2800,
+  napkin 20. seq ~147 vs mixer
+  232. Sibling before citing the
+  map.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
