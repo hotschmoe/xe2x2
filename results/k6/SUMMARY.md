@@ -690,4 +690,20 @@ New floor 100 us both cards. ~3.35x
 square, near linear. Spread ~0.04%.
 Beats s8 141.6. Loses to s4 29.5.
 
-K6 next: GPTQ K=17408 decode.
+## GPTQ s4 RC=4 K=17408 card0 (2026-09-03cz)
+
+Same dpas_s4_gptq_sc. down_proj dump
+17408x5120. NT=2 spin=4000. timed
+2800 throttle=0. cosine=1.0.
+
+| shape | card | event_us | pipe_host_us | square | s4 | s8 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 0 | 173.477 | 174.629 | 29.9 | 53.4 | 261.6 |
+| 4 x 5120 x 17408 | 0 | 174.047 | 174.561 | 29.9 | 53.4 | 261.6 |
+
+174.6 us at 2800 card0. ~5.84x
+square, not napkin 102. Beats s8
+261.6. Loses to s4 53.4 and W8A8
+155.3. One-card.
+
+K6 next: sibling K=17408.

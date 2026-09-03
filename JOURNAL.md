@@ -6136,3 +6136,76 @@ VERDICT -> Sibling matches. New GPTQ
   Rank pipe_host. Next: GPTQ K=17408
   vs s8xs4 4x8 M=256.
 
+### 2026-09-03cz - K6 GPTQ s4 RC=4 K=17408 card0
+
+CONTEXT -> GPTQ square 29.9. N-wide
+  100. s4 K=17408 53.4. s8xs4 73.2.
+  s8 261.6. W8A8 155.3. Napkin
+  29.9*17408/5120 ~102. down_proj
+  dump. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s4_gptq_sc RC=4 NT=2 gs=128.
+  gpu-run --card 0. M=1 and M=4
+  N=5120 K=17408. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4_sc_k17408.sh 0 2 4000
+  ```
+
+RESULT -> dump down 17408x5120.
+  check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 173.477 pipe_host 174.629 vs
+  square 29.9 vs N-wide 100 vs s4
+  53.4 vs s8xs4 73.2 vs s8 261.6 vs
+  W8A8 155.3 vs napkin 102. cosine=1
+  max_abs=0. M=4 pipe 174.561.
+  ~5.84x square, not 3.4x.
+
+VERDICT -> Wide-K GPTQ is 174.6 us
+  pipe_host at 2800 card0. Napkin 102
+  miss. Beats s8 261.6, loses to s4
+  53.4, s8xs4 73.2, and W8A8 155.3
+  (~1.12x). More K-hostile than
+  N-wide. One-card. Do not freeze
+  174.6 us until card1. Rank
+  pipe_host.
+
+### 2026-09-03da - K2 s8xs4 4x8 A-db M=256 card1
+
+CONTEXT -> mix 4x8 M=64 is 43.3.
+  s4 4-acc 48.6. s8 128. W8A8 75.
+  compose 4x8 194.9. Napkin 43.3*4
+  ~173. Same 4x8 A-db tile. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s8xs4_db48 RC=8 wg 4x8 A-db.
+  gpu-run --card 1. M=256 N=K=5120.
+  NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_db48_m256.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=2767 cur=2800
+  throttle=1. event 124.563
+  pipe_host 123.272 vs M=64 43.3 vs
+  s4 48.6 vs s8 128 vs W8A8 75 vs
+  compose 194.9 vs napkin 173.
+  ~2.85x M=64, under linear.
+
+VERDICT -> Mix 4x8 M=256 is 123 us
+  pipe_host at 2800 card1. Numeric
+  closed. Beats s8 128 and compose
+  194.9, loses to s4 48.6 (~2.54x)
+  and W8A8 75 (~1.64x). Not a
+  prefill floor. throttle=1. One-card.
+  Do not freeze. Rank pipe_host.
+  Next: sibling mix M=256 vs sibling
+  GPTQ K=17408.
+
+

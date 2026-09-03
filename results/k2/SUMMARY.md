@@ -1065,4 +1065,19 @@ New floor 43.3 us both cards. ~2.64x
 8x2-N 114. Spread ~0.33%. Beats s8 75
 and W8A8 46. Loses to s4 33.6.
 
-K2 next: s8xs4 4x8 A-db M=256.
+## s8xs4 4x8 A-db M=256 card1 (2026-09-03da)
+
+Same dpas_s8xs4_db48. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed act=2767
+cur=2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | s4 4-acc | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 | 1 | 124.563 | 123.272 | 48.6 | 128 | 75 |
+
+123 us at 2800 card1. ~2.85x M=64,
+under linear. Beats s8 128. Loses to
+s4 48.6 and W8A8 75. throttle=1.
+One-card.
+
+K2 next: sibling mix M=256.
