@@ -967,24 +967,23 @@ cosine=1.0 max_abs=0. timed 2800.
 New s2xs8 decode floor 14.1 us both
 cards. ~2.41x s8. Spread ~1.2%.
 
-## mixed s8xs4 host s32 oracle card1 (2026-09-03cg)
+## mixed s8xs4 host s32 oracle both cards (2026-09-03ch)
 
 sycl+l0 AOT dpas_s8xs4. K=32 OPC=4.
 s4 [-8,7]. Host unpacked s8*s4 s32.
-Never E2M1. Card1. bin_rc=0.
+Never E2M1. Both cards. bin_rc=0.
 
-| arm | phase | shape | us | max_abs | ok |
+| arm | phase | shape | c0 us | c1 us | max_abs |
 |---|---|---|---:|---:|---:|
-| s8A_s4B | check | 8x16x32 | 27.130 | 0 | 1 |
-| s4A_s8B | check | 8x16x32 | 18.677 | 0 | 1 |
-| s8A_s4B | check2 | 32x32x128 | 20.542 | 0 | 1 |
-| s4A_s8B | check2 | 32x32x128 | 20.787 | 0 | 1 |
-| s8A_s4B | timed | 256^3 | 24.203 | 0 | 1 |
-| s4A_s8B | timed | 256^3 | 5.000 | 0 | 1 |
+| s8A_s4B | check | 8x16x32 | 19.745 | 27.130 | 0 |
+| s4A_s8B | check | 8x16x32 | 18.677 | 18.677 | 0 |
+| s8A_s4B | check2 | 32x32x128 | 20.542 | 20.542 | 0 |
+| s4A_s8B | check2 | 32x32x128 | 20.781 | 20.787 | 0 |
+| s8A_s4B | timed | 256^3 | 10.031 | 24.203 | 0 |
+| s4A_s8B | timed | 256^3 | 8.896 | 5.000 | 0 |
 
-Numeric closed both mixes. Do not
-quote 256^3 us (clocks not held).
-One-card. Do not freeze until card0.
+Numeric closed both mixes both cards.
+Do not quote 256^3 us (clocks not held).
 
-K2 next: sibling s8xs4 oracle vs
-GPTQ/AWQ s4 checkpoint.
+K2 next: serving-shaped s8xs4 decode
+tile. GPTQ s4 is K6.

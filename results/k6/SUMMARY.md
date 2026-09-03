@@ -616,7 +616,7 @@ Throttle=1. Qwen FFN w4a16 M=256 map closed.
 |---|---|
 | 1 sparse-hi / lo-only | hist ov 24.6-25.1%. loonly 16.34/16.35 us cosine 0.76 ok=0 |
 | 2 dyadic s2 | s2xs2 COMPILE_OK max_abs=0. s2xs4 COMPILE_REFUSED. 4-plane not fused |
-| 3 mixed dpas | MIX_OK s8xs4 and s4xs8 both cards. host-s32 closed card1 (03cg) max_abs=0 |
+| 3 mixed dpas | MIX_OK s8xs4 and s4xs8 both cards. host-s32 closed both cards (03ch) |
 | 4 product LUT GEMV | max_abs=0. 697/1106 us clocks unmatched. stop |
 | 5 closed-form | 134.8 us both-card held 2800 |
 | 6 nvfp4_gemm_w4a16 | v028 so. 36.8/37.2 us after M=64 heat. clocks not 2800 |
@@ -626,3 +626,20 @@ Throttle=1. Qwen FFN w4a16 M=256 map closed.
 | 10 MXFP4 | 0 layers. NVFP4 193 g16. FP8 208 |
 | 11 persist s8 | weights 29.0 GiB vs resident 20.4 GiB |
 | 12 ISA toys | skip-hi=1. s8xs4 lights. s2xs4 refuse. SLM/u4 not built |
+
+## GPTQ INT4 through ESIMD s4 card1 (2026-09-03ci)
+
+Qwen3.8-27B gptq-int4 g128 sym. CPU
+unpack LSB-first along K, s4=q-8.
+dpas_s4_ckpt synthetic s4 A. Card1.
+
+6/6 layer0/1 FFN: s4_ov=0, range
+[-8,7], g_idx=i/128, z_uniq=7 (all).
+down_proj dump 256x256. check 8x16x64
+max_abs=0. tile 8x256x256 max_abs=0.
+
+Integer codes feed dpas<s4,s4>. Stored
+qzeros are 7. Do not quote us. One-card.
+
+K6 next: sibling GPTQ s4 vs serving
+s8xs4 decode tile.

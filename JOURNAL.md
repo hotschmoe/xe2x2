@@ -5569,3 +5569,69 @@ VERDICT -> Mixed s8xs4 is host-s32
   quote 256^3 us. Rank the close.
   Next: sibling s8xs4 oracle vs
   GPTQ/AWQ s4 checkpoint.
+
+### 2026-09-03ch - K2 mixed s8xs4 host s32 sibling card0
+
+CONTEXT -> card1 s8xs4 oracle was
+  max_abs=0 both mixes. New numeric
+  sibling. s4 [-8,7]. K=32. Never
+  E2M1 bitcast.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8xs4. gpu-run --card 0.
+  Check 8x16x32 and 32x32x128, timed
+  256^3.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s8xs4.sh 0
+  ```
+
+RESULT -> All six rows max_abs=0 ok=1.
+  s8A_s4B check 19.745 vs card1 27.130.
+  s4A_s8B check 18.677 vs 18.677.
+  check2 20.542/20.781. timed 256^3
+  10.031/8.896 vs card1 24.2/5.0
+  (clocks not held). bin_rc=0.
+
+VERDICT -> Sibling matches. Mixed
+  s8xs4 is host-s32 closed both cards.
+  Do not quote 256^3 us. Rank the
+  close.
+
+### 2026-09-03ci - K6 GPTQ INT4 through ESIMD s4 card1
+
+CONTEXT -> Qwen3.8-27B gptq-int4
+  g128 sym pack i32. True INT4 XMX
+  control (K6 arm 9). s4 [-8,7].
+  Never E2M1 bitcast. One-card.
+
+CONFIG -> backend sycl+l0, CPU unpack
+  then AOT dpas_s4_ckpt. gpu-run
+  --card 1. Layer0/1 FFN hist. Dump
+  down_proj 256x256 s4=q-8. Synthetic
+  s4 A, host s32.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s4_ckpt.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_gptq_s4.sh 1
+  ```
+
+RESULT -> COMPILE_OK. 6/6 FFN tensors
+  s4_ov=0 s4 in [-8,7] g_idx_linear=1.
+  z_uniq=7 (all; zp stored as 7, code
+  is q-8). dump 256x256. check 8x16x64
+  max_abs=0 ok=1. tile 8x256x256
+  max_abs=0 ok=1. bin_rc=0. Clocks not
+  held; do not rank us.
+
+VERDICT -> Real GPTQ INT4 codes are
+  s4 and feed dpas<s4,s4> bit-exact
+  vs host s32 on card1. Stored qzeros
+  are 7, not 8. Integer path closed
+  on this tile. One-card. Do not
+  freeze until card0. Group-scale
+  f16 epilogue is a later question.
+  Next: sibling GPTQ s4 vs serving
+  s8xs4 decode tile.
