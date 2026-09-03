@@ -19,6 +19,10 @@ OUT = os.environ.get(
     "GPTQ_DUMP",
     "/mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_down0_256.bin",
 )
+OUT_SC = os.environ.get(
+    "GPTQ_DUMP_SC",
+    "/mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_down0_256_sc.bin",
+)
 TILE_K = int(os.environ.get("TILE_K", "256"))
 TILE_N = int(os.environ.get("TILE_N", "256"))
 GS = 128
@@ -166,6 +170,29 @@ def main() -> int:
                 int(tile.min()),
                 "s4_max",
                 int(tile.max()),
+                flush=True,
+            )
+            ng = tk // GS
+            sc_tile = sc[:ng, :tn].astype("<f2")
+            with open(OUT_SC, "wb") as f:
+                f.write(struct.pack("<III", tk, tn, GS))
+                f.write(tile.tobytes(order="C"))
+                f.write(sc_tile.tobytes(order="C"))
+            print(
+                "DUMP_SC",
+                OUT_SC,
+                "k",
+                tk,
+                "n",
+                tn,
+                "gs",
+                GS,
+                "ng",
+                ng,
+                "sc_min",
+                float(sc_tile.astype(np.float32).min()),
+                "sc_max",
+                float(sc_tile.astype(np.float32).max()),
                 flush=True,
             )
             dumped = True

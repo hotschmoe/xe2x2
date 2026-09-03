@@ -5698,3 +5698,63 @@ VERDICT -> Mix decode lights and is
   not freeze 22.1 us until card0. Rank
   pipe_host. Next: sibling s8xs4 decode
   vs GPTQ group-scale f16.
+
+### 2026-09-03cl - K2 s8xs4 RC=4 decode sibling card0
+
+CONTEXT -> card1 s8xs4 decode was 22.1
+  us at 2800, cosine=1 max_abs=0. New
+  mix sibling. A=s8 B=s4. Never E2M1
+  bitcast.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s8xs4_sc. gpu-run --card 0.
+  NT=2 spin=4000. M=1 and M=4 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s8xs4_sc.sh 0 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 21.565 pipe_host 21.961 vs card1
+  22.149 vs s2xs8 14.1 vs s4 16.5 vs
+  s8 34. M=4 pipe 21.957. Spread ~0.9%.
+
+VERDICT -> Sibling matches. New s8xs4
+  decode floor 22.1 us pipe_host both
+  cards at 2800. ~1.53x s8. Numeric
+  closed. Rank pipe_host.
+
+### 2026-09-03cm - K6 GPTQ s4 group-scale f16 card1
+
+CONTEXT -> GPTQ INT4 codes already
+  feed dpas<s4,s4> both cards. Next:
+  apply g128 f16 scales in epilogue.
+  Partial s32 per group, * scale, f16.
+  Never E2M1. One-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s4_gptq. gpu-run --card 1.
+  down_proj 256x256 dump + scales.
+  Synthetic s4 A * 0.02. Host group
+  s32 oracle.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s4_gptq.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_gptq_s4_sc.sh 1
+  ```
+
+RESULT -> COMPILE_OK. DUMP_SC gs=128
+  ng=2 sc 0.0028-0.0102. check 8x16x128
+  cosine=1.000 max_abs=7.6e-6 ok=1.
+  tile 8x256x256 cosine=1.000 max_abs=0
+  ok=1. bin_rc=0. Clocks not held.
+
+VERDICT -> Group-scale f16 epilogue
+  is numeric-closed on card1 vs host
+  s32*scale. Real GPTQ scales applied.
+  One-card. Do not freeze until card0.
+  Do not rank us. Next: sibling GPTQ
+  scale vs s8xs4 wide-N.

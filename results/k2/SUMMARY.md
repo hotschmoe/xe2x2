@@ -985,7 +985,7 @@ Never E2M1. Both cards. bin_rc=0.
 Numeric closed both mixes both cards.
 Do not quote 256^3 us (clocks not held).
 
-## s8xs4 RC=4 8x2-N decode tile card1 (2026-09-03ck)
+## s8xs4 RC=4 8x2-N decode both cards (2026-09-03cl)
 
 sycl+l0 AOT dpas_s8xs4_sc. A=s8 B=s4
 pack=2 K=32 dpas. NT=2 spin=4000.
@@ -993,12 +993,14 @@ cosine=1.0 max_abs=0. timed 2800.
 
 | shape | card | event_us | pipe_host_us | s2xs8 | s4 | s8 |
 |---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 21.565 | 21.961 | 14.1 | 16.5 | 34 |
 | 1 x 5120 | 1 | 21.565 | 22.149 | 14.1 | 16.5 | 34 |
+| 4 x 5120 | 0 | 21.586 | 21.957 | 14.1 | 16.5 | 34 |
 | 4 x 5120 | 1 | 21.573 | 21.966 | 14.1 | 16.5 | 34 |
 
-22.1 us pipe_host at 2800 card1.
-~1.53x s8. Loses to s4 16.5 and
-s2xs8 14.1. One-card. Do not freeze.
+New floor 22.1 us both cards. ~1.53x
+s8. Spread ~0.9%. Loses to s4 16.5
+and s2xs8 14.1.
 
-K2 next: sibling s8xs4 decode vs
-GPTQ group-scale f16.
+K2 next: s8xs4 wide-N. GPTQ scale is
+K6.

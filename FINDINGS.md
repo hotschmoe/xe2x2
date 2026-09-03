@@ -1040,28 +1040,49 @@ VERDICT -> This GPTQ INT4 checkpoint
 Evidence: `results/k6/gptq_s4_card0.txt`,
   `results/k6/gptq_s4_card1.txt`.
 
-## ESIMD s8xs4 decode is 22.1 us card1 (K2)
+## ESIMD s8xs4 decode is 22.1 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
   `dpas_s8xs4_sc`. RC=4 NT=2 unroll=16
   packB=2 A=s8 B=s4 K=32 dpas. M=1 and
-  M=4 5120. Card1. Named clock 2800.
-  Never E2M1 bitcast. Prior: s8 34.
+  M=4 5120. Both cards. Named clock
+  2800. Never E2M1 bitcast.
 
 RESULT -> cosine=1.0 max_abs=0. timed
   act=cur=2800 throttle=0. M=1
-  pipe_host 22.149 vs s2xs8 14.1 vs
-  s4 16.5 vs s8 34 vs W8A8 44. M=4
-  pipe 21.966 tracks.
+  pipe_host 21.961/22.149 vs s2xs8 14.1
+  vs s4 16.5 vs s8 34 vs W8A8 44. M=4
+  tracks. Spread ~0.9%.
 
-VERDICT -> First serving-shaped s8xs4
-  decode is 22.1 us pipe_host at 2800
-  card1, numeric closed. Beats s8 34,
-  loses to s4 16.5 and s2xs8 14.1.
-  One-card. Do not freeze 22.1 us until
-  card0. Rank pipe_host.
+VERDICT -> New s8xs4 decode floor 22.1
+  us pipe_host at 2800 both cards.
+  Beats s8 34 (~1.53x), loses to s4
+  16.5 and s2xs8 14.1. Numeric closed.
+  Rank pipe_host.
 
-Evidence: `results/k2/s8xs4sc_n2_s4000_card1.txt`.
+Evidence: `results/k2/s8xs4sc_n2_s4000_card0.txt`,
+  `results/k2/s8xs4sc_n2_s4000_card1.txt`.
+
+## GPTQ s4 group-scale f16 is closed card1 (K6)
+
+CONFIG -> backend `sycl+l0`, `dpas_s4_gptq`.
+  Real GPTQ s4 B + g128 f16 scales from
+  Qwen3.8-27B down_proj 256x256.
+  Synthetic s4 A * 0.02. Partial s32
+  per group then * scale. Card1.
+
+RESULT -> COMPILE_OK. scales 0.0028-
+  0.0102. check 8x16x128 cosine=1.0
+  max_abs=7.6e-6 ok=1. tile 8x256x256
+  cosine=1.0 max_abs=0 ok=1.
+
+VERDICT -> Group-scale epilogue matches
+  host s32*scale. Integer GPTQ path
+  now includes the f16 scales. One-card.
+  Do not freeze until card0. Do not
+  rank us.
+
+Evidence: `results/k6/gptq_s4_sc_card1.txt`.
 
 ## 256-entry product LUT GEMV is a numeric-closed loss (K6)
 
@@ -2773,8 +2794,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   GPTQ INT4 codes are s4 and feed
   ESIMD s4 both cards (max_abs=0;
   qzeros=7). ESIMD s8xs4 decode is
-  22.1 us card1 at 2800 (beats s8 34,
-  loses to s4 16.5). One-card.
+  22.1 us both cards at 2800 (beats
+  s8 34, loses to s4 16.5). GPTQ s4
+  group-scale f16 closed card1.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
