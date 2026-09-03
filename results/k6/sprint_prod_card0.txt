@@ -1,0 +1,17 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1983 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3335709187500 energy2=pkg:1789594221374 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3262022606384 energy2=pkg:1854051315673 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=prod_lut_gemv
+# CONFIG backend=sycl+l0 arm=prod_lut_gemv W4A4 table16x16 m=1 n=5120 k=5120
+timed,1,5120,5120,1105.573,0,1
+DONE
+prod_rc=0
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3335737224121 energy2=pkg:1789610888244 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3262047185546 energy2=pkg:1854065716247 temp2_mC=54000

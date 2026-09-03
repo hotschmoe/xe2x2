@@ -1,0 +1,30 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3305227338256 energy2=pkg:1773300473205 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3231811171997 energy2=pkg:1837813779785 temp2_mC=48000
+=== loonly ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xE2M1_two_term->f16_scaled never_bitcast_s4 RC=4 NT=2 unroll=16 dpas_lo_hi=64 wg=8x2_alongN padM=RC pack=2 a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=1 spin=4000 heat=none
+timed_begin act=550 cur=550 power=D0 throttle=0
+timed_end act=550 cur=550 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,12.604,44.956,28.113,0.0208,0.760549,1.6387,0,12.604,12.604,12.604
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,1,5120,5120,15.984,30.123,16.352,3.2800,0.760548,8.1953,0,15.989,15.521,16.354
+loonly_rc=1
+=== bitcast ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=3 iters=10
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,5.511,0.0030,352,0
+timed,256,256,256,6.125,5.4784,1408,0
+bitcast_rc=1
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=1983 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3305309023925 energy2=pkg:1773358153320 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3231859195861 energy2=pkg:1837844394836 temp2_mC=51000

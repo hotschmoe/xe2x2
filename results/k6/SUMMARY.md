@@ -273,3 +273,62 @@ max_abs=0. timed act=cur=2800 throttle=0.
 New wide-K floor 403.4 us both cards.
 ~5.87x square vs s4 3.15x. Loses to s8
 374.7. Qwen FFN compose M=64 map closed.
+
+## E2M1 two-term 4x8 A-db M=256 N=17408 (2026-09-03z/ac)
+
+Same tile, N=17408 K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 N | s8 | M=64 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 17408 | 0 | 985.644 | 194.9 | 140.0 | 469.8 | 326.9 |
+| 256 x 17408 | 1 | 982.879 | 194.9 | 140.0 | 469.8 | 326.9 |
+
+New wide-N floor 984.3 us both cards.
+~5.05x square vs s4 2.88x. ~2.10x s8.
+
+## E2M1 two-term 4x8 A-db M=256 K=17408 (2026-09-03aa/ab)
+
+Same tile, N=5120 K=17408. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 K | s8 | M=64 |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 x 17408 | 0 | 964.294 | 194.9 | 149.0 | 477.4 | 403.4 |
+| 256 x 5120 x 17408 | 1 | 973.110 | 194.9 | 149.0 | 477.4 | 403.4 |
+
+New wide-K floor 968.7 us both cards.
+~4.97x square vs s4 3.07x. ~2.03x s8.
+Qwen FFN compose M=256 map closed.
+
+## Closed-form nibble LUT (2026-09-03ad)
+
+`nibble_lut_scf`: exp/mant shift, no 16-entry
+table. Same RC=4 8x2-N packed E2M1. Never
+bitcast. cosine=1.0 max_abs=0. timed
+act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | merge | s8 | W8A8 | GBs_packedB |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 134.756 | 158 | 34 | 44 | 97.557 |
+| 1 x 5120 | 1 | 134.783 | 158 | 34 | 44 | 97.542 |
+
+New Family-A floor 134.8 us both cards.
+~1.17x merge LUT, still ~4.0x s8 34.
+
+## 12-idea sprint (2026-09-03ae)
+
+| idea | result |
+|---|---|
+| 1 sparse-hi / lo-only | hist ov 24.6-25.1%. loonly 16.34/16.35 us cosine 0.76 ok=0 |
+| 2 dyadic s2 | s2xs2 COMPILE_OK max_abs=0. s2xs4 COMPILE_REFUSED. 4-plane not fused |
+| 3 mixed dpas | MIX_OK s8xs4 and s4xs8 both cards. no s32 oracle |
+| 4 product LUT GEMV | max_abs=0. 697/1106 us clocks unmatched. stop |
+| 5 closed-form | 134.8 us both-card held 2800 |
+| 6 nvfp4_gemm_w4a16 | v028 so. 36.8/37.2 us after M=64 heat. clocks not 2800 |
+| 7 bitcast s4 | max_abs 352/1408 ok=0 both. explicit negative |
+| 8 g16 e4m3 | hand K=16 COMPILE_REFUSED. f8scale op ~39 us |
+| 9 checkpoint hist | 8 FFN tensors ov_frac 0.246-0.251. sparse-hi dead |
+| 10 MXFP4 | 0 layers. NVFP4 193 g16. FP8 208 |
+| 11 persist s8 | weights 29.0 GiB vs resident 20.4 GiB |
+| 12 ISA toys | skip-hi=1. s8xs4 lights. s2xs4 refuse. SLM/u4 not built |

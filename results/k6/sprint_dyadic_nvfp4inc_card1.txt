@@ -1,0 +1,19 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=1050 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3329176447448 energy2=pkg:1786204518676 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3255511578613 energy2=pkg:1850595781555 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 sprint=dyadic_s2 then pytorch nvfp4_gemm_w4a16
+=== dyadic_s2 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s2xs2s32 RC=8 K=64 N=16 OPC=8 s2_range=[-2,1] Bload=lsc_load_2d_Transformed warmup=3 iters=10
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,5.323,0.0031,0,1
+timed,256,256,256,5.906,5.6812,0,1
+dyadic_rc=0
+=== clocks mid ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2200 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3329192043884 energy2=pkg:1786213477050 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3255529517517 energy2=pkg:1850606886596 temp2_mC=54000

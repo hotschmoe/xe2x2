@@ -1,0 +1,11 @@
+CONFIG persist_vram cpu-only dir /mnt/vm_8tb/github/b70_ai_things/models/files/qwen3.8-27b/nvfp4-radixark
+shards 3 u8_tensors 193
+bytes_u8_packed 9192079360 GiB 8.561
+bytes_s8_unpack 18384158720 GiB 17.122
+bytes_f8 8363212800 GiB 7.789
+bytes_bf16 4366132704 GiB 4.066
+bytes_other 3208 GiB 0.0
+resident_4bit_plus_rest_GiB 20.416
+persist_s8_plus_rest_GiB 28.977
+card_GiB 30.3 persist_fits True resident_fits True
+DONE

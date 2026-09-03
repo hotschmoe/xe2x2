@@ -118,10 +118,30 @@ M=64 N=17408 is 326.9 us both cards
 compose M=64 K=17408 is 403.4 us both
 cards (2026-09-03y), ~5.87x square vs s4
 106.0, loses to s8 374.7. Qwen FFN compose
-M=64 map is closed. A=s4.
-Next: split. card0: compose_e2m1_db48 M=256
-N=17408. card1: compose_e2m1_db48 M=256
-K=17408. Loop every 20m.
+M=64 map is closed. A=s4. compose 4x8
+A-db M=256 N=17408 is 984.3 us both cards
+(2026-09-03ac), ~5.05x square vs s4 140,
+~2.10x s8 469.8. compose M=256 K=17408
+is 968.7 us both cards (2026-09-03ab),
+~4.97x square vs s4 149, ~2.03x s8 477.4.
+throttle=0. Qwen FFN compose M=256 map
+is closed. A=s4. 4x8 A-db loses to s4
+and s8 at FFN prefill M=256.
+K6 12-idea sprint (2026-09-03ae):
+closed-form LUT 134.8 us is the new
+Family-A floor. Bitcast s4 is an
+explicit negative. Sparse-hi dies
+(~25% overflow). Mixed s8xs4 lights;
+s2xs4 and s8 K=16 dpas refuse.
+Product LUT GEMV is a numeric-closed
+us loss. oneDNN nvfp4_gemm_w4a16
+lights at ~37 us after M=64 heat
+(clocks not held 2800). MXFP4 absent.
+Persist-s8 29.0 GiB vs resident 20.4.
+Next: split. card0: compose on the M=256
+4-acc s4 tile (new geometry). card1:
+nibble LUT M=64 N=17408 on 4x8 A-db.
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

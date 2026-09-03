@@ -1,0 +1,6 @@
+CONFIG hist_landmine cpu-only s8_K32 vs NVFP4_g16
+quant_algo MIXED_PRECISION
+layers NVFP4 193 MXFP4 0 FP8 208 other 0 nv_g16 193 nv_g32 0
+k32_one_scale -288.0 k16_two_scale -720.0 diff -432.0
+LANDMINE s8_dpas_K32_cannot_isolate_g16 True
+DONE

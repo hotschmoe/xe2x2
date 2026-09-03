@@ -327,7 +327,8 @@ RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
 VERDICT -> First serving-shaped NVFP4 in-register spoof
   is numerically closed. 4-bit B stays in HBM. Not a us
   beat of s8 (~4.65x) or W8A8. LUT tax, not HBM (83 vs
-  608 GB/s). "NVFP4 cannot feed XMX" is false; "as fast
+  608 GB/s). Closed-form decode later cut this to 134.8
+  us (03ad). "NVFP4 cannot feed XMX" is false; "as fast
   as s8" is false. Rank us.
 
 Evidence: `results/k6/sc_n2_s4000_card0.txt`,
@@ -644,6 +645,195 @@ VERDICT -> New E2M1 two-term 4x8 wide-K
 
 Evidence: `results/k6/e2m1db48_m64_k17408_n2_s512_card0.txt`,
   `results/k6/e2m1db48_m64_k17408_n2_s512_card1.txt`.
+
+## E2M1 two-term 4x8 A-db N=17408 is 984.3 us at M=256 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_db48`. M=256 N=17408 K=5120.
+  Both cards, NT=2, spin=512. Never
+  bitcast. Prior: s4 140.0; s8 469.8.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=256 pipe_host
+  985.64/982.88 vs 5120 194.9 vs s4 140.0
+  vs s8 469.8 vs M=64 326.9. Spread ~0.3%.
+
+VERDICT -> New E2M1 two-term 4x8 M=256
+  wide-N floor 984.3 us at 2800 both cards.
+  ~5.05x square, ~7.03x native s4 140,
+  ~2.10x s8 469.8. throttle=0. Rank us.
+
+Evidence: `results/k6/e2m1db48_m256_n17408_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m256_n17408_n2_s512_card1.txt`.
+
+## E2M1 two-term 4x8 A-db K=17408 is 968.7 us at M=256 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_db48`. M=256 N=5120 K=17408.
+  Both cards, NT=2, spin=512. Never
+  bitcast. Prior: s4 149.0; s8 477.4.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=256 pipe_host
+  964.29/973.11 vs 5120 194.9 vs N=17408
+  984.3 vs s4 149.0 vs s8 477.4 vs M=64
+  403.4. Spread ~0.9%.
+
+VERDICT -> New E2M1 two-term 4x8 M=256
+  wide-K floor 968.7 us at 2800 both cards.
+  ~4.97x square, ~6.50x native s4 149,
+  ~2.03x s8 477.4. Qwen FFN compose M=256
+  map is closed. Rank us.
+
+Evidence: `results/k6/e2m1db48_m256_k17408_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m256_k17408_n2_s512_card1.txt`.
+
+## Closed-form E2M1 nibble decode is 134.8 us (K6)
+
+CONFIG -> backend `sycl+l0`, standalone `nibble_lut_scf`.
+  Same packed-E2M1 RC=4 8x2-N s8 scale-to-f16 tile as
+  `nibble_lut_sc`, but mag = (e==0)? m : (2+m)<<(e-1)
+  instead of the 3-merge LUT. Never bitcast s4. Both
+  cards, NT=2, spin=4000, M=1 5120. Prior: merge 158.
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0. pipe_host 134.756/134.783 vs merge 158
+  vs s8 34 vs W8A8 44. Packed-B 97.5 GB/s. Spread
+  ~0.02%.
+
+VERDICT -> New Family-A s8-A spoof floor 134.8 us
+  at 2800 both cards. ~1.17x the merge LUT. Still
+  ~4.0x s8 and ~3.06x W8A8. Keep packed E2M1 in
+  HBM. Rank us.
+
+Evidence: `results/k6/scf_n2_s4000_card0.txt`,
+  `results/k6/scf_n2_s4000_card1.txt`.
+
+## E2M1 bitcast onto s4 DPAS is an explicit negative (K6)
+
+CONFIG -> backend `sycl+l0`, standalone `bitcast_e2m1_s4`.
+  Feed E2M1 nibbles as s4 two's complement into
+  `dpas<s4,s4>`. Oracle is E2M1 q = {0,+-1,+-2,+-3,
+  +-4,+-6,+-8,+-12}. Both cards.
+
+RESULT -> check 8x16x64 max_abs=352 ok=0. timed
+  256^3 max_abs=1408 ok=0. Both cards agree.
+
+VERDICT -> Do not bitcast NVFP4 E2M1 onto s4 DPAS.
+  +-12 is outside s4 [-8,7]. Compile was not the
+  failure; the numeric is.
+
+Evidence: `results/k6/sprint_mix_lo_bitcast_card0.txt`,
+  `results/k6/sprint_lo_bitcast_card1.txt`.
+
+## Sparse-hi / lo-only compose is cheap and wrong (K6)
+
+CONFIG -> backend `sycl+l0`, `compose_e2m1_loonly`
+  (drop hi s4 DPAS). Both cards, NT=2, spin=4000,
+  M=1 5120. Real checkpoint hist on qwen3.8-27b
+  nvfp4-radixark FFN U8 weights.
+
+RESULT -> 8 FFN tensors (layers 0,1,10 gate/up/down),
+  89e6 nibbles each: ov_frac 0.2464-0.2505, zeros
+  ~3.45% per sign, nearly uniform. lo-only pipe
+  16.342/16.352 us at held 2800, cosine=0.760548
+  max_abs=8.1953 ok=0.
+
+VERDICT -> Hi plane is dense ~25% on this ckpt, same
+  as uniform 4/16. Skip-hi is s4-cheap and E2M1-wrong.
+  Stop sparse correction on codes 8 and 12.
+
+Evidence: `results/k6/hist_nvfp4.txt`,
+  `results/k6/sprint_mix_lo_bitcast_card0.txt`,
+  `results/k6/sprint_lo_bitcast_card1.txt`.
+
+## Mixed s8xs4 DPAS lights; s2xs4 does not compile (K6)
+
+CONFIG -> backend `sycl+l0`, `sprint_dpas_mix` check
+  tile 8x16x32. Both cards. `g16_k16_dpas` K=16
+  probe. `dyadic_s2` s2xs2 control.
+
+RESULT -> MIX_OK s8A_s4B and s4A_s8B both cards
+  (runtime; no host s32 oracle this sprint).
+  s2xs4 COMPILE_REFUSED (`A bits 8*8*4=256` vs
+  operand 128). s8 `dpas<4,4>` K=16 COMPILE_REFUSED
+  (`Systolic depth must be equal to 8`). dyadic_s2
+  256^3 max_abs=0 ok=1 card1.
+
+VERDICT -> Mixed s8/s4 DPAS exists on this IGC.
+  Mixed s2/s4 does not compile. Hand s8 DPAS cannot
+  isolate NVFP4 group-16: depth is fixed at 8, so
+  s8 K is 32 = two groups.
+
+Evidence: `results/k6/sprint_mix_prod_card1.txt`,
+  `results/k6/sprint_mix_lo_bitcast_card0.txt`,
+  `results/k6/g16_k16_dpas.compile.log`,
+  `results/k6/g16_scale_landmine.txt`.
+
+## 256-entry product LUT GEMV is a numeric-closed loss (K6)
+
+CONFIG -> backend `sycl+l0`, `prod_lut_gemv` W4A4
+  16x16 E2M1 product table, M=1 N=K=5120. Both
+  cards. Naive per-column scalar loop. Never
+  bitcast s4.
+
+RESULT -> max_abs=0 ok=1 both cards. card1 697.042
+  us (end cur=1050). card0 1105.573 us (start 1983
+  end 2800). Clocks unmatched.
+
+VERDICT -> Numeric closed, us lost vs closed-form
+  134.8 (~5-8x) and vs s8 34. Stop this hail-mary
+  as a serving tile.
+
+Evidence: `results/k6/sprint_mix_prod_card1.txt`,
+  `results/k6/sprint_prod_card0.txt`.
+
+## oneDNN nvfp4_gemm_w4a16 M=1 is ~37 us after M=64 heat (K6)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  Image `b70-sglang-xpu-int8-runtime:20260826-mtp6`
+  does not export the op. Load
+  `/mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so`
+  via `torch.ops.load_library` without importing
+  the image `_xpu_C` first. B packed NT, stride(0)=1.
+  A bf16, W uint8 [K/2,N], group 16. M=64 heat then
+  us_bench M=1 5120. Both cards.
+
+RESULT -> HAS nvfp4_gemm_w4a16 and f8scale. out
+  bf16 [1,5120]. Folded bf16 scale 36.809/37.169
+  us. f8scale (e4m3 group-16 + fp32 global)
+  38.448/39.611 us. No E2M1 cosine this dump.
+  Clocks not held 2800: card0 freq 2800 then 1583;
+  card1 1750 then 1383, never 2800.
+
+VERDICT -> The 27B-class incumbent lights and is
+  in the same us class as W8A8 44, not Family-A
+  LUT 135. A is bf16, not s8. f8scale is the real
+  NVFP4 group-16 epilogue in oneDNN; hand s8 DPAS
+  cannot match that isolation. Do not freeze 37 us
+  against held-2800 s8 34. Rank us with clocks.
+
+Evidence: `results/k6/nvfp4_w4a16_m1_card0.txt`,
+  `results/k6/nvfp4_w4a16_m1_card1.txt`.
+
+## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
+
+CONFIG -> CPU envelope of
+  `qwen3.8-27b/nvfp4-radixark` 3 shards.
+  MXFP4 counted from `hf_quant_config.json`.
+
+RESULT -> U8 packed 8.561 GiB (193 tensors), s8
+  unpack 17.122 GiB, F8 7.789 GiB, bf16 4.066 GiB.
+  resident 4-bit+rest 20.416 GiB fits 30.3.
+  persist-s8+rest 28.977 GiB leaves ~1.3 GiB.
+  Layers: NVFP4 193 all g16, MXFP4 0, FP8 208.
+
+VERDICT -> Resident 4-bit is the 27B VRAM path.
+  Load-time s8 is the 8B-class path. MXFP4 is a
+  labeled third format and is not this checkpoint.
+
+Evidence: `results/k6/persist_vram.txt`,
+  `results/k6/g16_scale_landmine.txt`.
 
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
@@ -1759,14 +1949,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   closed (K3). In-register VNNI4 pack closed; scalar LUT lost
   us; simd LUT is ~6-8x that arm (304-406 us) and still clock-
   bound vs two-launch unpack. Serving-shaped simd LUT on the
-  RC=4 8x2-N tile is 158 us at 2800 both cards (cq), numeric
-  closed, ~4.65x s8 34. Packed E2M1 stays in HBM. 16-entry
+  RC=4 8x2-N tile is 158 us merge / 134.8 us closed-form
+  at 2800 both cards (cq / 03ad), numeric closed, ~4.0x
+  s8 34. Packed E2M1 stays in HBM. 16-entry
   iselect table is 1022 us (cr), a loss; stop gather tables.
   Scalar two-launch unpack is 265 us (2026-09-03a), a loss
   vs 158; s8ctrl 34.5. k64 combined load is 169 us
   (2026-09-03b), a small loss. Vectorized unpack is
   314.6 us both cards (2026-09-03f), a loss. Keep
-  two k32 merge LUT as the s8-A spoof. E2M1
+  two k32 closed-form as the s8-A spoof. E2M1
   two-term s4 decode is 28.5 us both cards
   (2026-09-03e) vs s4 16.5 vs s8 34, A=s4.
   Wide-N is 103.5 us both cards (~3.63x, not
@@ -1787,9 +1978,22 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards (~4.76x square vs s4 94.7).
   compose M=64 K=17408 is 403.4 us both
   cards (~5.87x square vs s4 106, loses to
-  s8 374.7).
+  s8 374.7). compose 4x8 A-db M=256 N=17408
+  is 984.3 us both cards (~5.05x square vs
+  s4 140, ~2.10x s8 469.8). compose M=256
+  K=17408 is 968.7 us both cards (~4.97x
+  square vs s4 149, ~2.03x s8 477.4).
+  throttle=0. Qwen FFN compose M=256 map
+  is closed.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
+  Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
+  Local dump (v028 so, M=64 heat, clocks not held 2800): ~37 us
+  folded / ~39 us f8scale at M=1 5120. Stock mtp6 image lacks the
+  op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
+  on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
+  and s8 K=16 dpas do not compile. Product LUT GEMV is a
+  numeric-closed us loss. MXFP4 is absent from this checkpoint.
 - M=1 decode is tens to hundreds of times under the compute roof.
 - W8A8 decode paid ~160 activation-quant launches that W8A16 skips.
 - Transformed LSC VNNI loads were bit-exact; flat prepack was not.

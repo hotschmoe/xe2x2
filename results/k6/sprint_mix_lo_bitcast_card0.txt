@@ -1,0 +1,38 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3329578580322 energy2=pkg:1786446073852 temp2_mC=56000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3255840299499 energy2=pkg:1850787662963 temp2_mC=54000
+CONFIG backend=sycl+l0 card=0 sprint=mix+loonly+bitcast never_bitcast_s4
+=== mix ===
+# CONFIG backend=sycl+l0 arm=sprint_dpas_mix check=8x16x32
+MIX_OK s8A_s4B
+MIX_OK s4A_s8B
+MIX_COMPILE_SKIP s2xs4 s4xs2 static_assert size
+DONE
+mix_rc=0
+=== loonly ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xE2M1_two_term->f16_scaled never_bitcast_s4 RC=4 NT=2 unroll=16 dpas_lo_hi=64 wg=8x2_alongN padM=RC pack=2 a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=1150 cur=1133 power=D0 throttle=0
+timed_end act=1150 cur=1133 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,6.042,32.452,17.133,0.0434,0.760549,1.6387,0,6.042,6.042,6.042
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,1,5120,5120,15.992,30.661,16.342,3.2784,0.760548,8.1953,0,15.989,15.521,16.563
+loonly_rc=1
+=== bitcast ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=3 iters=10
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,5.458,0.0030,352,0
+timed,256,256,256,6.094,5.5064,1408,0
+bitcast_rc=1
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1983 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3329631092468 energy2=pkg:1786478431396 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3255884842651 energy2=pkg:1850813933776 temp2_mC=54000

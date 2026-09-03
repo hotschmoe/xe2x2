@@ -31,21 +31,32 @@ s4 is the true INT4 XMX control, not an NVFP4 alias.
 
 1. Load-time s8 LUT + `int8_gemm_w8a16` (oracle and 8B-class path).
 2. Resident packed E2M1 + oneDNN `nvfp4_gemm_w4a16` (current 27B
-   class path).
-3. On-the-fly nibble LUT into s8 DPAS (the unbuilt spoof).
+   class path). Dumped ~37 us M=1 5120 after M=64 heat;
+   clocks not held 2800. Stock mtp6 image lacks the op;
+   load v028 `_xpu_C.abi3.so`.
+3. On-the-fly nibble LUT into s8 DPAS. Serving-shaped:
+   merge 158 us / closed-form 134.8 us at M=1 5120 held
+   2800. Still ~4x s8 34. Packed E2M1 stays in HBM.
 4. Two-term s4 compose `w_lo + 8*w_hi` (overflow split). Cross-link
-   K3.
+   K3. Decode 28.5 us. A is s4.
 5. Dyadic planes `{0.5,1,2,4}` / at-most-two scaled s2/s4 GEMMs.
-6. Sparse correction only on codes 8 and 12.
-7. Keep 4-bit in HBM, unpack to s8 in registers without a LUT if a
-   closed-form map exists (prove it).
-8. MXFP4 (e8m0 group 32) as a separate labeled arm.
+   s2xs2 lights. s2xs4 COMPILE_REFUSED. 4-plane not fused.
+6. Sparse correction only on codes 8 and 12. DEAD on the
+   real Qwen3.8 NVFP4 FFN (~25% overflow). lo-only cosine 0.76.
+7. Closed-form nibble->s8 (exp/mant). Proved. 134.8 us.
+8. MXFP4 (e8m0 group 32) as a separate labeled arm. 0 layers
+   on nvfp4-radixark.
 9. Integer s4 checkpoint (GPTQ/AWQ/RTN) through ESIMD s4 DPAS, as
    the "this is what INT4 XMX is for" control.
 10. Prefill vs decode: 4-bit resident should win M=1 GB/s; s8 XMX
     or s4 XMX should win large-M TOPS. Measure both.
 11. Hail mary: 16-code E2M1 product LUT (256 exact products) as a
-    decode GEMV and as the numeric oracle. Label hail-mary.
+    decode GEMV. Numeric closed, 697-1106 us clock-noisy. Stop
+    as a serving tile.
+12. Sprint 2026-09-03ae also closed: bitcast s4 is an explicit
+    negative; mixed s8xs4 lights; hand s8 K=16 dpas refuses;
+    oneDNN `nvfp4_gemm_w4a16` ~37 us after M=64 heat (clocks
+    not held); persist-s8 29.0 GiB vs resident 20.4 GiB.
 
 Card0 || card1: split the arm list, swap. Real checkpoints if present
 under `/mnt/vm_8tb/github/b70_ai_things` models; otherwise synthetic

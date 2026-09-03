@@ -3519,3 +3519,308 @@ VERDICT -> Sibling matches. New E2M1
   2800 both cards. ~5.87x square, ~3.81x
   s4 106, loses to s8 374.7. Qwen FFN
   compose M=64 map is closed. Rank us.
+
+### 2026-09-03z - K3/K6 E2M1 two-term 4x8 A-db M=256 N=17408 card0
+
+CONTEXT -> compose 4x8 A-db is 194.9 us at
+  M=256 N=5120. s4 4-acc N=17408 is 140.0
+  us (~2.88x). s8 469.8 throttle=1. M=64
+  N=17408 is 326.9 (~4.76x). FFN-up
+  prefill. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  RC=8 NT=2 U=16 spin=512. M=256 N=17408
+  K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_db48_m256_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 983.870 us, pipe_host
+  985.644 vs 5120 194.9 vs s4 140.0 vs s8
+  469.8 vs M=64 326.9. Ratio 985.6/194.9
+  ~5.06x, worse than s4's 2.88x. min/max
+  971.8-996.9.
+
+VERDICT -> Wide-N compose at M=256 is a
+  real 986 us at 2800, ~5.06x square,
+  ~7.0x native s4 140, ~2.10x s8 469.8.
+  throttle=0. One-card. Do not freeze.
+  Rank us.
+
+### 2026-09-03aa - K3/K6 E2M1 two-term 4x8 A-db M=256 K=17408 card1
+
+CONTEXT -> compose N=17408 M=256 is 986 us.
+  s4 4-acc K=17408 is 149.0 us (~3.07x).
+  s8 477.4 throttle=1. M=64 K=17408 is
+  403.4. FFN-down prefill. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  Same RC=8 NT=2 U=16 spin=512. M=256
+  N=5120 K=17408. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_db48_m256_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card1: event 970.375 us, pipe_host
+  973.110 vs 5120 194.9 vs N=17408 986 vs
+  s4 149.0 vs s8 477.4 vs M=64 403.4.
+  Ratio 973.1/194.9 ~4.99x. min/max
+  920.2-1053.2.
+
+VERDICT -> Wide-K compose at M=256 is 973
+  us at 2800, ~4.99x square, ~6.53x native
+  s4 149, ~2.04x s8 477.4. throttle=0.
+  One-card. Do not freeze. Rank us. Next:
+  sibling N=17408 vs sibling K=17408.
+
+### 2026-09-03ab - K3/K6 E2M1 two-term 4x8 A-db M=256 K=17408 sibling card0
+
+CONTEXT -> card1 compose M=256 K=17408 was
+  973 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_db48_m256_k17408.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card0: event 966.937 us, pipe_host
+  964.294 vs card1 973.110 vs s4 149.0 vs
+  s8 477.4. Spread ~0.9%.
+
+VERDICT -> Sibling matches. New E2M1
+  two-term 4x8 M=256 wide-K floor 968.7 us
+  at 2800 both cards. ~4.97x square,
+  ~6.50x s4 149, ~2.03x s8 477.4. Rank us.
+
+### 2026-09-03ac - K3/K6 E2M1 two-term 4x8 A-db M=256 N=17408 sibling card1
+
+CONTEXT -> card0 compose M=256 N=17408 was
+  986 us at 2800, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  compose_e2m1_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_db48_m256_wide.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  M=256 card1: event 978.516 us, pipe_host
+  982.879 vs card0 985.644 vs s4 140.0 vs
+  s8 469.8. Spread ~0.3%.
+
+VERDICT -> Sibling matches. New E2M1
+  two-term 4x8 M=256 wide-N floor 984.3 us
+  at 2800 both cards. ~5.05x square,
+  ~7.03x s4 140, ~2.10x s8 469.8. Qwen FFN
+  compose M=256 map is closed. Rank us.
+  Next: compose on 4-acc M=256 vs nibble
+  LUT M=64 N=17408.
+
+### 2026-09-03ad - K6 closed-form nibble->s8 is 134.8 us
+
+CONTEXT -> Family-A merge LUT is 158 us
+  at held 2800. CONFIG prior: IEEE E2M1
+  mag = (e==0)? m : (2+m)<<(e-1) needs
+  no 16-entry table. Same RC=4 8x2-N
+  tile, packed E2M1 B. Never bitcast.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0
+  || --card 1. NT=2 spin=4000 M=1 5120.
+  New numeric (closed-form decode).
+
+COMMAND ->
+  ```
+  gpu-run --card N kernels/nvfp4/bin/nibble_lut_scf --nt 2 --m 1 --n 5120 --k 5120 --spin 4000 --card N
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0.
+  card0 pipe_host 134.756 us packed-B
+  97.557 GB/s. card1 134.783 us /
+  97.542 GB/s. vs merge 158 vs s8 34
+  vs W8A8 44. Spread ~0.02%.
+
+VERDICT -> New Family-A s8-A floor
+  134.8 us at 2800 both cards. ~1.17x
+  merge LUT. Still ~4.0x s8 34 and
+  ~3.06x W8A8 44. Keep packed E2M1
+  in HBM. Rank us.
+
+### 2026-09-03ae - K6 12-idea NVFP4 sprint write-downs
+
+CONTEXT -> User: try all 12 crazy
+  NVFP4 spoofs and write down what we
+  come across, including refusals.
+  Napkin is CONFIG. Measure on cards.
+  Backend named per arm.
+
+CONFIG -> sycl+l0 standalone icpx
+  2026.1.1 AOT intel_gpu_bmg_g31 unless
+  noted pytorch-xpu. gpu-run --card N.
+  Never bitcast E2M1 onto s4 as a
+  supposed integer path.
+
+COMMAND ->
+  ```
+  kernels/nvfp4/compile_extra.sh ...
+  gpu-run --card 0 run_sprint_card0.sh 0
+  gpu-run --card 1 run_sprint_card1.sh 1
+  python3 kernels/nvfp4/hist_nvfp4.py
+  python3 kernels/nvfp4/persist_vram.py
+  python3 kernels/nvfp4/g16_scale_landmine.py
+  gpu-run --card N run_bench_nvfp4_m1.sh N
+  ```
+
+RESULT -> twelve write-downs. Logs
+  under results/k6/.
+
+1 Sparse hi-plane / skip-hi. Real
+  Qwen3.8 nvfp4-radixark FFN nibbles
+  (8 tensors, 89e6 nibbles each):
+  ov_frac 0.2464-0.2505, zeros 3.42-
+  3.47% per sign. Uniform-ish, not
+  sparse. lo-only compose (drop hi
+  DPAS) both-card held 2800: pipe
+  16.342/16.352 us cosine=0.760548
+  max_abs=8.1953 ok=0. us matches
+  s4 16.5. Cheap and wrong. P(all
+  hi zero in k64) ~0. Stop skip-hi.
+
+2 Dyadic {1,2,4}/s2. dyadic_s2
+  COMPILE_OK. card1 256^3 max_abs=0
+  ok=1, 5.906 us (clocks not held).
+  s2 range is [-2,1], not E2M1.
+  4-plane E2M1 not fused. s2xs4
+  COMPILE_REFUSED (dpas.hpp size
+  assert 2048==1024). Native s2xs2
+  already lit in K2.
+
+3 Mixed dpas. sprint_dpas_mix:
+  MIX_OK s8A_s4B and s4A_s8B both
+  cards (runtime lights, no host
+  s32 oracle). s2xs4/s4xs2 skipped
+  after compile static_assert.
+
+4 256-entry product LUT GEMV.
+  prod_lut_gemv W4A4 16x16 table
+  M=1 5120. max_abs=0 ok=1 both
+  cards. card1 697.042 us end
+  cur=1050. card0 1105.573 us
+  start 1983 end 2800. Clock-noisy,
+  ~5-8x closed-form 134.8. Stop
+  naive scalar GEMV.
+
+5 Closed-form. 134.8 us both-card
+  held 2800. See 03ad.
+
+6 Incumbent nvfp4_gemm_w4a16.
+  Stock mtp6 image: OP_ABSENT.
+  v028 _xpu_C.abi3.so load_library
+  OK if the image _xpu_C is NOT
+  imported first (TORCH_LIBRARY
+  collision). Packed NT: B.stride(0)
+  must be 1. After M=64 heat,
+  us_bench M=1 5120: folded-bf16
+  scale 36.809/37.169 us; f8scale
+  38.448/39.611 us. out bf16
+  [1,5120]. Clocks NOT held 2800
+  (card0 freq mostly 2800 then
+  1583; card1 1750/1383, never
+  2800). Same us class as W8A8
+  44, not LUT 135. A is bf16, not
+  s8. No E2M1 cosine this dump.
+  Do not freeze vs held-2800 s8 34.
+
+7 Explicit bitcast E2M1 nibble as
+  s4 two's complement vs E2M1 q
+  oracle. Both cards. check 8x16x64
+  max_abs=352 ok=0. timed 256^3
+  max_abs=1408 ok=0. Explicit
+  negative CONFIRMED.
+
+8 Group-16 e4m3. Hand s8
+  dpas<4,4> K=16 COMPILE_REFUSED:
+  "Systolic depth must be equal
+  to 8". CPU: one scale after
+  k32 vs two g16 scales differs
+  (-288 vs -720). oneDNN
+  nvfp4_gemm_w4a16_f8scale LIGHTS
+  (~39 us, idea 6). JIT isolates
+  g16. Hand integer dpas cannot.
+
+9 Histogram. qwen3.8-27b
+  nvfp4-radixark model-00001.
+  1043 tensors, 73 U8. FFN
+  down/gate/up layers 0,1,10:
+  ov_frac 0.2464-0.2505. hist
+  nearly uniform. Sparse-hi
+  prior DIES on this checkpoint.
+
+10 MXFP4. hf_quant_config
+  MIXED_PRECISION: NVFP4 193
+  all group_size 16, MXFP4 0,
+  FP8 208 (attn). Third format,
+  not this checkpoint.
+
+11 Persist s8 vs resident 4-bit.
+  CPU envelope 3 shards: U8
+  packed 8.561 GiB, s8 unpack
+  17.122, F8 7.789, bf16 4.066.
+  resident 20.416 GiB fits 30.3.
+  persist-s8 weights-only 28.977
+  GiB leaves ~1.3 GiB, not a
+  serve. Matches "8B served, 27B
+  s8 did not fit". Load-time s8
+  ctrl was 34.5 us vs LUT 158
+  (03a); VRAM is the 27B gate.
+
+12 ISA toys. skip-hi = (1).
+  s2xs8 already lit K2. s8xs4
+  lights (3). s2xs4 refuse (2).
+  SLM LUT and u4+sign not built
+  this sprint.
+
+VERDICT -> DoA split stands, with
+  new numbers. Cannot feed XMX:
+  false (LUT, compose, mixed
+  dpas, oneDNN W4A16). As fast
+  as s8/W8A8 with s8-A: false
+  (134.8 vs 34/44). Can beat
+  s8/W8A8 if A is s4: true at
+  decode 5120 (compose 28.5).
+  oneDNN W4A16 bf16-A is ~37 us
+  (clocks not held) vs LUT 135.
+  Bitcast is wrong. Sparse-hi is
+  dead on this ckpt. Stop skip-hi,
+  iselect, naive product GEMV,
+  s2xs4, hand K=16 dpas.
+  Family-A floor is now 134.8.
+  Rank us. Never bitcast s4.
