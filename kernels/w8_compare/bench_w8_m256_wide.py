@@ -44,7 +44,7 @@ def sample_gt(card: int) -> tuple[int, int, int]:
 def main() -> int:
     card = int(os.environ.get("ZE_AFFINITY_MASK") or "0")
     spin = int(os.environ.get("W8_SPIN") or "512")
-    m = 256
+    m = int(os.environ.get("W8_M") or "256")
     n = int(os.environ.get("W8_N") or "17408")
     k = int(os.environ.get("W8_K") or "5120")
     print(

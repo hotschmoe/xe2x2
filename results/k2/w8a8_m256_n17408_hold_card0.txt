@@ -1,0 +1,22 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4010253613586 energy2=pkg:2137531960021 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3941481115417 energy2=pkg:2213329136047 temp2_mC=54000
+CONFIG backend=pytorch-xpu on sycl+l0 card=0 op=int8_gemm_w8a8 spin=512 time=M256 n=17408 k=5120
+W8A8 M=256 square 75. w4a16 N=17408 394. s8 469.8. s4 140.0. Napkin 75*17408/5120 ~255.
+CONFIG backend=pytorch-xpu on sycl+l0 op=int8_gemm_w8a8 torch 2.13.0+xpu ZE_AFFINITY_MASK 0 spin=512 time=M256 n=17408 k=5120
+imported vllm_xpu_kernels._xpu_C
+out_shape (256, 17408) dtype torch.float16
+spin_done n=512 act=2500 cur=2800 throttle=1
+timed_begin act=2500 cur=2800 throttle=1
+timed_end act=2467 cur=2800 throttle=1
+int8_gemm_w8a8,256,17408,5120,248.232,359.056,1.000198,0.062515
+DONE
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1900 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4011427249084 energy2=pkg:2138201417602 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3942651830200 energy2=pkg:2214010876770 temp2_mC=54000

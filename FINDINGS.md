@@ -1247,27 +1247,53 @@ VERDICT -> New w4a16 M=256 wide-K floor 377
 Evidence: `results/k6/nvfp4_w4a16_m256_k17408_hold_card0.txt`,
   `results/k6/nvfp4_w4a16_m256_k17408_hold_card1.txt`.
 
-## oneDNN W8A8 M=256 N=17408 is 248 us card1 (K1/K4)
+## oneDNN W8A8 M=256 N=17408 is 248 us both cards (K1/K4)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
   mtp6 `int8_gemm_w8a8` GEMM-only. spin=512
   of M=256 then us_bench M=256 N=17408
-  K=5120. Card1 only. Oracle after timed.
+  K=5120. Both cards. Oracle after timed.
 
 RESULT -> out f16 [256,17408]. timed
-  act=2517-2500 cur=2800 throttle=1.
-  248.116 us vs square 75 vs w4a16 394 vs
-  s8 469.8 vs s4 140.0 vs napkin 255.
-  cosine=1.000 max_abs=0.062. 359 GB/s.
+  act=2467-2517 cur=2800 throttle=1.
+  248.232/248.116 us vs square 75 vs
+  w4a16 394 vs s8 469.8 vs s4 140.0 vs
+  napkin 255. Spread ~0.05%. cosine=1.000
+  max_abs=0.063. 359 GB/s.
 
-VERDICT -> Wide-N W8A8 M=256 is ~3.31x
-  square, N-linear held, beats w4a16 394
-  (~1.59x) and hand s8 469.8, loses to s4
-  140.0. Throttle=1. Numeric closed.
-  One-card. Do not freeze 248 us until
+VERDICT -> New W8A8 M=256 wide-N floor 248
+  us both cards, cur=2800, act 2467-2517,
+  throttle=1. ~3.31x square, N-linear held,
+  beats w4a16 394 (~1.59x) and hand s8
+  469.8, loses to s4 140.0. Numeric closed.
+  Rank us.
+
+Evidence: `results/k2/w8a8_m256_n17408_hold_card0.txt`,
+  `results/k2/w8a8_m256_n17408_hold_card1.txt`.
+
+## oneDNN W8A8 M=256 K=17408 is 228 us card1 (K1/K4)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  mtp6 `int8_gemm_w8a8` GEMM-only. spin=512
+  of M=256 then us_bench M=256 N=5120
+  K=17408. Card1 only. Oracle after timed.
+
+RESULT -> out f16 [256,5120]. timed
+  act=2500-2483 cur=2800 throttle=1.
+  228.094 us vs square 75 vs N-wide 248 vs
+  w4a16 377 vs s8 477.4 vs s4 149.0 vs
+  napkin 265. cosine=1.000 max_abs=0.125.
+  391 GB/s. Under K-linear (75*17408/5120
+  ~255).
+
+VERDICT -> Wide-K W8A8 M=256 is ~3.04x
+  square, under K-linear, beats w4a16 377
+  (~1.65x) and hand s8 477.4, loses to s4
+  149.0. Throttle=1. Numeric closed.
+  One-card. Do not freeze 228 us until
   card0.
 
-Evidence: `results/k2/w8a8_m256_n17408_hold_card1.txt`.
+Evidence: `results/k2/w8a8_m256_k17408_hold_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2495,8 +2521,12 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ~3.19x square, under K-linear, beats s8
   477.4). Qwen FFN w4a16 M=256 map is
   closed. oneDNN W8A8 M=256 N=17408 is
-  248 us card1 (act~2510/2800, throttle=1,
-  ~3.31x square, beats w4a16 394). One-card.
+  248 us both cards (act 2467-2517/2800,
+  throttle=1, ~3.31x square, beats w4a16
+  394). oneDNN W8A8 M=256 K=17408 is 228
+  us card1 (act~2490/2800, throttle=1,
+  ~3.04x square, beats w4a16 377).
+  One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
