@@ -431,19 +431,34 @@ New wide-K floor 1125 us both cards.
 K-linear ~3.39x. ~1.18x merge. Qwen FFN
 closed-form LUT M=64 map closed.
 
-## closed-form LUT 4x8 A-db M=256 N=17408 card1 (2026-09-03au)
+## closed-form LUT 4x8 A-db M=256 N=17408 (2026-09-03au/av)
 
 Same `nibble_lut_scf_db48`, M=256 N=17408
 K=5120. cosine=1.0 max_abs=0. timed
-act=2683 cur=2800 throttle=1.
+act=2650/2683 cur=2800 throttle=1.
 
 | shape | card | pipe_host_us | square | s8 | compose | napkin |
 |---|---|---:|---:|---:|---:|---:|
+| 256 x 17408 | 0 | 3163.038 | 1083 | 469.8 | 984.3 | 2874 |
 | 256 x 17408 | 1 | 3113.855 | 1083 | 469.8 | 984.3 | 2874 |
 
-~2.88x square. ~6.63x s8. Napkin missed
-~8.3%. Throttle=1. One-card. Do not
-freeze 3114 us.
+New M=256 wide-N floor 3138 us both
+cards. ~2.90x square. ~6.68x s8.
+Throttle=1.
+
+## closed-form LUT 4x8 A-db M=256 K=17408 card1 (2026-09-03aw)
+
+Same `nibble_lut_scf_db48`, M=256 N=5120
+K=17408. cosine=1.0 max_abs=0. timed
+act=2783 cur=2800 throttle=1.
+
+| shape | card | pipe_host_us | square | s8 | compose | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| 256 x 5120 x 17408 | 1 | 3412.241 | 1083 | 477.4 | 968.7 | 3675 |
+
+~3.15x square. ~7.15x s8. Napkin 3675
+was high ~7.2%. Throttle=1. One-card.
+Do not freeze 3412 us.
 
 ## 12-idea sprint (2026-09-03ae)
 

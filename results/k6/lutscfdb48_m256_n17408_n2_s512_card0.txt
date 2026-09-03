@@ -1,0 +1,25 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3741257889587 energy2=pkg:1998180828369 temp2_mC=56000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3670339667663 energy2=pkg:2069245777038 temp2_mC=60000
+CONFIG backend=sycl+l0 card=0 arm=nibble_lut_scf_db48 nt=2 spin=512 m=256 n=17408 RC=8 A_db wg=4x8 no_slm out=f16 never_bitcast_s4
+scf M=256 1083 us. scf M=64 N=17408 880. s8 469.8. s4 140. compose 984.3. Napkin 1083*880/331.6 ~2874.
+=== lut_scf_db48 nt=2 m=256 n=17408 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_lut_scf_db48 never_bitcast_s4 packedB=K/2 dtype=s8xE2M1->f16_scaled RC=8 NT=2 unroll=16 dpas=64 wg=4x8_NxM A_double_buffer=1 no_slm=1 grf256_request=1 a_scale=b_scale=0.0200 out=f16 warmup=10 iters=20 card=0 spin=512 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,64,128,1024,248.750,285.124,267.760,0.0674,0.263,1.000000,0,1,248.750,248.750,248.750
+spin_done n=512 act=2650 cur=2800 power=D0 throttle=1
+timed_begin act=2650 cur=2800 power=D0 throttle=1
+timed_end act=2650 cur=2800 power=D0 throttle=1
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,256,17408,5120,3158.255,3179.338,3163.038,14.4491,14.110,1.000000,0,1,3155.521,3143.646,3186.459
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=2800 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:3746932818725 energy2=pkg:2001458229187 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:3675715850708 energy2=pkg:2072356523193 temp2_mC=46000

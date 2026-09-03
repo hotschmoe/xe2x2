@@ -4328,3 +4328,69 @@ VERDICT -> Wide-N closed-form LUT at
   Throttle=1. One-card. Do not freeze
   until card0. Rank us. Next: sibling
   scf M=256 N=17408 vs scf M=256 K=17408.
+
+### 2026-09-03av - K6 closed-form LUT 4x8 A-db M=256 N=17408 sibling card0
+
+CONTEXT -> card1 closed-form 4x8 M=256
+  N=17408 was 3114 us at 2683/2800,
+  throttle=1, numeric closed. Sibling
+  swap.
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 0.
+  Same RC=8 NT=2 U=16 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k6_lut_scf_db48_m256_wide.sh 0 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2650 cur=2800 throttle=1.
+  M=256 card0: event 3158.255 us, pipe_host
+  3163.038 vs card1 3113.855 vs 5120 1083
+  vs s8 469.8 vs s4 140 vs compose 984.3.
+  Spread ~1.6%. min/max 3143.6-3186.5.
+
+VERDICT -> Sibling matches. New 4x8 A-db
+  closed-form LUT M=256 wide-N floor 3138
+  us at ~2660/2800 both cards, throttle=1.
+  ~2.90x square, ~6.68x s8 469.8. Rank us.
+
+### 2026-09-03aw - K6 closed-form LUT 4x8 A-db M=256 K=17408 card1
+
+CONTEXT -> scf M=256 is 1083 us. scf
+  M=64 K=17408 is 1125 (~3.39x). s8 477.4.
+  s4 149. compose 968.7. Napkin
+  1083*1125/331.6 ~3675. FFN-down prefill.
+  One-card. Never bitcast. Host oracle is
+  slow at this shape (~4 min wall).
+
+CONFIG -> sycl+l0, standalone
+  nibble_lut_scf_db48, icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31, gpu-run --card 1.
+  RC=8 NT=2 U=16 spin=512. M=256 N=5120
+  K=17408. Packed E2M1 B.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k6_lut_scf_db48_m256_k17408.sh 1 2 512
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=2783 cur=2800 throttle=1.
+  M=256 card1: event 3407.661 us, pipe_host
+  3412.241 vs 5120 1083 vs M=64 K=17408
+  1125 vs s8 477.4 vs s4 149 vs compose
+  968.7 vs napkin 3675. Ratio 3412/1083
+  ~3.15x. min/max 3362.6-3462.0.
+
+VERDICT -> Wide-K closed-form LUT at
+  M=256 is 3412 us at 2783/2800, ~3.15x
+  square (M=64 was 3.39x), ~7.15x s8
+  477.4. Napkin 3675 was high ~7.2%.
+  Throttle=1. One-card. Do not freeze
+  until card0. Rank us. Next: sibling
+  scf M=256 K=17408 vs held-clock
+  nvfp4_gemm_w4a16 M=1.
