@@ -1348,28 +1348,50 @@ VERDICT -> New W8A8 M=64 wide-K floor 181
 Evidence: `results/k2/w8a8_m64_k17408_hold_card0.txt`,
   `results/k2/w8a8_m64_k17408_hold_card1.txt`.
 
-## ESIMD s2 decode tile is 11.5 us card1 (K2)
+## ESIMD s2 decode tile is 11.5 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
   icpx AOT `intel_gpu_bmg_g31`. `dpas_s2_sc`
   RC=4 8x2-N scale-to-f16, pack=4 along K,
-  IGC s2 [-2,1]. NT=2 spin=4000. Card1.
+  IGC s2 [-2,1]. NT=2 spin=4000. Both cards.
   Never E2M1 bitcast.
 
-RESULT -> COMPILE_OK. check 4x32x1024
+RESULT -> check cosine=1.0 max_abs=0.
+  timed M=1 5120 act=cur=2800 throttle=0.
+  pipe_host 11.468/11.474 us vs s4 16.5
+  vs s8 34 vs W8A8 44. M=4 tracks.
+  Spread ~0.05%. ~1.43x s4, ~2.96x s8.
+  Napkin 8 (2x s4) missed.
+
+VERDICT -> New s2 decode floor 11.5 us
+  pipe_host at 2800 both cards. Numeric
+  closed. Beats s4, not 2x s4. Rank
+  pipe_host.
+
+Evidence: `results/k2/s2sc_n2_s4000_card0.txt`,
+  `results/k2/s2sc_n2_s4000_card1.txt`.
+
+## ESIMD s2xs8 decode mix is 14.1 us card1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  AOT `dpas_s2xs8_sc`. A=s8 B=s2 pack=4,
+  dpas K=32 (OPC=4). RC=4 8x2-N scale-to-
+  f16. NT=2 spin=4000. Card1. Literature
+  mix arXiv 2508.06753. Never E2M1 bitcast.
+
+RESULT -> COMPILE_OK. check 4x32x512
   cosine=1.0 max_abs=0. timed M=1 5120
   act=cur=2800 throttle=0. pipe_host
-  11.474 us vs s4 16.5 vs s8 34 vs W8A8
-  44. M=4 pipe 11.458 tracks. ~1.43x s4,
-  ~2.96x s8. Napkin 8 (2x s4) missed.
+  14.140 us vs s2 11.5 vs s4 16.5 vs s8
+  34 vs napkin 34. M=4 pipe 13.962.
+  ~2.41x s8. Paper same-rate napkin missed.
 
-VERDICT -> First serving-shaped s2 decode
-  lights and is numeric-closed. 11.5 us
-  at 2800 card1. Beats s4, not 2x s4.
-  New dtype. One-card. Do not freeze 11.5
-  us until card0.
+VERDICT -> Mix lights, numeric-closed,
+  14.1 us at 2800 card1. Beats s8, loses
+  to s2xs2 11.5. New mix. One-card. Do
+  not freeze 14.1 us until card0.
 
-Evidence: `results/k2/s2sc_n2_s4000_card1.txt`.
+Evidence: `results/k2/s2xs8sc_n2_s4000_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2610,9 +2632,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards (act~2725/2800, throttle=1,
   ~3.93x square, loses to w4a16 130).
   Qwen FFN W8A8 M=64 map is closed.
-  ESIMD s2 RC=4 decode is 11.5 us card1
-  at 2800 (cosine=1 max_abs=0, ~1.43x
-  s4 16.5). New dtype. One-card.
+  ESIMD s2 RC=4 decode is 11.5 us both
+  cards at 2800 (cosine=1 max_abs=0,
+  ~1.43x s4 16.5). ESIMD s2xs8 decode
+  mix is 14.1 us card1 at 2800 (beats
+  s8 34, loses to s2xs2 11.5). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

@@ -935,7 +935,7 @@ w4a16 130 (~1.39x) both cards and s4
 106.0. Beats hand s8 374.7. Spread ~3.7%.
 Throttle=1. Qwen FFN W8A8 M=64 map closed.
 
-## s2 RC=4 8x2-N decode card1 (2026-09-03by)
+## s2 RC=4 8x2-N decode (2026-09-03by/bz)
 
 sycl+l0 standalone AOT. dpas_s2_sc pack=4
 NT=2 spin=4000. IGC s2 [-2,1]. cosine=1.0
@@ -943,12 +943,28 @@ max_abs=0. timed act=cur=2800 throttle=0.
 
 | shape | card | event_us | pipe_host_us | s4 | s8 | W8A8 |
 |---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 0 | 11.102 | 11.468 | 16.5 | 34 | 44 |
 | 1 x 5120 | 1 | 11.096 | 11.474 | 16.5 | 34 | 44 |
+| 4 x 5120 | 0 | 11.104 | 11.476 | 16.5 | 34 | 44 |
 | 4 x 5120 | 1 | 11.083 | 11.458 | 16.5 | 34 | 44 |
 
-COMPILE_OK. ~1.43x s4, ~2.96x s8. Napkin
-8 missed. New dtype. One-card. Do not
-freeze 11.5 us.
+New s2 decode floor 11.5 us both cards.
+~1.43x s4, ~2.96x s8. Spread ~0.05%.
 
-K2 next: sibling s2 decode vs s2xs8
-serving-shaped.
+## s2xs8 RC=4 decode mix card1 (2026-09-03ca)
+
+sycl+l0 AOT dpas_s2xs8_sc. A=s8 B=s2
+pack=4 K=32 dpas. NT=2 spin=4000.
+cosine=1.0 max_abs=0. timed 2800.
+
+| shape | card | event_us | pipe_host_us | s2 | s4 | s8 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 5120 | 1 | 13.557 | 14.140 | 11.5 | 16.5 | 34 |
+| 4 x 5120 | 1 | 13.570 | 13.962 | 11.5 | 16.5 | 34 |
+
+COMPILE_OK. ~2.41x s8. Paper same-rate
+napkin 34 missed. One-card. Do not freeze
+14.1 us.
+
+K2 next: sibling s2xs8 vs K5 producer
+N=17408.

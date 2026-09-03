@@ -5314,3 +5314,65 @@ VERDICT -> First serving-shaped s2 decode
   11.5 us until card0. Rank pipe_host.
   Next: sibling s2 decode vs s2xs8
   serving-shaped.
+
+### 2026-09-03bz - K2 s2 RC=4 decode sibling card0
+
+CONTEXT -> card1 s2 decode was 11.5 us
+  at 2800, cosine=1 max_abs=0. New dtype
+  sibling. IGC s2 [-2,1]. Never E2M1
+  bitcast.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s2_sc. gpu-run --card 0.
+  NT=2 spin=4000. M=1 and M=4 5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_sc.sh 0 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 11.102 pipe_host 11.468 vs card1
+  11.474 vs s4 16.5 vs s8 34. M=4 pipe
+  11.476. Spread ~0.05%.
+
+VERDICT -> Sibling matches. New s2 decode
+  floor 11.5 us pipe_host both cards at
+  2800. ~1.43x s4, ~2.96x s8. Numeric
+  closed. Rank pipe_host.
+
+### 2026-09-03ca - K2 s2xs8 RC=4 decode tile card1
+
+CONTEXT -> Literature mix A=s8 B=s2,
+  K=32 dpas (same OPC as s8). s2xs2 is
+  11.5. s8 34. Napkin ~34 if paper rate.
+  IGC s2 [-2,1]. Never E2M1 bitcast.
+  One-card.
+
+CONFIG -> backend sycl+l0, standalone
+  AOT dpas_s2xs8_sc RC=4 NT=2 unroll=16
+  packB=4 A=s8. gpu-run --card 1. NT=2
+  spin=4000.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s2xs8_sc.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_s2xs8_sc.sh 1 2 4000
+  ```
+
+RESULT -> COMPILE_OK. check 4x32x512
+  cosine=1.000 max_abs=0. timed M=1
+  5120 act=cur=2800 throttle=0. event
+  13.557 pipe_host 14.140 vs s2 11.5 vs
+  s4 16.5 vs s8 34 vs napkin 34. M=4
+  pipe 13.962 tracks. ~2.41x s8, ~1.23x
+  s2xs2.
+
+VERDICT -> Mix lights and is numeric-
+  closed. 14.1 us pipe_host at 2800
+  card1. Beats s8 34 (paper same-rate
+  napkin missed). Loses to s2xs2 11.5.
+  New mix. One-card. Do not freeze 14.1
+  us until card0. Rank pipe_host. Next:
+  sibling s2xs8 vs K5 producer N=17408.
