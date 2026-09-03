@@ -1002,5 +1002,19 @@ New floor 22.1 us both cards. ~1.53x
 s8. Spread ~0.9%. Loses to s4 16.5
 and s2xs8 14.1.
 
-K2 next: s8xs4 wide-N. GPTQ scale is
-K6.
+## s8xs4 RC=4 N=17408 card1 (2026-09-03co)
+
+Same tile. NT=2 spin=4000. cosine=1.0
+max_abs=0. timed act=cur=2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | square | s4 | s8 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 17408 x 5120 | 1 | 38.086 | 38.554 | 22.1 | 29.5 | 141.6 |
+| 4 x 17408 x 5120 | 1 | 38.167 | 38.575 | 22.1 | 29.5 | 141.6 |
+
+38.6 us at 2800 card1. ~1.74x square,
+under linear (napkin 75). Beats s8
+141.6. Loses to s4 29.5. One-card.
+
+K2 next: sibling N=17408 vs K=17408.

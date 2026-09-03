@@ -648,12 +648,12 @@ dpas_s4_gptq. Real down_proj 256x256
 s4 + g128 f16 scales. A s4 * 0.02.
 Partial s32 per group then * scale.
 
-| phase | shape | us | cosine | max_abs | ok |
-|---|---|---:|---:|---:|---:|
-| check | 8x16x128 | 33.766 | 1.000 | 7.6e-6 | 1 |
-| tile | 8x256x256 | 25.974 | 1.000 | 0 | 1 |
+| phase | shape | c0 us | c1 us | cosine | max_abs | ok |
+|---|---|---:|---:|---:|---:|---:|
+| check | 8x16x128 | 36.339 | 33.766 | 1.000 | 7.6e-6 | 1 |
+| tile | 8x256x256 | 27.990 | 25.974 | 1.000 | 0 | 1 |
 
-Numeric closed. Do not rank us.
-One-card. Do not freeze until card0.
+Numeric closed both cards (2026-09-03cn).
+Do not rank us.
 
-K6 next: sibling GPTQ group-scale.
+K6 next: serving-shaped GPTQ s4 decode.

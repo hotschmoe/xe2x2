@@ -5758,3 +5758,61 @@ VERDICT -> Group-scale f16 epilogue
   One-card. Do not freeze until card0.
   Do not rank us. Next: sibling GPTQ
   scale vs s8xs4 wide-N.
+
+### 2026-09-03cn - K6 GPTQ s4 group-scale sibling card0
+
+CONTEXT -> card1 GPTQ group-scale was
+  cosine=1 max_abs=0 on 8x256x256.
+  New numeric sibling.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s4_gptq. gpu-run --card 0.
+  Same dump + g128 scales.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4_sc.sh 0
+  ```
+
+RESULT -> check 8x16x128 cosine=1.000
+  max_abs=7.6e-6 ok=1. tile 8x256x256
+  cosine=1.000 max_abs=0 ok=1 vs card1
+  0. bin_rc=0.
+
+VERDICT -> Sibling matches. GPTQ s4
+  group-scale f16 is numeric-closed
+  both cards. Do not rank us.
+
+### 2026-09-03co - K2 s8xs4 RC=4 N=17408 card1
+
+CONTEXT -> s8xs4 square is 22.1 us.
+  s8 N=17408 is 141.6. s4 29.5. W8A8
+  158.1. Napkin N-linear 22.1*17408/5120
+  ~75. Mix A=s8 B=s4. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s8xs4_sc RC=4 NT=2. gpu-run
+  --card 1. M=1 and M=4 N=17408 K=5120.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_sc_wide.sh 1 2 4000
+  ```
+
+RESULT -> check cosine=1.000 max_abs=0.
+  timed M=1 act=cur=2800 throttle=0.
+  event 38.086 pipe_host 38.554 vs
+  square 22.1 vs s4 29.5 vs s8 141.6
+  vs W8A8 158.1 vs napkin 75. M=4 pipe
+  38.575 tracks. ~1.74x square, not
+  3.4x.
+
+VERDICT -> Wide-N s8xs4 is 38.6 us
+  pipe_host at 2800 card1. Under
+  linear. Beats s8 141.6 and W8A8
+  158.1, loses to s4 29.5 (~1.31x).
+  Napkin 75 missed. One-card. Do not
+  freeze 38.6 us until card0. Rank
+  pipe_host. Next: sibling wide-N vs
+  s8xs4 K=17408.
