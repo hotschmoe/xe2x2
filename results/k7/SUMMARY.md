@@ -1203,5 +1203,33 @@ ok=1. pipe_host 19.929 event
 20 us both at 2800. T-map
 C=10240 closed.
 
-K7 next: sibling mixer L2-out
-T=256 vs mixer L2-once T=256.
+## ESIMD mixer L2-once T=256 card0 (2026-09-03ja)
+
+backend sycl+l0, standalone
+gdn_mixer_l2once. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=1.5e-5 cosine_o=1
+max_abs_o=9.8e-4 ok=1. pipe_host
+326.779 event 319.096. act
+2700-2667 cur=2800 throttle=0.
+Beats mixer 471, loses to seq
+298. Extra launch. Do not
+freeze 327 as 2800. Sibling
+before promote.
+
+## ESIMD mixer L2-out T=256 sibling card1 (2026-09-03jb)
+
+backend sycl+l0, same
+gdn_mixer_l2out. T=256 C=10240
+nv=48 blk=16 host-L2 spin=0.
+cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=9.8e-4
+ok=1. pipe_host 266.844 event
+271.094 vs card0 270.767.
+Spread ~1.5%. act 2700-2767
+cur=2800 throttle=1. 267-271 us
+both. Do not freeze 271 as 2800.
+
+K7 next: sibling mixer L2-once
+T=256 vs mixer conv-L2 fuse
+T=256.

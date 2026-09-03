@@ -11047,3 +11047,74 @@ VERDICT -> Sibling matches.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-03ja - K7 ESIMD mixer L2-once T=256 card0
+
+CONTEXT -> mixer-slmht 471.
+  L2-out 271. L2 once per
+  (t,kh) then packed delta.
+  New TU gdn_mixer_l2once.
+  spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_l2once.
+  gpu-run --card 0. T=256
+  C=10240 nv=48 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_mixer_l2once_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 319.096 pipe_host
+  326.779. timed act 2700-2667
+  cur=2800 throttle=0. vs mixer
+  471 (~1.44x) vs seq 298
+  (~1.10x) vs conv+l2out ~309.
+
+VERDICT -> ESIMD mixer L2-once
+  T=256 is 327 us pipe_host
+  card0, beats mixer-slmht 471,
+  loses to seq 298. Extra
+  launch. First fuse. Do not
+  freeze 327 as 2800. Sibling
+  before promote. Rank
+  pipe_host.
+
+### 2026-09-03jb - K7 ESIMD mixer L2-out T=256 sibling card1
+
+CONTEXT -> card0 L2-out was 271
+  us at 2650-2700. First fuse.
+  Sibling. spin=0. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_mixer_l2out. gpu-run
+  --card 1. T=256 C=10240 nv=48
+  blk=16 host-L2. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_mixer_l2out_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=9.8e-4
+  ok=1. event 271.094 pipe_host
+  266.844 vs card0 270.767.
+  Spread ~1.5%. timed act
+  2700-2767 cur=2800 throttle=1.
+  vs slmht 260.
+
+VERDICT -> Sibling matches.
+  ESIMD mixer L2-out T=256 is
+  267-271 us pipe_host both
+  cards, wash vs slmht 260.
+  Packed tax ~4%. Do not freeze
+  271 as 2800. Rank pipe_host.
+  Next: sibling mixer L2-once
+  T=256 vs mixer conv-L2 fuse.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

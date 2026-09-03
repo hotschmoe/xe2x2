@@ -3920,32 +3920,59 @@ VERDICT -> Conv T=128 C=10240 is
 Evidence: `results/k7/esimd_conv1d_t128_c10240_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t128_c10240_s4000_card1.txt`.
 
-## ESIMD mixer L2-out T=256 is 271 us card0 (K7)
+## ESIMD mixer L2-out T=256 is 267-271 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_mixer_l2out`.
   Host conv+L2 q/k. Packed
   slmht delta skips device L2.
-  T=256 blk=16. Card0. spin=0.
-  Prior: mixer-slmht 471, slmht
-  260, seq ~298.
+  T=256 blk=16. Both cards.
+  spin=0. Prior: mixer-slmht
+  471, slmht 260, seq ~298.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 9.8e-4 ok=1. pipe_host
-  270.767 event 271.320. timed
-  act 2700-2650 cur=2800
-  throttle=0.
+  270.767 / 266.844. Spread
+  ~1.5%. timed act 2700-2650 /
+  2700-2767 cur=2800. card1
+  throttle=1.
 
 VERDICT -> Mixer L2-out T=256 is
-  271 us pipe_host card0, wash
-  vs slmht 260 (~1.04x). Packed
-  tax ~4%. Device L2 is the
-  mixer leftover vs 471. First
-  fuse. Do not freeze 271 as
-  2800. Sibling before promote.
-  Rank pipe_host.
+  267-271 us pipe_host both
+  cards, wash vs slmht 260
+  (~1.04x). Packed tax ~4%. Do
+  not freeze 271 as 2800. Rank
+  pipe_host.
 
-Evidence: `results/k7/esimd_mixer_l2out_t256_s0_card0.txt`.
+Evidence: `results/k7/esimd_mixer_l2out_t256_s0_card0.txt`,
+  `results/k7/esimd_mixer_l2out_t256_s0_card1.txt`.
+
+## ESIMD mixer L2-once T=256 is 327 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_l2once`.
+  Conv, device L2 once per
+  (t,kh), packed delta no L2.
+  T=256 blk=16. Card0. spin=0.
+  Prior: mixer-slmht 471, L2-out
+  271, seq ~298.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 9.8e-4 ok=1. pipe_host
+  326.779 event 319.096. timed
+  act 2700-2667 cur=2800
+  throttle=0.
+
+VERDICT -> Mixer L2-once T=256 is
+  327 us pipe_host card0, beats
+  mixer-slmht 471 (~1.44x),
+  loses to seq 298 (~1.10x) and
+  conv+l2out ~309. Extra launch.
+  First fuse. Do not freeze 327
+  as 2800. Sibling before
+  promote. Rank pipe_host.
+
+Evidence: `results/k7/esimd_mixer_l2once_t256_s0_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5585,6 +5612,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   slmht 260. Packed tax ~4%.
   Device L2 is the mixer leftover.
   Do not freeze 271 as 2800.
+  Sibling before promote.
+  mixer L2-out T=256 is 267-271
+  us both cards (2026-09-03iy/jb).
+  Packed tax ~4%. mixer L2-once
+  T=256 is 327 us card0
+  (2026-09-03ja), beats mixer 471,
+  loses to seq 298. Extra launch.
+  Do not freeze 327 as 2800.
   Sibling before promote.
   s2 4x8
   M=256 N=17408 is 171 us both
