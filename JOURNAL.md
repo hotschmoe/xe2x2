@@ -5635,3 +5635,66 @@ VERDICT -> Real GPTQ INT4 codes are
   f16 epilogue is a later question.
   Next: sibling GPTQ s4 vs serving
   s8xs4 decode tile.
+
+### 2026-09-03cj - K6 GPTQ INT4 ESIMD s4 sibling card0
+
+CONTEXT -> card1 GPTQ s4 was max_abs=0
+  on 8x16x64 and 8x256x256, s4_ov=0,
+  qzeros=7. New numeric sibling.
+
+CONFIG -> backend sycl+l0, same AOT
+  binary dpas_s4_ckpt. gpu-run --card 0.
+  Same dump path, layer0/1 hist.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4.sh 0
+  ```
+
+RESULT -> 6/6 FFN s4_ov=0 s4 in [-8,7]
+  g_idx_linear=1 z_uniq=7. check 8x16x64
+  max_abs=0 ok=1. tile 8x256x256
+  max_abs=0 ok=1 vs card1 0/0. bin_rc=0.
+
+VERDICT -> Sibling matches. GPTQ INT4
+  codes feed ESIMD s4 both cards.
+  Stored qzeros are 7. Integer path
+  closed. Do not rank us. Group-scale
+  f16 epilogue is next on this arm.
+
+### 2026-09-03ck - K2 s8xs4 RC=4 decode tile card1
+
+CONTEXT -> Mix A=s8 B=s4 pack=2 K=32
+  dpas (OPC=4). s2xs8 is 14.1. s4 16.5.
+  s8 34. Napkin ~34 if s8 rate, ~14 if
+  s2xs8 B-bytes. s4 [-8,7]. Never E2M1
+  bitcast. First scale-to-f16 of mix.
+  One-card.
+
+CONFIG -> backend sycl+l0, standalone
+  AOT dpas_s8xs4_sc RC=4 NT=2 unroll=16
+  packB=2 A=s8. gpu-run --card 1.
+  NT=2 spin=4000.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s8xs4_sc.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_sc.sh 1 2 4000
+  ```
+
+RESULT -> COMPILE_OK. check 4x32x512
+  cosine=1.000 max_abs=0. timed M=1
+  5120 act=cur=2800 throttle=0. event
+  21.565 pipe_host 22.149 vs s2xs8 14.1
+  vs s4 16.5 vs s8 34 vs W8A8 44 vs
+  napkin 34. M=4 pipe 21.966 tracks.
+  ~1.53x s8, loses to s4.
+
+VERDICT -> Mix decode lights and is
+  numeric-closed. 22.1 us pipe_host at
+  2800 card1. Beats s8 34 (same-rate
+  napkin missed). Loses to s4 16.5 and
+  s2xs8 14.1. New mix. One-card. Do
+  not freeze 22.1 us until card0. Rank
+  pipe_host. Next: sibling s8xs4 decode
+  vs GPTQ group-scale f16.

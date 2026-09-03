@@ -1015,30 +1015,53 @@ VERDICT -> Mixed s8/s4 is numerically
 Evidence: `results/k2/s8xs4_oracle_card0.txt`,
   `results/k2/s8xs4_oracle_card1.txt`.
 
-## GPTQ INT4 codes feed ESIMD s4 card1 (K6)
+## GPTQ INT4 codes feed ESIMD s4 both cards (K6)
 
 CONFIG -> backend `sycl+l0`, Qwen3.8-27B
   `gptq-int4-mtp-bf16-9d189a60` g128
   `sym=true` pack i32. CPU unpack
   LSB-first along K, s4 = nibble-8.
   `dpas_s4_ckpt` synthetic s4 A, real
-  B. Card1. Never E2M1 bitcast.
+  B. Both cards. Never E2M1 bitcast.
 
-RESULT -> 6/6 layer0/1 FFN tensors:
-  s4 in [-8,7], s4_ov=0, g_idx = i/128.
-  Stored qzeros all 7 (696320/696320).
+RESULT -> 6/6 layer0/1 FFN tensors both
+  cards: s4 in [-8,7], s4_ov=0,
+  g_idx = i/128. Stored qzeros all 7.
   down_proj 256x256 dump. check 8x16x64
-  and tile 8x256x256 max_abs=0 ok=1.
+  and tile 8x256x256 max_abs=0 ok=1
+  both cards.
 
 VERDICT -> This GPTQ INT4 checkpoint
   is integer s4, and ESIMD `dpas<s4,s4>`
-  matches host s32 on the dumped tile.
-  Stored zp nibble is 7, not 8. One-card.
-  Do not freeze until card0. Group
-  scales not applied in this micro.
+  matches host s32 on the dumped tile
+  both cards. Stored zp nibble is 7,
+  not 8. Group scales not applied.
 
-Evidence: `results/k6/gptq_s4_card1.txt`,
-  `results/k6/gptq_s4_down0_256.bin`.
+Evidence: `results/k6/gptq_s4_card0.txt`,
+  `results/k6/gptq_s4_card1.txt`.
+
+## ESIMD s8xs4 decode is 22.1 us card1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s8xs4_sc`. RC=4 NT=2 unroll=16
+  packB=2 A=s8 B=s4 K=32 dpas. M=1 and
+  M=4 5120. Card1. Named clock 2800.
+  Never E2M1 bitcast. Prior: s8 34.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1
+  pipe_host 22.149 vs s2xs8 14.1 vs
+  s4 16.5 vs s8 34 vs W8A8 44. M=4
+  pipe 21.966 tracks.
+
+VERDICT -> First serving-shaped s8xs4
+  decode is 22.1 us pipe_host at 2800
+  card1, numeric closed. Beats s8 34,
+  loses to s4 16.5 and s2xs8 14.1.
+  One-card. Do not freeze 22.1 us until
+  card0. Rank pipe_host.
+
+Evidence: `results/k2/s8xs4sc_n2_s4000_card1.txt`.
 
 ## 256-entry product LUT GEMV is a numeric-closed loss (K6)
 
@@ -2748,7 +2771,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   closed. Mixed s8xs4 host-s32 closed
   both cards (max_abs=0 both mixes).
   GPTQ INT4 codes are s4 and feed
-  ESIMD s4 card1 (max_abs=0; qzeros=7).
+  ESIMD s4 both cards (max_abs=0;
+  qzeros=7). ESIMD s8xs4 decode is
+  22.1 us card1 at 2800 (beats s8 34,
+  loses to s4 16.5). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
@@ -2772,7 +2798,7 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   and s8 K=16 dpas do not compile. Product LUT GEMV is a
   numeric-closed us loss. MXFP4 is absent from this checkpoint.
   Qwen3.8 GPTQ-INT4 g128 codes are s4 (q-8, ov=0) and match
-  ESIMD s4 DPAS on card1. Stored qzeros are 7.
+  ESIMD s4 DPAS both cards. Stored qzeros are 7.
 - M=1 decode is tens to hundreds of times under the compute roof.
 - W8A8 decode paid ~160 activation-quant launches that W8A16 skips.
 - Transformed LSC VNNI loads were bit-exact; flat prepack was not.

@@ -638,8 +638,8 @@ dpas_s4_ckpt synthetic s4 A. Card1.
 down_proj dump 256x256. check 8x16x64
 max_abs=0. tile 8x256x256 max_abs=0.
 
-Integer codes feed dpas<s4,s4>. Stored
-qzeros are 7. Do not quote us. One-card.
+Integer codes feed dpas<s4,s4> both
+cards (2026-09-03cj sibling max_abs=0).
+Stored qzeros are 7. Do not quote us.
 
-K6 next: sibling GPTQ s4 vs serving
-s8xs4 decode tile.
+K6 next: GPTQ group-scale f16 epilogue.

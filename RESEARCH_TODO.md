@@ -218,8 +218,11 @@ Qwen FFN producer decode map is
 closed. Mixed s8xs4 host-s32 closed
 both cards (2026-09-03ch), max_abs=0
 both mixes. GPTQ INT4 codes feed
-ESIMD s4 card1 (2026-09-03ci),
-s4_ov=0 max_abs=0 qzeros=7. One-card.
+ESIMD s4 both cards (2026-09-03cj),
+s4_ov=0 max_abs=0 qzeros=7. ESIMD
+s8xs4 decode is 22.1 us card1
+(2026-09-03ck) at 2800, beats s8 34,
+loses to s4 16.5. One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -231,11 +234,11 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: sibling GPTQ s4
-ckpt (card1 max_abs=0; runner
-kernels/esimd_dpas/run_gptq_s4.sh).
-card1: serving-shaped s8xs4 RC=4
-decode tile (oracle now both-card).
+Next: split. card0: sibling s8xs4
+RC=4 decode (card1 22.1 us; runner
+kernels/esimd_dpas/run_s8xs4_sc.sh).
+card1: GPTQ group-scale f16 epilogue
+on ESIMD s4 (integer codes closed).
 Loop every 5m. Do not drop below 5m:
 M=256 FFN spin=512 already 3-6 min GPU,
 and overlapping fires serialize on gpu-run.
@@ -245,12 +248,12 @@ and overlapping fires serialize on gpu-run.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. Sibling GPTQ s4 ckpt (card1
-   max_abs=0, qzeros=7).
-2. Serving-shaped s8xs4 RC=4 decode
-   tile (numeric both-card closed).
-3. GPTQ group-scale f16 epilogue on
-   ESIMD s4 (integer codes closed).
+1. Sibling s8xs4 RC=4 decode (card1
+   22.1 us at 2800).
+2. GPTQ group-scale f16 epilogue on
+   ESIMD s4 (integer codes both-card).
+3. s8xs4 wide-N/K after the decode
+   floor is both-card.
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
