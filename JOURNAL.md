@@ -9013,6 +9013,70 @@ VERDICT -> ESIMD SLM-K blk=64
   835. Rank pipe_host. Next:
   SLM-K T=64 vs SLM a/b.
 
+### 2026-09-03gq - K7 ESIMD fused delta T=64 SLM-K card0
+
+CONTEXT -> fused T=64 265-271
+  throttle=1. SLM-K T=256 847.
+  Napkin ~212 if T-linear. Same
+  TU gdn_delta_slmk --t 64.
+  spin=0.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmk. gpu-run
+  --card 0. T=64 blk=16. spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmk_t64.sh 0 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 213.732 pipe_host
+  214.083. 29.5 GB/s. timed
+  act=cur=2800 throttle=0. vs
+  fused 265 (~1.24x) vs napkin
+  212.
+
+VERDICT -> ESIMD SLM-K T=64 is
+  214 us pipe_host card0 at 2800,
+  ~1.24x fused 265, T-linear vs
+  847. throttle=0. Do not freeze
+  214 until sibling. Possible
+  T=64 leftover cut. Rank
+  pipe_host.
+
+### 2026-09-03gr - K7 ESIMD fused delta T=256 SLM a/b card1
+
+CONTEXT -> SLM-K 847-858 leftover.
+  Napkin a/b SLM cuts HBM scalars.
+  spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmab.
+  gpu-run --card 1. T=256 blk=16.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmab_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 848.302 pipe_host
+  853.663. 18.5 GB/s. timed act
+  2783-2750 throttle=1. vs SLM-K
+  847-858.
+
+VERDICT -> ESIMD SLM a/b T=256 is
+  854 us pipe_host card1, wash vs
+  SLM-K 847-858. Napkin miss.
+  Stop a/b SLM vs k/q-only. Rank
+  pipe_host. Next: sibling T=64
+  vs v-prefetch T=256.
+
+
 
 
 
