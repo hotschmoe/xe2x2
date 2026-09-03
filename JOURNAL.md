@@ -7239,6 +7239,130 @@ VERDICT -> Sibling matches. New s2
   s2 4-acc M=256 N=17408 vs
   K=17408.
 
+### 2026-09-03eh - K2 s2 4-acc M=256 N=17408 card0
+
+CONTEXT -> s2 4-acc 37.4. s4 140.
+  W8A8 248. Napkin 37.4*17408/5120
+  ~127. Same 4-acc tile. IGC s2
+  [-2,1]. Never E2M1.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_w48m4 RC=8 4-acc wg 4x8
+  k128 pack=4. gpu-run --card 0.
+  M=256 N=17408 K=5120. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_w48m4_wide.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 108.104
+  pipe_host 108.604 vs square 37.4
+  vs s4 140 vs W8A8 248 vs napkin
+  127. ~2.90x square.
+
+VERDICT -> Wide-N s2 4-acc is 109
+  us pipe_host at 2800 card0.
+  Numeric closed. Beats s4 140
+  (~1.29x) and W8A8 248 (~2.28x).
+  Napkin 127 beat. Rank pipe_host.
+
+### 2026-09-03ei - K2 s2 4-acc M=256 K=17408 card1
+
+CONTEXT -> s2 4-acc 37.4. s4 149.
+  W8A8 226. Napkin ~127. Same
+  4-acc tile. Never E2M1.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4. gpu-run --card 1.
+  M=256 N=5120 K=17408. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_w48m4_k17408.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 108.620
+  pipe_host 108.414 vs square 37.4
+  vs s4 149 vs W8A8 226 vs napkin
+  127. ~2.90x square.
+
+VERDICT -> Wide-K s2 4-acc is 108
+  us pipe_host at 2800 card1.
+  Numeric closed. Beats s4 149
+  (~1.37x) and W8A8 226 (~2.09x).
+  Rank pipe_host.
+
+### 2026-09-03ej - K2 s2 4-acc M=256 N=17408 sibling card1
+
+CONTEXT -> card0 s2 4-acc N=17408
+  was 109 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4. gpu-run --card 1.
+  M=256 N=17408 K=5120. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_w48m4_wide.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 109.807
+  pipe_host 109.947 vs card0
+  108.604 vs square 37.4 vs s4
+  140 vs W8A8 248. Spread ~1.24%.
+  ~2.94x square.
+
+VERDICT -> Sibling matches. New s2
+  4-acc M=256 N=17408 floor 110 us
+  pipe_host both cards at 2800.
+  Beats s4 140 (~1.27x) and W8A8
+  248 (~2.25x). Rank pipe_host.
+
+### 2026-09-03ek - K2 s2 4-acc M=256 K=17408 sibling card0
+
+CONTEXT -> card1 s2 4-acc K=17408
+  was 108 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_w48m4. gpu-run --card 0.
+  M=256 N=5120 K=17408. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_w48m4_k17408.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=cur=2800
+  throttle=0. event 107.865
+  pipe_host 108.216 vs card1
+  108.414 vs square 37.4 vs s4
+  149 vs W8A8 226. Spread ~0.18%.
+  ~2.89x square.
+
+VERDICT -> Sibling matches. New s2
+  4-acc M=256 K=17408 floor 108 us
+  pipe_host both cards at 2800.
+  Beats s4 149 (~1.38x) and W8A8
+  226 (~2.09x). Qwen FFN s2 4-acc
+  M=256 map is closed (37.4 / 110
+  / 108). Rank pipe_host. Next:
+  s2 4-acc M=64 vs NT=4 M=256.
+
+
 
 
 

@@ -2126,6 +2126,58 @@ Evidence: `results/k2/s2w48m4_m256_n2_s512_card0.txt`,
   `results/k2/s2w48m4_m256_n2_s512_card1.txt`,
   `results/k2/s2w48m4_dpas_lines.txt`.
 
+## s2 4-acc M=256 N=17408 is 110 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2_w48m4`. M=256 N=17408
+  K=5120. Both cards. NT=2
+  spin=512. Named clock 2800.
+  Prior: square 37.4; s4 140;
+  W8A8 248; napkin ~127.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=256 pipe_host 108.604/109.947
+  vs square 37.4 vs s4 140 vs
+  W8A8 248. Spread ~1.24%. ~2.94x
+  square.
+
+VERDICT -> New s2 4-acc M=256
+  N=17408 floor 110 us pipe_host
+  at 2800 both cards. Beats s4 140
+  (~1.27x) and W8A8 248 (~2.25x).
+  Rank pipe_host.
+
+Evidence: `results/k2/s2w48m4_m256_n17408_n2_s512_card0.txt`,
+  `results/k2/s2w48m4_m256_n17408_n2_s512_card1.txt`.
+
+## s2 4-acc M=256 K=17408 is 108 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2_w48m4`. M=256 N=5120
+  K=17408. Both cards. NT=2
+  spin=512. Named clock 2800.
+  Prior: square 37.4; s4 149;
+  W8A8 226; napkin ~127.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=256 pipe_host 108.216/108.414
+  vs square 37.4 vs s4 149 vs
+  W8A8 226. Spread ~0.18%. ~2.89x
+  square.
+
+VERDICT -> New s2 4-acc M=256
+  K=17408 floor 108 us pipe_host
+  at 2800 both cards. Beats s4 149
+  (~1.38x) and W8A8 226 (~2.09x).
+  Qwen FFN s2 4-acc M=256 map is
+  closed (37.4 / 110 / 108). Rank
+  pipe_host.
+
+Evidence: `results/k2/s2w48m4_m256_k17408_n2_s512_card0.txt`,
+  `results/k2/s2w48m4_m256_k17408_n2_s512_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3438,7 +3490,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   M=256 is 37.4 us both cards at
   2800, new M=256 hand floor,
   beats s4 48.6 (~1.30x) and W8A8
-  75 (~2.01x). s2 4x8
+  75 (~2.01x). s2 4-acc M=256
+  N=17408 is 110 us both cards at
+  2800, beats s4 140 and W8A8 248
+  (~2.25x). s2 4-acc M=256 K=17408
+  is 108 us both cards at 2800,
+  beats s4 149 and W8A8 226
+  (~2.09x). Qwen FFN s2 4-acc
+  M=256 map is closed (37.4 / 110
+  / 108). s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
   W8A8 248 (~1.45x), loses to s4
@@ -3558,7 +3618,8 @@ M=64 s4 (33.6 vs 46 us), s2 (20 vs
 at M=256 s4 (48.6 vs 75 us), s2 4x8
 (55.5 vs 75 us), and s2 4-acc
 (37.4 vs 75 us), and at M=256
-N=17408 s2 (171 vs W8A8 248 us;
+N=17408 s2 4-acc (110 vs W8A8 248)
+and s2 4x8 (171 vs W8A8 248 us;
 throttle=1) and K=17408 s2 (201
 vs W8A8 226 us). s2xs8 M=64
 N=17408 is 100.5 vs W8A8 202.

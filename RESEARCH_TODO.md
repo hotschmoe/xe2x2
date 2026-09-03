@@ -321,7 +321,16 @@ mix at M=256 prefill vs W8A8. s2
 (2026-09-03eg) at 2800, new M=256
 hand floor, beats s4 48.6 (~1.30x)
 and W8A8 75 (~2.01x). Napkin 29
-miss.
+miss. s2 4-acc M=256 N=17408 is
+110 us both cards (2026-09-03ej)
+at 2800, ~2.94x square, beats s4
+140 (~1.27x) and W8A8 248
+(~2.25x). s2 4-acc M=256 K=17408
+is 108 us both cards (2026-09-03ek)
+at 2800, ~2.89x square, beats s4
+149 (~1.38x) and W8A8 226
+(~2.09x). Qwen FFN s2 4-acc M=256
+map is closed (37.4 / 110 / 108).
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
 Family-A floor. Bitcast s4 is an
@@ -333,14 +342,14 @@ us loss. oneDNN nvfp4_gemm_w4a16
 lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
-Next: split. card0: s2 4-acc M=256
-N=17408 (runner
-kernels/esimd_dpas/run_s2_w48m4_wide.sh).
-card1: s2 4-acc M=256 K=17408
+Next: split. card0: s2 4-acc M=64
 (runner
-kernels/esimd_dpas/run_s2_w48m4_k17408.sh).
+kernels/esimd_dpas/run_s2_w48m4_m64.sh).
+card1: s2 4-acc M=256 NT=4 (same
+binary run_s2_w48m4.sh 1 4 512).
 Loop every 5m. Do not drop below 5m:
-M=256 FFN host-oracle already 2-4 min.
+M=256 FFN spin=512 already 2-4 min GPU,
+and overlapping fires serialize on gpu-run.
 
 
 ## 10-hour remaining (ruthless)
@@ -348,12 +357,10 @@ M=256 FFN host-oracle already 2-4 min.
 Park GDN and fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. s2 4-acc M=256 N=17408 (square
-   37.4, s4 140, W8A8 248, napkin
-   ~127).
-2. s2 4-acc M=256 K=17408 (square
-   37.4, s4 149, W8A8 226, napkin
-   ~127).
+1. s2 4-acc M=64 (4x8 20, W8A8 46,
+   occupancy check vs M=256 37.4).
+2. s2 4-acc M=256 NT=4 (NT=2 37.4,
+   unroll 4 vs 8).
 Park: K7 GDN inventory, P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

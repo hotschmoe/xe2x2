@@ -1297,5 +1297,38 @@ New M=256 hand floor 37.4 us both
 cards. Spread ~0.01%. Beats s4
 48.6 (~1.30x) and W8A8 75 (~2.01x).
 
-K2 next: s2 4-acc M=256 N=17408 vs
-K=17408.
+## s2 4-acc M=256 N=17408 both cards (2026-09-03eh/ej)
+
+Same dpas_s2_w48m4. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 17408 x 5120 | 0 | 108.104 | 108.604 | 140 | 248 |
+| 256 x 17408 x 5120 | 1 | 109.807 | 109.947 | 140 | 248 |
+
+New floor 110 us both cards.
+Spread ~1.24%. ~2.94x square.
+Beats s4 140 (~1.27x) and W8A8
+248 (~2.25x).
+
+## s2 4-acc M=256 K=17408 both cards (2026-09-03ei/ek)
+
+Same dpas_s2_w48m4. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s4 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 5120 x 17408 | 0 | 107.865 | 108.216 | 149 | 226 |
+| 256 x 5120 x 17408 | 1 | 108.620 | 108.414 | 149 | 226 |
+
+New floor 108 us both cards.
+Spread ~0.18%. ~2.89x square.
+Beats s4 149 (~1.38x) and W8A8
+226 (~2.09x). Qwen FFN s2 4-acc
+M=256 map closed (37.4 / 110 /
+108).
+
+K2 next: s2 4-acc M=64 vs NT=4.
