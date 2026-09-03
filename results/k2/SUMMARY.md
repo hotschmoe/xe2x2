@@ -1196,5 +1196,37 @@ Spread ~0.14%. Beats W8A8 46
 (~1.39x) and s8xs4 43.3. Loses to
 s2 20 (~1.66x).
 
-K2 next: s2 4x8 M=256 N=17408 vs
-s2xs8 4x8 M=64 N=17408.
+## s2 4x8 A-db M=256 N=17408 both cards (2026-09-03dv/dx)
+
+Same dpas_s2_db48. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed
+act=2750/2767 cur=2800 throttle=1.
+
+| shape | card | event_us | pipe_host_us | s4 | W8A8 |
+|---|---|---:|---:|---:|---:|
+| 256 x 17408 x 5120 | 0 | 169.401 | 170.943 | 140 | 248 |
+| 256 x 17408 x 5120 | 1 | 170.083 | 170.446 | 140 | 248 |
+
+New floor 171 us both cards.
+throttle=1. Spread ~0.29%. ~3.08x
+square 55.5. Beats W8A8 248
+(~1.45x). Loses to s4 140 (~1.22x).
+
+## s2xs8 4x8 A-db M=64 N=17408 both cards (2026-09-03dw/dy)
+
+Same dpas_s2xs8_db48. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800
+throttle=0.
+
+| shape | card | event_us | pipe_host_us | s2 | mix | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 17408 x 5120 | 0 | 100.016 | 100.137 | 53.1 | 129 | 202 |
+| 64 x 17408 x 5120 | 1 | 101.057 | 100.528 | 53.1 | 129 | 202 |
+
+New floor 100.5 us both cards.
+Spread ~0.39%. ~3.03x square 33.2.
+Beats W8A8 202 (~2.01x) and mix
+129. Loses to s2 53.1 (~1.89x).
+
+K2 next: s2 4x8 M=256 K=17408 vs
+s2xs8 4x8 M=64 K=17408.

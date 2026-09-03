@@ -1904,6 +1904,31 @@ VERDICT -> New s2 4x8 A-db M=256
 Evidence: `results/k2/s2db48_m256_n2_s512_card0.txt`,
   `results/k2/s2db48_m256_n2_s512_card1.txt`.
 
+## s2 4x8 A-db M=256 N=17408 is 171 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2_db48`. M=256 N=17408
+  K=5120. Both cards. NT=2
+  spin=512. Named clock 2800.
+  Prior: square 55.5; s4 140;
+  W8A8 248; napkin ~189.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=2750/2767 cur=2800
+  throttle=1 both. M=256 pipe_host
+  170.943/170.446 vs square 55.5
+  vs s4 140 vs W8A8 248. Spread
+  ~0.29%. ~3.08x square.
+
+VERDICT -> New s2 4x8 M=256 N=17408
+  floor 171 us pipe_host at 2800
+  both cards. throttle=1. Beats
+  W8A8 248 (~1.45x). Loses to s4
+  140 (~1.22x). Rank pipe_host.
+
+Evidence: `results/k2/s2db48_m256_n17408_n2_s512_card0.txt`,
+  `results/k2/s2db48_m256_n17408_n2_s512_card1.txt`.
+
 ## ESIMD s2xs8 decode mix is 14.1 us both cards (K2)
 
 CONFIG -> backend `sycl+l0`, standalone
@@ -1959,6 +1984,33 @@ VERDICT -> New s2xs8 4x8 A-db M=64
 Evidence: `results/k2/s2xs8db48_m64_n2_s512_card0.txt`,
   `results/k2/s2xs8db48_m64_n2_s512_card1.txt`,
   `results/k2/s2xs8db48_dpas_lines.txt`.
+
+## s2xs8 4x8 A-db M=64 N=17408 is 100.5 us both cards (K2)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s2xs8_db48`. A=s8 B=s2
+  pack=4. M=64 N=17408 K=5120.
+  Both cards. NT=2 spin=512. Named
+  clock 2800. Never E2M1. Prior:
+  square 33.2; s2 53.1; mix 129;
+  W8A8 202; napkin ~113.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  M=64 pipe_host 100.137/100.528
+  vs square 33.2 vs s2 53.1 vs mix
+  129 vs W8A8 202. Spread ~0.39%.
+  ~3.03x square.
+
+VERDICT -> New s2xs8 4x8 M=64
+  N=17408 floor 100.5 us pipe_host
+  at 2800 both cards. Beats W8A8
+  202 (~2.01x) and mix 129. Loses
+  to s2 53.1 (~1.89x). Rank
+  pipe_host.
+
+Evidence: `results/k2/s2xs8db48_m64_n17408_n2_s512_card0.txt`,
+  `results/k2/s2xs8db48_m64_n17408_n2_s512_card1.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -3268,11 +3320,18 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   64). s2 4x8 A-db M=256 is 55.5
   us both cards at 2800, beats
   W8A8 75 (~1.35x), loses to s4
-  4-acc 48.6 (~1.14x). ESIMD
-  s2xs8 4x8 A-db M=64 is 33.2 us
-  both cards at 2800 (beats W8A8
-  46 and s8xs4 43.3, loses to s2
-  20). ESIMD s2xs8 decode
+  4-acc 48.6 (~1.14x). s2 4x8
+  M=256 N=17408 is 171 us both
+  cards at 2800, throttle=1, beats
+  W8A8 248 (~1.45x), loses to s4
+  140. ESIMD s2xs8 4x8 A-db M=64
+  is 33.2 us both cards at 2800
+  (beats W8A8 46 and s8xs4 43.3,
+  loses to s2 20). s2xs8 4x8 M=64
+  N=17408 is 100.5 us both cards
+  at 2800 (beats W8A8 202 and mix
+  129, loses to s2 53.1). ESIMD
+  s2xs8 decode
   mix is 14.1 us both cards at 2800
   (beats s8 34, loses to s2xs2 11.5).
   K5 producer+GEMM N=17408 is 155 us
@@ -3364,7 +3423,10 @@ us at N=17408) and s4 (16.5 vs 44 us), at
 M=64 s4 (33.6 vs 46 us), s2 (20 vs
 46 us), s2xs8 (33.2 vs 46 us), and
 at M=256 s4 (48.6 vs 75 us) and s2
-(55.5 vs 75 us).
+(55.5 vs 75 us), and at M=256
+N=17408 s2 (171 vs W8A8 248 us;
+throttle=1). s2xs8 M=64 N=17408
+is 100.5 vs W8A8 202.
 Different dtype than W8A8, not a W8A8 replacement. s4 M=1
 N=17408 is 29.5 us both cards (1.80x N=5120, not 3.4x).
 s4 M=1 K=17408 is 53.4 us both cards (~3.24x, near

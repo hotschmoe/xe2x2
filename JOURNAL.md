@@ -6844,6 +6844,135 @@ VERDICT -> Sibling matches. New
   M=256 N=17408 vs s2xs8 4x8 M=64
   N=17408.
 
+### 2026-09-03dv - K2 s2 4x8 A-db M=256 N=17408 card0
+
+CONTEXT -> s2 4x8 M=256 is 55.5.
+  s4 N=17408 140. W8A8 248. Napkin
+  55.5*17408/5120 ~189. Same 4x8
+  s2 tile. IGC s2 [-2,1]. Never
+  E2M1. throttle=1 risk.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2_db48 RC=8 wg 4x8 A-db
+  pack=4. gpu-run --card 0. M=256
+  N=17408 K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_db48_m256_wide.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=2750 cur=2800
+  throttle=1. event 169.401
+  pipe_host 170.943 vs square 55.5
+  vs s4 140 vs W8A8 248 vs napkin
+  189. ~3.08x square.
+
+VERDICT -> Wide-N s2 4x8 M=256 is
+  171 us pipe_host at 2800 card0.
+  Numeric closed. Beats W8A8 248
+  (~1.45x). Loses to s4 140
+  (~1.22x). throttle=1. Rank
+  pipe_host.
+
+### 2026-09-03dw - K2 s2xs8 4x8 A-db M=64 N=17408 card1
+
+CONTEXT -> s2xs8 4x8 is 33.2. s2
+  N=17408 53.1. mix 129. W8A8 202.
+  Napkin 33.2*17408/5120 ~113.
+  A=s8 B=s2. Never E2M1.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s2xs8_db48 RC=8 wg 4x8 A-db.
+  gpu-run --card 1. M=64 N=17408
+  K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2xs8_db48_wide.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800
+  throttle=0. event 101.057
+  pipe_host 100.528 vs square 33.2
+  vs s2 53.1 vs mix 129 vs W8A8
+  202 vs napkin 113. ~3.03x
+  square.
+
+VERDICT -> Wide-N s2xs8 4x8 is
+  100.5 us pipe_host at 2800
+  card1. Numeric closed. Beats
+  W8A8 202 (~2.01x) and mix 129.
+  Loses to s2 53.1 (~1.89x). Rank
+  pipe_host.
+
+### 2026-09-03dx - K2 s2 4x8 A-db M=256 N=17408 sibling card1
+
+CONTEXT -> card0 s2 4x8 M=256
+  N=17408 was 171 us, cosine=1
+  max_abs=0, throttle=1. Sibling
+  swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48. gpu-run --card 1.
+  M=256 N=17408 K=5120. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_db48_m256_wide.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=256 act=2767 cur=2800
+  throttle=1. event 170.083
+  pipe_host 170.446 vs card0
+  170.943 vs square 55.5 vs s4
+  140 vs W8A8 248. Spread ~0.29%.
+  ~3.08x square.
+
+VERDICT -> Sibling matches. New s2
+  4x8 M=256 N=17408 floor 171 us
+  pipe_host both cards at 2800.
+  throttle=1 both. Beats W8A8 248
+  (~1.45x). Loses to s4 140
+  (~1.22x). Rank pipe_host.
+
+### 2026-09-03dy - K2 s2xs8 4x8 A-db M=64 N=17408 sibling card0
+
+CONTEXT -> card1 s2xs8 4x8 N=17408
+  was 100.5 us at 2800, cosine=1
+  max_abs=0. Sibling swap.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2xs8_db48. gpu-run --card 0.
+  M=64 N=17408 K=5120. NT=2
+  spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2xs8_db48_wide.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800
+  throttle=0. event 100.016
+  pipe_host 100.137 vs card1
+  100.528 vs square 33.2 vs s2
+  53.1 vs mix 129 vs W8A8 202.
+  Spread ~0.39%. ~3.03x square.
+
+VERDICT -> Sibling matches. New
+  s2xs8 4x8 M=64 N=17408 floor
+  100.5 us pipe_host both cards
+  at 2800. Beats W8A8 202 (~2.01x)
+  and mix 129. Loses to s2 53.1
+  (~1.89x). Rank pipe_host. Next:
+  s2 4x8 M=256 K=17408 vs s2xs8
+  4x8 M=64 K=17408.
+
 
 
 
