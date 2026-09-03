@@ -2960,3 +2960,112 @@ RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
 VERDICT -> Sibling matches. Vectorized unpack
   is 314.6 us both cards, a loss. Stop this
   unpack path. Keep fused 158 us LUT for s8-A.
+
+### 2026-09-03g - K3/K6 E2M1 two-term N=17408 card0
+
+CONTEXT -> compose_e2m1_sc is 28.5 us at N=5120.
+  s4 N=17408 is 29.5 us (1.80x, not 3.4x).
+  Napkin N-linear 28.5*17408/5120 ~97 us.
+  FFN-up decode. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. NT=2 U=16 spin=4000.
+  M=1 and M=4, N=17408 K=5120. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_sc_wide.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 101.336 us, pipe_host 102.729
+  vs 5120 28.5 vs s4 29.5 vs s8 141.6 vs napkin
+  97. Ratio 102.7/28.5 ~3.60x, near linear, not
+  s4's 1.80x. M=4 tracks (pipe 101.733).
+
+VERDICT -> Wide-N compose is a real 102.7 us at
+  2800, ~3.60x square, slower than native s4
+  29.5 at this shape. One-card. Do not freeze
+  until card1. Rank us.
+
+### 2026-09-03h - K3/K6 E2M1 two-term K=17408 card1
+
+CONTEXT -> compose N=17408 is 102.7 us. s4
+  K=17408 is 53.4 us (~3.24x). Napkin K-linear
+  ~97 us. FFN-down decode. One-card. A=s4.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. NT=2 U=16 spin=4000.
+  M=1 and M=4, N=5120 K=17408. Never bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_sc_k17408.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 192.753 us, pipe_host 193.096
+  vs 5120 28.5 vs N=17408 102.7 vs s4 53.4 vs
+  napkin 97. Ratio 193.1/28.5 ~6.78x, worse than
+  linear. M=4 tracks (pipe 193.146).
+
+VERDICT -> Wide-K compose is 193.1 us at 2800,
+  ~6.78x square, K-hostile like s8 8x2-N.
+  Native s4 53.4 still wins. One-card. Do not
+  freeze until card0. Rank us. Next: sibling
+  N=17408 vs sibling K=17408.
+
+### 2026-09-03i - K3/K6 E2M1 two-term N=17408 sibling card1
+
+CONTEXT -> card0 compose N=17408 was 102.7 us
+  at 2800, numeric closed. Sibling swap.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 1. Same NT=2 U=16 spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_k3_e2m1_sc_wide.sh 1 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card1: event 103.401 us, pipe_host 104.353
+  vs card0 102.729 vs s4 29.5 vs s8 141.6.
+  Spread ~1.6%. M=4 pipe 102.142.
+
+VERDICT -> Sibling matches within 2%. New
+  E2M1 two-term wide-N floor 103.5 us at 2800
+  both cards. ~3.63x square, not s4's 1.80x.
+  Native s4 29.5 still wins this shape. Rank us.
+
+### 2026-09-03j - K3/K6 E2M1 two-term K=17408 sibling card0
+
+CONTEXT -> card1 compose K=17408 was 193.1 us
+  at 2800, numeric closed. Sibling swap.
+
+CONFIG -> sycl+l0, standalone compose_e2m1_sc,
+  icpx 2026.1.1 AOT intel_gpu_bmg_g31,
+  gpu-run --card 0. Same NT=2 U=16 spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_k3_e2m1_sc_k17408.sh 0 2 4000
+  ```
+
+RESULT -> cosine=1.0 max_abs=0. timed act=cur=2800
+  throttle=0.
+  M=1 card0: event 192.922 us, pipe_host 194.021
+  vs card1 193.096 vs s4 53.4 vs s8 261.6 vs
+  W8A8 155.3. Spread ~0.5%. M=4 pipe 195.476.
+
+VERDICT -> Sibling matches. New E2M1 two-term
+  wide-K floor 193.6 us at 2800 both cards.
+  ~6.79x square, K-hostile. Native s4 53.4 and
+  oneDNN W8A8 155 both beat this at FFN-down.
+  Qwen FFN compose decode map is closed. Rank us.

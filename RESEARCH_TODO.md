@@ -91,9 +91,14 @@ both cards (2026-09-03f), a loss vs scalar
 E2M1 two-term s4 decode is 28.5 us both
 cards (2026-09-03e) vs s4 16.5 vs s8 34,
 A=s4. Keep fused 158 us LUT for s8-A.
-Next: split. card0: compose_e2m1_sc N=17408.
-card1: compose_e2m1_sc K=17408. Loop every
-20m.
+compose N=17408 is 103.5 us both cards
+(2026-09-03i), ~3.63x square vs s4 29.5.
+compose K=17408 is 193.6 us both cards
+(2026-09-03j), ~6.79x vs s4 53.4. Qwen FFN
+compose decode map is closed. A=s4.
+Next: split. card0: compose_e2m1_sc M=64
+N=5120. card1: compose_e2m1_sc M=256 N=5120.
+Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 

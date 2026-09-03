@@ -130,3 +130,34 @@ timed act=cur=2800 throttle=0. Never bitcast.
 
 New floor 28.5 us both cards. ~1.73x native
 s4, under s8 and W8A8. A is s4.
+
+## E2M1 two-term N=17408 card0 (2026-09-03g)
+
+Same tile, N=17408 K=5120. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 N | napkin |
+|---|---|---:|---:|---:|---:|
+| 1 x 17408 | 0 | 102.729 | 28.5 | 29.5 | 97 |
+| 1 x 17408 | 1 | 104.353 | 28.5 | 29.5 | 97 |
+| 4 x 17408 | 0 | 101.733 | 28.5 | 29.5 | 97 |
+| 4 x 17408 | 1 | 102.142 | 28.5 | 29.5 | 97 |
+
+New wide-N floor 103.5 us both cards.
+~3.63x square, near linear, not s4's 1.80x.
+
+## E2M1 two-term K=17408 (2026-09-03h/j)
+
+Same tile, N=5120 K=17408. cosine=1.0
+max_abs=0. timed act=cur=2800 throttle=0.
+
+| shape | card | pipe_host_us | 5120 | s4 K | napkin |
+|---|---|---:|---:|---:|---:|
+| 1 x 5120 x 17408 | 0 | 194.021 | 28.5 | 53.4 | 97 |
+| 1 x 5120 x 17408 | 1 | 193.096 | 28.5 | 53.4 | 97 |
+| 4 x 5120 x 17408 | 0 | 195.476 | 28.5 | 53.4 | 97 |
+| 4 x 5120 x 17408 | 1 | 193.146 | 28.5 | 53.4 | 97 |
+
+New wide-K floor 193.6 us both cards.
+~6.79x square, K-hostile. Qwen FFN compose
+decode map closed.

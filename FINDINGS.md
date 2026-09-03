@@ -436,6 +436,48 @@ VERDICT -> New overflow-split E2M1 floor 28.5
 Evidence: `results/k6/e2m1sc_n2_s4000_card0.txt`,
   `results/k6/e2m1sc_n2_s4000_card1.txt`.
 
+## E2M1 two-term N=17408 is 103.5 us at 2800 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `compose_e2m1_sc`. Same tile, M=1 N=17408
+  K=5120. Both cards, NT=2, spin=4000.
+  Prior: N-linear ~97 us; s4 29.5.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1 pipe_host
+  102.73/104.35 vs 5120 28.5 vs s4 29.5 vs
+  s8 141.6. M=4 tracks. Spread ~1.6%.
+
+VERDICT -> New E2M1 two-term wide-N floor
+  103.5 us at 2800 both cards. ~3.63x square,
+  near linear, not s4's 1.80x. Native s4 29.5
+  still wins this shape. Rank us.
+
+Evidence: `results/k6/e2m1sc_n17408_n2_s4000_card0.txt`,
+  `results/k6/e2m1sc_n17408_n2_s4000_card1.txt`.
+
+## E2M1 two-term K=17408 is 193.6 us at 2800 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `compose_e2m1_sc`. M=1 N=5120 K=17408.
+  Both cards, NT=2, spin=4000. Prior:
+  K-linear ~97 us; s4 53.4.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=1 pipe_host
+  194.02/193.10 vs 5120 28.5 vs N=17408
+  103.5 vs s4 53.4 vs W8A8 155.3. M=4
+  tracks. Spread ~0.5%.
+
+VERDICT -> New E2M1 two-term wide-K floor
+  193.6 us at 2800 both cards. ~6.79x square,
+  K-hostile. Native s4 53.4 and oneDNN W8A8
+  155 both beat this at FFN-down. Qwen FFN
+  compose decode map is closed. Rank us.
+
+Evidence: `results/k6/e2m1sc_k17408_n2_s4000_card0.txt`,
+  `results/k6/e2m1sc_k17408_n2_s4000_card1.txt`.
+
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
 CONFIG -> backend `sycl+l0`, standalone `dpas_s8` / `dpas_s4`,
@@ -1560,6 +1602,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   two k32 merge LUT as the s8-A spoof. E2M1
   two-term s4 decode is 28.5 us both cards
   (2026-09-03e) vs s4 16.5 vs s8 34, A=s4.
+  Wide-N is 103.5 us both cards (~3.63x, not
+  s4's 1.80x). Wide-K is 193.6 us both cards
+  (~6.79x); s4 53.4 and W8A8 155 beat it.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.
