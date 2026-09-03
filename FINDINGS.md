@@ -1736,9 +1736,9 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   this tile at prefill. compose on s4 4x8
   A-db M=64 is 68.7 us both cards (~2.04x
   s4 33.6, ~3.17x faster than 8x2-N).
-  compose 4x8 A-db M=256 is 194.8 us card0
-  (~3.12x 8x2-N 607, throttle=0). nibble
-  LUT on s8 4x8 A-db M=64 is 392 us card1
+  compose 4x8 A-db M=256 is 194.9 us both
+  cards (~3.12x 8x2-N 607). nibble LUT on
+  s8 4x8 A-db M=64 is 392.4 us both cards
   (~1.67x 8x2-N 656, still ~5.23x s8 75).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
