@@ -191,7 +191,7 @@ Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nvfp4_gemm_w4a16
 M=64 N=17408 (act=2300 last). card1:
 held-clock nvfp4_gemm_w4a16 M=64 K=17408.
-Loop every 10m.
+Loop every 5m.
 
 ## After P0: kernel workstreams (parallelizable)
 
