@@ -517,18 +517,44 @@ Evidence: `results/k6/e2m1sc_m256_n2_s512_card0.txt`,
 
 CONFIG -> backend `sycl+l0`, standalone
   `nibble_lut_sc`. Packed E2M1, simd LUT,
-  VNNI4, s8 DPAS. M=64 N=K=5120. Card1 only,
-  NT=2, spin=512. Never bitcast.
+  VNNI4, s8 DPAS. M=64 N=K=5120. Both
+  cards, NT=2, spin=512. Never bitcast.
 
 RESULT -> cosine=1.0 max_abs=0. timed
   act=cur=2800 throttle=0. M=64 pipe_host
-  645.63 vs M=1 158 vs s8 4x8 75 vs W8A8 46.
+  665.56/645.63 vs M=1 158 vs s8 4x8 75
+  vs W8A8 46. Spread ~3.1%.
 
 VERDICT -> Decode-tile LUT is ~8.6x s8 4x8
-  at M=64. Not a prefill floor. One-card.
-  Do not freeze 646 us.
+  at M=64 both cards. Not a prefill floor.
+  Stop 8x2-N LUT at prefill.
 
-Evidence: `results/k6/sc_m64_n2_s512_card1.txt`.
+Evidence: `results/k6/sc_m64_n2_s512_card0.txt`,
+  `results/k6/sc_m64_n2_s512_card1.txt`.
+
+## E2M1 two-term 4x8 A-db is 68.7 us at M=64 (K3/K6)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `compose_e2m1_db48`. RC=8 wg 4x8 A-db,
+  two s4 DPAS per k64, acc_lo+8*acc_hi.
+  M=64 N=K=5120. Both cards, NT=2, spin=512.
+  Never bitcast. Prior: 2x s4 ~67 us.
+
+RESULT -> ocloc 64x `dpas.8x8` rW:s4 rA:s4,
+  grf 128, no SLM. cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0. M=64
+  pipe_host 68.73/68.68 vs 8x2-N 217.9 vs
+  s4 33.6 vs s8 75 vs W8A8 46. Spread
+  ~0.07%.
+
+VERDICT -> New E2M1 two-term 4x8 A-db floor
+  68.7 us at 2800 both cards. ~3.17x the
+  decode tile and ~2.04x native s4. Beats
+  s8 75, loses to W8A8 46. A is s4. Rank us.
+
+Evidence: `results/k6/e2m1db48_m64_n2_s512_card0.txt`,
+  `results/k6/e2m1db48_m64_n2_s512_card1.txt`,
+  `results/k6/e2m1db48_dpas_lines.txt`.
 
 ## Untuned 8x16 DPAS does not beat 45 us W8A8 (K2)
 
@@ -1660,8 +1686,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   is 217.9 us card0 (loss vs s4 33.6) and at
   M=256 is ~607 us both cards (loss vs s4
   48.6, throttle=1). 8x2-N LUT at M=64 is
-  646 us card1 (loss vs s8 75). Stop this
-  tile at prefill.
+  ~656 us both cards (loss vs s8 75). Stop
+  this tile at prefill. compose on s4 4x8
+  A-db M=64 is 68.7 us both cards (~2.04x
+  s4 33.6, ~3.17x faster than 8x2-N).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
 - M=1 decode is tens to hundreds of times under the compute roof.

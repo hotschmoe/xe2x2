@@ -187,14 +187,31 @@ throttle=1.
 (2026-09-03m), throttle=1. Stop 8x2-N
 compose at prefill.
 
-## nibble LUT M=64 8x2-N card1 (2026-09-03n)
+## nibble LUT M=64 8x2-N (2026-09-03n/o)
 
 `nibble_lut_sc` M=64 N=K=5120. cosine=1.0
 max_abs=0. timed act=cur=2800 throttle=0.
 
 | shape | card | pipe_host_us | M=1 | s8 4x8 | W8A8 |
 |---|---|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 665.562 | 158 | 75 | 46 |
 | 64 x 5120 | 1 | 645.630 | 158 | 75 | 46 |
 
-~8.6x s8 4x8. Loss. One-card. Stop 8x2-N
-LUT at prefill too.
+~8.6x s8 4x8. Spread ~3.1%. Stop 8x2-N
+LUT at prefill.
+
+## E2M1 two-term 4x8 A-db M=64 (2026-09-03p/q)
+
+`compose_e2m1_db48`: A s4, two s4 B planes,
+acc_lo+8*acc_hi, RC=8 wg 4x8 A-db.
+cosine=1.0 max_abs=0. timed act=cur=2800
+throttle=0. ocloc 64x dpas.8x8 rW:s4 rA:s4,
+grf 128, no SLM. Never bitcast.
+
+| shape | card | pipe_host_us | 8x2-N | s4 4x8 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 0 | 68.732 | 217.9 | 33.6 | 75 | 46 |
+| 64 x 5120 | 1 | 68.681 | 217.9 | 33.6 | 75 | 46 |
+
+New floor 68.7 us both cards. ~2.04x native
+s4, ~3.17x 8x2-N. Beats s8 75, loses W8A8 46.

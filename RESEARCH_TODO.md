@@ -101,11 +101,15 @@ compose M=64 8x2-N is 217.9 us card0
 M=256 is ~607 us both cards (2026-09-03m),
 throttle=1, a loss vs s4 48.6. Stop 8x2-N
 compose at prefill. nibble_lut_sc M=64 is
-646 us card1 (2026-09-03n), a loss vs s8
-75. Stop 8x2-N LUT at prefill too.
-Next: split. card0: sibling nibble_lut_sc
-M=64. card1: compose on the M=64 4x8 A-db
-s4 tile (new geometry). Loop every 20m.
+~656 us both cards (2026-09-03o), a loss
+vs s8 75. Stop 8x2-N LUT at prefill too.
+compose on s4 4x8 A-db M=64 is 68.7 us
+both cards (2026-09-03q), ~2.04x s4 33.6,
+~3.17x faster than 8x2-N 217.9. Beats s8
+75, loses to W8A8 46. A=s4.
+Next: split. card0: compose_e2m1_db48 M=256.
+card1: nibble LUT on the M=64 4x8 A-db s8
+tile (new geometry). Loop every 20m.
 
 ## After P0: kernel workstreams (parallelizable)
 
