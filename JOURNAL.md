@@ -6596,6 +6596,67 @@ VERDICT -> Sibling matches on event.
   Next: s2 4x8 M=64 N=17408 vs
   K=17408.
 
+### 2026-09-03dn - K2 s2 4x8 A-db M=64 N=17408 card0
+
+CONTEXT -> s2 4x8 M=64 is 20. s4
+  N=17408 94.7. mix 129. W8A8 202.
+  Napkin 20*17408/5120 ~68. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48 RC=8 wg 4x8 A-db.
+  gpu-run --card 0. M=64 N=17408
+  K=5120. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_s2_db48_wide.sh 0 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 52.359 pipe_host 53.079 vs
+  square 20 vs s4 94.7 vs mix 129 vs
+  W8A8 202 vs napkin 68. ~2.65x
+  square, under linear.
+
+VERDICT -> Wide-N s2 4x8 is 53.1 us
+  pipe_host at 2800 card0. Numeric
+  closed. Beats s4 94.7, mix 129,
+  and W8A8 202 (~3.81x). Napkin 68
+  beat. One-card. Do not freeze 53.1
+  us until card1. Rank pipe_host.
+
+### 2026-09-03do - K2 s2 4x8 A-db M=64 K=17408 card1
+
+CONTEXT -> s2 4x8 M=64 is 20. s4
+  K=17408 106.0. mix 144.7. W8A8
+  181. Napkin ~68. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s2_db48. gpu-run --card 1.
+  M=64 N=5120 K=17408. NT=2 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/esimd_dpas/run_s2_db48_k17408.sh 1 2 512
+  ```
+
+RESULT -> check cosine=1 max_abs=0.
+  timed M=64 act=cur=2800 throttle=0.
+  event 62.099 pipe_host 62.540 vs
+  square 20 vs s4 106.0 vs mix 144.7
+  vs W8A8 181 vs napkin 68. ~3.13x
+  square, near linear.
+
+VERDICT -> Wide-K s2 4x8 is 62.5 us
+  pipe_host at 2800 card1. Numeric
+  closed. Beats s4 106.0, mix 144.7,
+  and W8A8 181 (~2.89x). One-card.
+  Do not freeze 62.5 us until card0.
+  Rank pipe_host. Next: sibling
+  N-wide vs sibling K-wide.
+
+
 
 
 
