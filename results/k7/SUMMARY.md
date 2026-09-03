@@ -1,4 +1,4 @@
-# K7 GDN inventory 2026-09-03ep/fm
+# K7 GDN inventory 2026-09-03ep/fo
 
 Qwen3.8-27B text_config. Backend pytorch-xpu on sycl+l0.
 No serve. Rank us. Short kernels, cur 550-2800, throttle=0.
@@ -183,5 +183,33 @@ throttle=0.
 10.1 us both at 2800. Spread
 ~0.3%. ~11x eager 115.
 
-K7 next: conv T=256 vs packed
-qkv M=256.
+## ESIMD conv1d T=256 card0 (2026-09-03fn)
+
+backend sycl+l0, AOT gdn_conv1d_t.
+C=2048 T=256 spin=4000. cosine=1
+max_abs=0 ok=1. act=cur=2800
+throttle=0.
+
+| arm | pipe_host us | event us |
+|---|---:|---:|
+| T=256 | 37.607 | 37.253 |
+
+~3.72x T=64 10.1. ~3.1x eager
+115. One-card.
+
+## Packed qkv W8A8 M=256 card1 (2026-09-03fo)
+
+backend pytorch-xpu on sycl+l0.
+M=256 n=10240 k=5120. heat M=64
+spin=512. cosine=1 ok=1.
+
+| arm | m | us |
+|---|---:|---:|
+| qkv | 256 | 163.539 |
+
+~1.17x M=64 140. ~1.37x 3x 75.
+One-card.
+
+K7 next: sibling swap. card0
+packed qkv M=256, card1 conv
+T=256.

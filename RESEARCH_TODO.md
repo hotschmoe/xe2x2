@@ -388,9 +388,15 @@ cards (2026-09-03fm), wash vs
 3x 46. ESIMD conv T=64 is 10.1
 us pipe_host both cards at 2800
 (2026-09-03fl) vs eager 115.
-Next: split. card0: ESIMD conv
-T=256. card1: packed qkv W8A8
-M=256. Loop every 5m.
+ESIMD conv T=256 is 37.6 us
+pipe_host card0 at 2800
+(2026-09-03fn), ~3.72x T=64.
+Packed qkv M=256 is 164 us
+card1 (2026-09-03fo), ~1.17x
+M=64. One-card. Do not freeze.
+Next: sibling swap. card0:
+packed qkv M=256. card1: conv
+T=256. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -401,10 +407,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. ESIMD GDN conv1d T=256
-   (eager 115, T=64 10.1).
-2. Packed qkv W8A8 M=256
-   (M=64 140, M=1 96).
+1. Sibling packed qkv W8A8 M=256
+   card0 (card1 164 us).
+2. Sibling ESIMD conv1d T=256
+   card1 (card0 37.6 us at 2800).
 Park: P2/P3, GRF256
 retry (still zebin 128), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.

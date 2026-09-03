@@ -2495,6 +2495,45 @@ VERDICT -> Prefill conv T=64 is
 Evidence: `results/k7/esimd_conv1d_t64_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t64_s4000_card1.txt`.
 
+## ESIMD conv1d T=256 is 37.6 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. C=2048
+  T=256 K=4 f16. Card0. spin=4000.
+  Prior: T=64 10.1, eager ~115.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 37.607 event 37.253.
+
+VERDICT -> Prefill conv T=256 is
+  37.6 us pipe_host card0 at
+  2800, ~3.72x T=64, ~3.1x eager
+  115. Near T-linear. One-card.
+  Do not freeze 37.6 until
+  sibling. Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t256_s4000_card0.txt`.
+
+## Packed qkv W8A8 M=256 is 164 us (K7)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. M=256 n=10240 k=5120.
+  int8_gemm_w8a8. Heat M=64
+  spin=512. Card1. No serve.
+
+RESULT -> cosine=1 max_abs=0.062
+  ok=1. 163.539 us. vs M=64 140
+  vs square 75 vs 3x 75 ~225.
+
+VERDICT -> Packed qkv M=256 is
+  164 us card1, ~1.17x M=64,
+  ~1.37x 3 sequential 225.
+  One-card. Do not freeze 164.
+  Rank us.
+
+Evidence: `results/k7/proj_qkv_w8a8_m256_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -3853,6 +3892,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards, wash vs 3x 46.
   ESIMD conv T=64 is 10.1 us both
   cards at 2800 vs eager 115.
+  ESIMD conv T=256 is 37.6 us
+  card0 at 2800, ~3.72x T=64.
+  Packed qkv M=256 is 164 us
+  card1, ~1.17x M=64. One-card
+  each. Sibling next.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

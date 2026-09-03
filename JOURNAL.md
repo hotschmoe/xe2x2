@@ -8127,6 +8127,63 @@ VERDICT -> Sibling matches. Packed
   Next: conv T=256 vs packed qkv
   M=256.
 
+### 2026-09-03fn - K7 ESIMD conv1d T=256 card0
+
+CONTEXT -> eager T=256 ~115.
+  T=64 10.1. decode T=1 4.4.
+  Napkin 4x 10.1 ~40.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. C=2048 T=256 k=4.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t256.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 37.253 pipe_host 37.607.
+  56 GB/s. vs T=64 10.1 vs eager
+  115.
+
+VERDICT -> ESIMD conv T=256 is
+  37.6 us pipe_host card0 at
+  2800, ~3.72x T=64, ~3.1x eager
+  115. Near T-linear. One-card.
+  Do not freeze 37.6 until
+  sibling. Rank pipe_host.
+
+### 2026-09-03fo - K7 packed qkv W8A8 M=256 card1
+
+CONTEXT -> M=1 96. M=64 140.
+  W8A8 M=256 square 75. 3x 75
+  ~225.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  int8_gemm_w8a8 M=256 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_qkv_w8a8_m256.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.062
+  ok=1. 163.539 us. 321 GB/s. vs
+  M=64 140 vs square 75 vs 3x 75
+  ~225.
+
+VERDICT -> Packed qkv M=256 is
+  164 us card1, ~1.17x M=64, ~1.37x
+  3 sequential 225. One-card. Do
+  not freeze 164. Rank us. Next:
+  sibling swap.
+
+
 
 
 
