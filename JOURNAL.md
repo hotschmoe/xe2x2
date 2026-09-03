@@ -4839,3 +4839,74 @@ VERDICT -> Wide-K w4a16 M=64 is 128 us
   2800. One-card. Do not freeze until
   card0. Rank us. Next: sibling w4a16
   M=64 K=17408 vs w4a16 M=256 N=17408.
+
+### 2026-09-03bl - K6 nvfp4_gemm_w4a16 M=64 K=17408 sibling card0
+
+CONTEXT -> card1 w4a16 M=64 K=17408 was
+  128 us at act=2350-2400/2800. Sibling
+  swap. A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. spin=512 of M=64 then us_bench.
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m64_k17408_hold.sh 0 512
+  ```
+
+RESULT -> out bf16 [64,5120]. timed
+  act=2100-2200 cur=2800 throttle=0.
+  us_bench folded 132.966 vs card1
+  127.793 vs square 37.1 vs M=1 K=17408
+  101 vs N-wide 142 vs s8 374.7 vs s4
+  106.0 vs compose 403.4 vs LUT 1125 vs
+  napkin 108. Spread ~4.0%. f8scale
+  139.400 vs card1 129.001, act=2200-2300
+  cur=2800.
+
+VERDICT -> Sibling matches on folded.
+  New w4a16 M=64 wide-K floor 130 us
+  both cards, cur=2800, act 2100-2400.
+  ~3.51x square, ~K-linear (126), beats
+  s8 374.7 and compose 403.4, loses to
+  s4 106.0. Qwen FFN w4a16 M=64 map is
+  closed. Act not 2800. Rank us.
+
+### 2026-09-03bm - K6 nvfp4_gemm_w4a16 M=256 N=17408 card1
+
+CONTEXT -> w4a16 M=256 square is 118 us.
+  M=64 N=17408 is 142 (~3.82x). s8 469.8.
+  s4 140.0. compose 984.3. LUT 3138.
+  Napkin 118*97/34.7 ~330. FFN-up
+  prefill. A=bf16. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. spin=512 of M=256 then us_bench.
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m256_wide_hold.sh 1 512
+  ```
+
+RESULT -> out bf16 [256,17408]. timed
+  act=2283-2267 cur=2800 throttle=1.
+  us_bench folded 397.434 vs square 118
+  vs M=64 N=17408 142 vs s8 469.8 vs s4
+  140.0 vs compose 984.3 vs LUT 3138 vs
+  napkin 330. Ratio 397.4/118 ~3.37x.
+  ~N-linear (118*17408/5120 ~401).
+  f8scale 390.800, act=2300-2283
+  throttle=1.
+
+VERDICT -> Wide-N w4a16 M=256 is 397 us
+  at act~2280/2800 card1, ~3.37x square
+  (napkin 330 missed, N-linear held),
+  beats s8 469.8 and compose 984.3,
+  loses to s4 140.0 (~2.84x). Throttle=1.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling w4a16 M=256
+  N=17408 vs w4a16 M=256 K=17408.

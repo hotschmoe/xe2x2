@@ -177,9 +177,13 @@ Qwen FFN w4a16 decode map is closed.
 nvfp4_gemm_w4a16 M=64 N=17408 is 142 us
 both cards (2026-09-03bj), ~3.82x square,
 beats s8 338.9, act 2050-2300/2800.
-nvfp4_gemm_w4a16 M=64 K=17408 is 128 us
-card1 (2026-09-03bk), ~3.44x square,
-~K-linear, beats s8 374.7, act=2350-2400.
+nvfp4_gemm_w4a16 M=64 K=17408 is 130 us
+both cards (2026-09-03bl), ~3.51x square,
+~K-linear, beats s8 374.7, act 2100-2400.
+Qwen FFN w4a16 M=64 map is closed.
+nvfp4_gemm_w4a16 M=256 N=17408 is 397 us
+card1 (2026-09-03bm), ~3.37x square,
+~N-linear, beats s8 469.8, throttle=1.
 One-card.
 K6 12-idea sprint (2026-09-03ae):
 closed-form LUT 134.8 us is the new
@@ -193,8 +197,8 @@ lights at ~37 us unheld / 34.7 us
 held 2800 both. MXFP4 absent.
 Persist-s8 29.0 GiB vs resident 20.4.
 Next: split. card0: sibling nvfp4_gemm_w4a16
-M=64 K=17408 (act=2350 last). card1:
-held-clock nvfp4_gemm_w4a16 M=256 N=17408.
+M=256 N=17408 (throttle=1 last). card1:
+held-clock nvfp4_gemm_w4a16 M=256 K=17408.
 Loop every 5m.
 
 ## After P0: kernel workstreams (parallelizable)
