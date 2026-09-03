@@ -8951,6 +8951,69 @@ VERDICT -> ESIMD SLM-K blk=32
   pipe_host. Next: sibling blk=32
   vs blk=64.
 
+### 2026-09-03go - K7 ESIMD fused delta T=256 SLM-K blk=32 sibling card0
+
+CONTEXT -> card1 blk=32 was 832 us
+  pipe_host, throttle=1. Sibling.
+  spin=4000 hold. Same TU.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_slmk32. gpu-run
+  --card 0. T=256 blk=32. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmk32_t256.sh 0 4000
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 863.659 pipe_host
+  862.027 vs card1 831.953.
+  Spread ~3.6%. 18.3 GB/s. timed
+  act=2650 cur=2800 throttle=1.
+  vs blk=16 847-858.
+
+VERDICT -> Sibling matches under
+  5%. ESIMD SLM-K blk=32 is
+  832-862 us pipe_host both
+  cards, throttle=1. Wash vs
+  blk=16 847-858 (clocks). Do
+  not freeze 832 as 2800. Rank
+  pipe_host.
+
+### 2026-09-03gp - K7 ESIMD fused delta T=256 SLM-K blk=64 card1
+
+CONTEXT -> blk=32 832-862. Napkin
+  blk=64 fewer barriers. spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmk64.
+  gpu-run --card 1. T=256 blk=64.
+  spin=0.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmk64_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 827.867 pipe_host
+  834.985. 18.9 GB/s. timed_begin
+  act=2800 throttle=0. timed_end
+  act=2733 throttle=1. vs blk=32
+  832.
+
+VERDICT -> ESIMD SLM-K blk=64
+  T=256 is 835 us pipe_host
+  card1, wash vs blk=32 832.
+  throttle=1 at end. Stop larger
+  blk vs 16/32. Do not freeze
+  835. Rank pipe_host. Next:
+  SLM-K T=64 vs SLM a/b.
+
+
 
 
 

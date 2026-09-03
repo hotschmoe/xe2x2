@@ -2859,26 +2859,49 @@ VERDICT -> SLM-K+rb=4 is 999 us
 
 Evidence: `results/k7/esimd_delta_slmk_rb4_t256_s0_card0.txt`.
 
-## ESIMD SLM-K blk=32 is 832 us (K7)
+## ESIMD SLM-K blk=32 is 832-862 us (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_delta_slmk32` AOT
   `intel_gpu_bmg_g31`. T=256 blk=32.
-  Card1. spin=0. Prior: blk=16
-  847-858.
+  Both cards. card1 spin=0, card0
+  spin=4000. Prior: blk=16 847-858.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  831.953. timed act 2783-2750
-  throttle=1.
+  831.953 / 862.027. Spread
+  ~3.6%. throttle=1 both. act
+  2750-2783 / 2650.
 
-VERDICT -> SLM-K blk=32 is 832 us
-  pipe_host card1, ~1.02x blk=16
-  847. throttle=1. Do not freeze
-  832 as 2800. Sibling before
-  promote. Rank pipe_host.
+VERDICT -> SLM-K blk=32 is 832-862
+  us pipe_host both cards,
+  throttle=1. Wash vs blk=16
+  847-858 (clocks). Do not freeze
+  832 as 2800. Rank pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmk32_t256_s0_card1.txt`.
+Evidence: `results/k7/esimd_delta_slmk32_t256_s0_card1.txt`,
+  `results/k7/esimd_delta_slmk32_t256_s4000_card0.txt`.
+
+## ESIMD SLM-K blk=64 washes vs blk=32 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmk64` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=64.
+  Card1. spin=0. Prior: blk=32
+  832-862.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  834.985. timed act 2800-2733
+  throttle=1 at end.
+
+VERDICT -> SLM-K blk=64 is 835 us
+  pipe_host card1, wash vs blk=32
+  832. Stop larger blk vs 16/32.
+  Do not freeze 835. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmk64_t256_s0_card1.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -4291,9 +4314,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   SLM-K+rb=4 is 999 us card0
   (2026-09-03gm) at 2800, ~1.18x
   SLM-K 847. Stop combine.
-  SLM-K blk=32 is 832 us card1
-  (2026-09-03gn), ~1.02x blk=16,
-  throttle=1. Do not freeze 832.
+  SLM-K blk=32 is 832-862 us both
+  cards (2026-09-03gn/go), wash vs
+  blk=16 847-858, throttle=1. Do
+  not freeze 832 as 2800. SLM-K
+  blk=64 is 835 us card1
+  (2026-09-03gp), wash vs blk=32.
+  Stop larger blk.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
