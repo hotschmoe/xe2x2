@@ -2517,6 +2517,28 @@ VERDICT -> Prefill conv T=256 is
 Evidence: `results/k7/esimd_conv1d_t256_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t256_s4000_card1.txt`.
 
+## ESIMD conv1d T=256 C=6144 is 38.0 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. C=6144
+  T=256 K=4 f16 (v-channels).
+  Both cards. spin=4000. Prior:
+  C=2048 37.7, napkin 3x ~113.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 38.010/38.032. Spread
+  ~0.06%.
+
+VERDICT -> v-conv T=256 C=6144 is
+  38.0 us pipe_host both cards at
+  2800, wash vs q/k C=2048 37.7
+  not 3x. Occupancy. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t256_c6144_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t256_c6144_s4000_card1.txt`.
+
 ## Packed qkv W8A8 M=256 is 164 us (K7)
 
 CONFIG -> backend `pytorch-xpu` on
@@ -2561,6 +2583,31 @@ VERDICT -> Prefill delta T=64 is
 
 Evidence: `results/k7/esimd_delta_t64_s4000_card0.txt`,
   `results/k7/esimd_delta_t64_s4000_card1.txt`.
+
+## ESIMD delta T=256 is 1100-1109 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_t`. T=256 nv=48
+  dv=128 dk=128 f16. Both cards.
+  spin=4000. Prior: T=64 265-271,
+  napkin 4x ~1060.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  1109.372/1099.419. Spread ~0.9%.
+  timed act 2617/2650 cur=2800
+  throttle=1 both.
+
+VERDICT -> Prefill delta T=256 is
+  1100-1109 us pipe_host both
+  cards, ~4.1x T=64 near T-linear.
+  Prefill GDN leftover vs packed
+  qkv 164 and conv 38. Do not
+  freeze 1100 as 2800. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_t256_s4000_card0.txt`,
+  `results/k7/esimd_delta_t256_s4000_card1.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -3924,13 +3971,17 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   both cards at 2800, ~3.72x T=64.
   Packed qkv M=256 is 164 us both
   cards, ~1.17x M=64. ESIMD conv
-  T=256 C=6144 is 38.0 us card0
-  at 2800, wash vs C=2048 37.7
-  not 3x; one-card, do not freeze.
-  ESIMD delta T=64 is 265-271 us
-  both cards, throttle=1, ~37x
-  decode 7.1 not 64x. Do not
-  freeze 265 as 2800.
+  T=256 C=6144 is 38.0 us both
+  cards at 2800, wash vs C=2048
+  37.7 not 3x. Occupancy. ESIMD
+  delta T=64 is 265-271 us both
+  cards, throttle=1, ~37x decode
+  7.1 not 64x. Do not freeze 265
+  as 2800. ESIMD delta T=256 is
+  1100-1109 us both cards,
+  throttle=1, ~4.1x T=64. Prefill
+  leftover. Do not freeze 1100 as
+  2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

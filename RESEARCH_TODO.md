@@ -396,17 +396,21 @@ cards (2026-09-03fp), ~1.17x
 M=64. ESIMD conv T=256 is 37.7
 us both cards at 2800
 (2026-09-03fq). ESIMD conv
-T=256 C=6144 is 38.0 us card0
-at 2800 (2026-09-03fr), wash
-vs C=2048 37.7 not 3x. ESIMD
-delta T=64 is 265-271 us both
-cards (2026-09-03fs/ft),
+T=256 C=6144 is 38.0 us both
+cards at 2800 (2026-09-03fr/fu),
+wash vs C=2048 37.7 not 3x.
+ESIMD delta T=64 is 265-271 us
+both cards (2026-09-03fs/ft),
 throttle=1, ~37x decode 7.1
 not 64x. Do not freeze 265 as
-2800. Next: split. card0:
-ESIMD delta T=256. card1:
-ESIMD conv T=256 C=6144
-sibling. Loop every 5m.
+2800. ESIMD delta T=256 is
+1100-1109 us both cards
+(2026-09-03fv/fw), throttle=1,
+~4.1x T=64. Prefill leftover.
+Do not freeze 1100 as 2800.
+Next: split. card0: ESIMD mixer
+T=64. card1: ESIMD conv T=64
+C=6144. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -417,12 +421,13 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling conv T=256 C=6144
-   (card0 38.0 wash vs 37.7).
-2. ESIMD GDN delta T=256
-   (T=64 is 265-271, throttle=1).
+1. ESIMD mixer T=64
+   (decode mixer 8.2, new TU).
+2. ESIMD conv T=64 C=6144
+   (T=64 C=2048 is 10.1).
 Park: P2/P3, GRF256
-retry (still zebin 128), SLM LUT / u4+sign
+retry (still zebin 128), chunk/WY
+delta (fused T=256 is 1100), SLM LUT / u4+sign
 / skip-hi kernel, persist-s8 GEMM us.
 
 ## After P0: kernel workstreams (parallelizable)

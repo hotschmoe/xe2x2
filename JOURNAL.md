@@ -8325,6 +8325,94 @@ VERDICT -> Sibling matches. ESIMD
   conv C=6144 sibling vs delta
   T=256.
 
+### 2026-09-03fu - K7 ESIMD conv1d T=256 C=6144 sibling card1
+
+CONTEXT -> card0 conv T=256 C=6144
+  was 38.0 us pipe_host at 2800.
+  Occupancy wash vs C=2048.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 1. C=6144 T=256.
+  spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_conv1d_t256_c6144.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 37.747 pipe_host 38.032 vs
+  card0 38.010. Spread ~0.06%.
+
+VERDICT -> Sibling matches. ESIMD
+  conv T=256 C=6144 is 38.0 us
+  pipe_host both cards at 2800.
+  Wash vs C=2048 37.7 not 3x.
+  Rank pipe_host.
+
+### 2026-09-03fv - K7 ESIMD delta T=256 card0
+
+CONTEXT -> T=64 265-271 throttle=1.
+  Napkin 4x ~1060. decode T=1 7.1.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_t. gpu-run
+  --card 0. T=256 nv=48 dv=128
+  dk=128 f16. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_t256.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 1112.104 pipe_host
+  1109.372. 14 GB/s. act=2617
+  cur=2800 throttle=1. vs T=64
+  271 vs napkin 1060.
+
+VERDICT -> ESIMD delta T=256 is
+  1109 us pipe_host card0, ~4.1x
+  T=64 near T-linear. throttle=1.
+  Prefill leftover. Do not freeze
+  1109 as 2800. Rank pipe_host.
+  Next: sibling (throttle=1).
+
+### 2026-09-03fw - K7 ESIMD delta T=256 sibling card1
+
+CONTEXT -> card0 delta T=256 was
+  1109 us pipe_host throttle=1.
+  Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_delta_t. gpu-run
+  --card 1. T=256. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_t256.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 1101.310 pipe_host
+  1099.419 vs card0 1109.372.
+  Spread ~0.9%. act=2650 cur=2800
+  throttle=1.
+
+VERDICT -> Sibling matches. ESIMD
+  delta T=256 is 1100-1109 us
+  pipe_host both cards.
+  throttle=1 both. Do not freeze
+  1100 as 2800. ~4.1x T=64. Rank
+  pipe_host. Next: mixer T=64 vs
+  conv T=64 C=6144.
+
+
 
 
 
