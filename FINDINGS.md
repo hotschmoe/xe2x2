@@ -2363,51 +2363,50 @@ VERDICT -> Fused ESIMD delta is
 Evidence: `results/k7/esimd_delta_s4000_card0.txt`,
   `results/k7/esimd_delta_s4000_card1.txt`.
 
-## GDN o-proj W8A8 is ~46 us decode (K7)
+## GDN o-proj W8A8 is ~47 us decode (K7)
 
 CONFIG -> backend `pytorch-xpu` on
   `sycl+l0`. M=1 n=5120 k=6144
   (value_dim -> H). int8_gemm_w8a8.
-  Heat M=64 spin=512. Card0. No
-  serve.
+  Heat M=64 spin=512. Both cards.
+  No serve.
 
-RESULT -> cosine=1 max_abs=0.060
-  ok=1. 46.293 us. vs v-proj 46
-  vs square 44. cur 2017-2800.
+RESULT -> cosine=1 ok=1.
+  46.293/47.133 us. Spread ~1.8%.
+  vs v-proj 46 vs square 44.
 
-VERDICT -> o-proj sits in the
-  W8A8 44-46 us class, not
-  K-linear. One-card. Do not
-  freeze 46 until sibling. Rank
+VERDICT -> o-proj is 46-47 us
+  both cards, same W8A8 44-class
+  as v-proj, not K-linear. Rank
   us.
 
-Evidence: `results/k7/proj_o_w8a8_card0.txt`.
+Evidence: `results/k7/proj_o_w8a8_card0.txt`,
+  `results/k7/proj_o_w8a8_card1.txt`.
 
-## Fused qkv conv1d is 4.4 us at 2800 (K7)
+## Fused qkv conv1d is 4.4-4.9 us (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_conv1d_qkv` AOT
   `intel_gpu_bmg_g31`. Packed
   q+k+v C=10240 K=4 T=1 f16.
-  VL=16 wg=16. Card1. spin=4000.
-  Prior: one-arm ~4.4, 3x ~13.2.
+  VL=16 wg=16. Both cards.
+  spin=4000. Prior: one-arm ~4.4,
+  3x ~13.2.
 
 RESULT -> fused cosine=1.0
-  max_abs=0. timed act=cur=2800
-  throttle=0. pipe_host 4.437
-  event 0.917. trio pipe_host
-  13.449 event 2.755.
+  max_abs=0. pipe_host 4.856/
+  4.437. cur 1183/2800. Spread
+  ~9% (clocks). trio pipe_host
+  14.233/13.449 at 2800 both.
 
 VERDICT -> One launch covers
-  q+k+v at 4.44 us pipe_host
-  card1 at 2800, ~3.03x the
-  three-launch trio. Same us
-  class as one-arm 4.4. Launch
-  bound. One-card. Do not freeze
-  4.44 until sibling. Rank
-  pipe_host.
+  q+k+v in the 4.4-4.9 us class
+  both cards, ~3x the trio ~13.8.
+  Do not freeze 4.44 as 2800.
+  Launch bound. Rank pipe_host.
 
-Evidence: `results/k7/esimd_conv1d_qkv_s4000_card1.txt`.
+Evidence: `results/k7/esimd_conv1d_qkv_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_qkv_s4000_card1.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -3752,12 +3751,13 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   2800 (~43x eager, 450 GB/s).
   Mixer 4.4+7.1 ~11.5 us under
   W8A8 46; leftover moves to
-  qkvz. o-proj W8A8 is 46 us
-  card0, same class as v-proj.
-  Fused qkv conv is 4.44 us
-  pipe_host card1 at 2800 vs
-  trio 13.4 (~3x). One-card
-  each. Sibling next.
+  qkvz. o-proj W8A8 is 46-47 us
+  both cards, same class as
+  v-proj. Fused qkv conv is
+  4.4-4.9 us both cards vs trio
+  ~13.8 (~3x). Clocks 1183/2800
+  on fused; do not freeze 4.44
+  as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

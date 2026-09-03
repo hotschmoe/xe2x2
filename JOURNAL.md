@@ -7860,6 +7860,61 @@ VERDICT -> Fused qkv conv is
   4.44 until sibling. Rank
   pipe_host. Next: sibling swap.
 
+### 2026-09-03fd - K7 ESIMD fused qkv conv sibling card0
+
+CONTEXT -> card1 fused was 4.44
+  us pipe_host at 2800 vs trio
+  13.4. First fuse. Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_qkv. gpu-run
+  --card 0. C=10240. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_qkv.sh 0
+  ```
+
+RESULT -> fused cosine=1
+  max_abs=0 ok=1. pipe_host 4.856
+  event 2.138 act=cur=1183. vs
+  card1 4.437 at 2800. Spread
+  ~9%. trio pipe_host 14.233 at
+  2800 vs card1 13.449.
+
+VERDICT -> Sibling matches the
+  4.4-4.9 us class. Fused clocks
+  1183 vs 2800, us spread >5%.
+  Do not freeze 4.44 as 2800.
+  Trio ~13.8 at 2800 both. Rank
+  pipe_host.
+
+### 2026-09-03fe - K7 GDN o-proj W8A8 sibling card1
+
+CONTEXT -> card0 o-proj was 46
+  us. Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  int8_gemm_w8a8 M=1 n=5120
+  k=6144. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_o_w8a8.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.056
+  ok=1. 47.133 us vs card0
+  46.293. Spread ~1.8%.
+
+VERDICT -> Sibling matches. GDN
+  o-proj W8A8 is 46-47 us both
+  cards, same class as v-proj 46.
+  Rank us. Next: packed qkv
+  W8A8 vs fuse conv+delta.
+
+
 
 
 
