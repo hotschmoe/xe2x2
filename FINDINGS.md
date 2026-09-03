@@ -2638,6 +2638,28 @@ VERDICT -> Prefill mixer T=64 is
 Evidence: `results/k7/esimd_mixer_t64_s4000_card0.txt`,
   `results/k7/esimd_mixer_t64_s4000_card1.txt`.
 
+## ESIMD conv1d T=64 C=6144 is 10.2-10.4 us at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_conv1d_t`. C=6144
+  T=64 K=4 f16 (v-channels).
+  Both cards. spin=4000. Prior:
+  C=2048 10.1, napkin 3x ~30.
+
+RESULT -> cosine=1.0 max_abs=0.
+  timed act=cur=2800 throttle=0.
+  pipe_host 10.449/10.231. Spread
+  ~2.1%.
+
+VERDICT -> v-conv T=64 C=6144 is
+  10.2-10.4 us pipe_host both
+  cards at 2800, wash vs q/k
+  C=2048 10.1 not 3x. Occupancy.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_conv1d_t64_c6144_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t64_c6144_s4000_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4016,8 +4038,14 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   ~275. Stop two-kernel packed
   mixer at prefill. Do not freeze
   395 as 2800. ESIMD conv T=64
-  C=6144 is 10.2 us card1 at 2800,
-  wash vs C=2048 10.1; one-card.
+  C=6144 is 10.2-10.4 us both
+  cards at 2800 (2026-09-03fx/ga),
+  wash vs C=2048 10.1 not 3x.
+  Occupancy. ESIMD conv T=64
+  C=10240 is 10.5 us card1 at
+  2800 (2026-09-03gb), wash vs
+  10.1 not 5x. One-card. Do not
+  freeze 10.5 until sibling.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

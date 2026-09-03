@@ -414,11 +414,15 @@ throttle=1, ~1.45x sequential
 ~275. Stop two-kernel packed
 mixer at prefill. Do not freeze
 395 as 2800. ESIMD conv T=64
-C=6144 is 10.2 us card1 at 2800
-(2026-09-03fx), wash vs C=2048
-10.1. Next: split. card0: ESIMD
-conv T=64 C=6144 sibling.
-card1: ESIMD conv T=64 C=10240.
+C=6144 is 10.2-10.4 us both
+cards (2026-09-03fx/ga) at 2800,
+wash vs C=2048 10.1 not 3x.
+ESIMD conv T=64 C=10240 is
+10.5 us card1 (2026-09-03gb) at
+2800, wash vs 10.1 not 5x.
+Occupancy. Next: split. card0:
+sibling conv T=64 C=10240.
+card1: ESIMD conv T=256 C=10240.
 Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -430,10 +434,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling conv T=64 C=6144
-   (card1 10.2 wash vs 10.1).
-2. ESIMD conv T=64 C=10240
-   (packed qkv width, T=64 10.1).
+1. sibling conv T=64 C=10240
+   (card1 10.5 wash vs 10.1).
+2. ESIMD conv T=256 C=10240
+   (packed qkv width, T=256 38.0).
 Park: P2/P3, GRF256
 retry (still zebin 128), chunk/WY
 delta (fused T=256 is 1100), mixer
