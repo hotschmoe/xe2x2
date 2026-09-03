@@ -681,5 +681,31 @@ cur=2800 throttle=1. Clock
 spread. 260-294 us both. Do
 not freeze 260 as 2800.
 
-K7 next: tile-fused T=16 vs
-T=64 hold.
+## ESIMD fused delta T=16 tile-fused card0 (2026-09-03hk)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=16 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 21.712 event
+22.143. 181 GB/s. act 2617-
+2600 cur=2800 throttle=1.
+~1.56x tree hsum 34. Napkin 21.
+Do not freeze 22 as 2800.
+Sibling before promote.
+
+## ESIMD fused delta T=64 tile-fused hold card1 (2026-09-03hl)
+
+backend sycl+l0, same
+gdn_delta_slmht. T=64 blk=16
+spin=4000. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 76.650 event
+77.055 vs card0 66.704. Spread
+~15%. act=2367 cur=2800
+throttle=1. Clock spread. 67-77
+us both. Do not freeze 67 as
+2800.
+
+K7 next: sibling T=16 vs inner
+unroll slmht T=256.

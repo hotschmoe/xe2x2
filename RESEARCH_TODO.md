@@ -523,9 +523,19 @@ tile-fused T=256 is 260-294 us
 both cards (2026-09-03hg/hj).
 Clock spread 13% (2283 vs
 2600). Do not freeze 260 as
-2800. Next: split. card0:
-tile-fused T=16. card1: T=64
-hold. Loop every 5m.
+2800. tile-fused T=16 is 22 us
+card0 (2026-09-03hk), ~1.56x
+tree hsum 34, napkin 21.
+throttle=1. Do not freeze 22
+as 2800. Sibling before
+promote. tile-fused T=64 is
+67-77 us both cards
+(2026-09-03hi/hl). Clock
+spread 15% (2367 vs 2700). Do
+not freeze 67 as 2800. Next:
+split. card0: inner unroll
+T=256 slmht. card1: sibling
+T=16. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -536,10 +546,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. tile-fused T=64 hold
-   (67 us; start 550 not 2800).
-2. tile-fused T=16
-   (tree hsum 34; napkin ~21).
+1. sibling tile-fused T=16
+   (22 us; ~1.56x 34).
+2. inner unroll slmht T=256
+   (260 leftover; tt unroll).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64

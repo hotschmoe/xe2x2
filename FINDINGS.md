@@ -3207,28 +3207,51 @@ VERDICT -> Tile-fused reduce
 Evidence: `results/k7/esimd_delta_slmht_t256_s0_card0.txt`,
   `results/k7/esimd_delta_slmht_t256_s4000_card1.txt`.
 
-## ESIMD tile-fused T=64 is 67 us pipe_host (K7)
+## ESIMD tile-fused T=64 is 67-77 us (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_delta_slmht`. T=64
-  blk=16. Card0. spin=0. Prior:
-  tree hsum T=64 109.
+  blk=16. Both cards. card0
+  spin=0, card1 spin=4000.
+  Prior: tree hsum T=64 109.
 
 RESULT -> cosine=1.0 max_abs
   1.5e-5 / 2.4e-4 ok=1. pipe_host
-  66.704 event 154.266 (ramp).
-  timed_begin act=cur=550.
-  timed_end act=2700 throttle=0.
-  event min 64.
+  66.704 / 76.650. Spread ~15%.
+  card0 ramped 550 to 2700.
+  card1 act=2367 throttle=1.
 
-VERDICT -> Tile-fused T=64 is 67
-  us pipe_host card0, ~1.63x
-  tree hsum 109, napkin 66.
-  Clocks ramped 550 to 2700. Do
-  not freeze 67 as 2800. Hold
-  retry. Rank pipe_host.
+VERDICT -> Tile-fused T=64 is
+  67-77 us pipe_host both cards.
+  Clock spread, not a kernel
+  split. ~1.63x tree hsum 109.
+  Do not freeze 67 as 2800. Rank
+  pipe_host.
 
-Evidence: `results/k7/esimd_delta_slmht_t64_s0_card0.txt`.
+Evidence: `results/k7/esimd_delta_slmht_t64_s0_card0.txt`,
+  `results/k7/esimd_delta_slmht_t64_s4000_card1.txt`.
+
+## ESIMD tile-fused T=16 is 22 us (K7)
+
+CONFIG -> backend `sycl+l0`,
+  same `gdn_delta_slmht`. T=16
+  blk=16. Card0. spin=4000.
+  Prior: tree hsum T=16 34.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  21.712. timed act 2617-2600
+  cur=2800 throttle=1.
+
+VERDICT -> Tile-fused T=16 is 22
+  us pipe_host card0, ~1.56x
+  tree hsum 34. Napkin 21.
+  throttle=1. Do not freeze 22
+  as 2800. One-card. Sibling
+  before promote. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht_t16_s4000_card0.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
