@@ -677,9 +677,17 @@ both cards (2026-09-03iu/ix) at
 conv T=128 C=10240 is 20 us
 card0 (2026-09-03iw) at 2800,
 napkin 20. seq ~147 vs mixer
-232. Next: split. card1:
-sibling conv T=128 C=10240.
-card0: mixer L2-out T=256.
+232. conv T=128 C=10240 is 20 us
+both cards (2026-09-03iw/iz) at
+2800. T-map C=10240 closed.
+mixer L2-out T=256 is 271 us
+card0 (2026-09-03iy), wash vs
+slmht 260. Packed tax ~4%.
+Device L2 is the mixer leftover.
+Do not freeze 271 as 2800.
+Next: split. card1: sibling
+mixer L2-out T=256. card0:
+mixer L2-once T=256.
 Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
@@ -691,10 +699,10 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. sibling conv T=128 C=10240
-   (20 at 2800; seq ~147).
-2. mixer L2-out T=256
-   (471 vs seq 298 leftover).
+1. sibling mixer L2-out T=256
+   (271 vs slmht 260; first fuse).
+2. mixer L2-once T=256
+   (L2 per kh not per WG).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),

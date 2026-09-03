@@ -3896,28 +3896,56 @@ VERDICT -> Conv T=32 C=10240 is
 Evidence: `results/k7/esimd_conv1d_t32_c10240_s4000_card0.txt`,
   `results/k7/esimd_conv1d_t32_c10240_s4000_card1.txt`.
 
-## ESIMD conv T=128 C=10240 is 20 us card0 (K7)
+## ESIMD conv T=128 C=10240 is 20 us both cards (K7)
 
 CONFIG -> backend `sycl+l0`,
   same `gdn_conv1d_t`. T=128
-  C=10240 k=4. Card0. spin=4000.
-  Prior: T=64 10.5, T=256 40.7.
-  Napkin T-linear ~20. slmht
-  T=128 127.
+  C=10240 k=4. Both cards.
+  spin=4000. Prior: T=64 10.5,
+  T=256 40.7. Napkin T-linear
+  ~20. slmht T=128 127.
 
 RESULT -> cosine=1.0 max_abs=0
-  ok=1. pipe_host 19.946 event
-  19.542. 267 GB/s. timed
-  act=cur=2800 throttle=0.
+  ok=1. pipe_host 19.946 /
+  19.929. Spread ~0.09%. timed
+  act=cur=2800 throttle=0 both.
 
 VERDICT -> Conv T=128 C=10240 is
-  20 us pipe_host card0 at 2800,
-  napkin 20, T-linear. seq ~147
-  vs mixer 232 (~1.58x). Sibling
-  before citing the map. Rank
+  20 us pipe_host both cards at
+  2800. T-map C=10240 closed
+  (16/32/64/128/256). seq ~147
+  vs mixer 232 (~1.58x). Rank
   pipe_host.
 
-Evidence: `results/k7/esimd_conv1d_t128_c10240_s4000_card0.txt`.
+Evidence: `results/k7/esimd_conv1d_t128_c10240_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t128_c10240_s4000_card1.txt`.
+
+## ESIMD mixer L2-out T=256 is 271 us card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_l2out`.
+  Host conv+L2 q/k. Packed
+  slmht delta skips device L2.
+  T=256 blk=16. Card0. spin=0.
+  Prior: mixer-slmht 471, slmht
+  260, seq ~298.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 9.8e-4 ok=1. pipe_host
+  270.767 event 271.320. timed
+  act 2700-2650 cur=2800
+  throttle=0.
+
+VERDICT -> Mixer L2-out T=256 is
+  271 us pipe_host card0, wash
+  vs slmht 260 (~1.04x). Packed
+  tax ~4%. Device L2 is the
+  mixer leftover vs 471. First
+  fuse. Do not freeze 271 as
+  2800. Sibling before promote.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_mixer_l2out_t256_s0_card0.txt`.
 
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
@@ -5549,7 +5577,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   card0 (2026-09-03iw) at 2800,
   napkin 20. seq ~147 vs mixer
   232. Sibling before citing the
-  map.
+  map. conv T=128 C=10240 is 20 us
+  both cards (2026-09-03iw/iz) at
+  2800. T-map C=10240 closed.
+  mixer L2-out T=256 is 271 us
+  card0 (2026-09-03iy), wash vs
+  slmht 260. Packed tax ~4%.
+  Device L2 is the mixer leftover.
+  Do not freeze 271 as 2800.
+  Sibling before promote.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

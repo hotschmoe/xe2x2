@@ -1177,5 +1177,31 @@ ok=1. pipe_host 5.771 event
 5.8-5.9 us both at 2800. seq
 ~45 vs mixer 60.
 
-K7 next: sibling conv T=128
-C=10240 vs mixer L2-out T=256.
+## ESIMD mixer L2-out T=256 card0 (2026-09-03iy)
+
+backend sycl+l0, standalone
+gdn_mixer_l2out. T=256 C=10240
+nv=48 blk=16 host-L2 spin=0.
+cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=9.8e-4
+ok=1. pipe_host 270.767 event
+271.320. act 2700-2650 cur=2800
+throttle=0. Wash vs slmht 260.
+Packed tax ~4%. Device L2 is
+the mixer leftover vs 471. Do
+not freeze 271 as 2800. Sibling
+before promote.
+
+## ESIMD conv T=128 C=10240 sibling card1 (2026-09-03iz)
+
+backend sycl+l0, same
+gdn_conv1d_t. T=128 C=10240 k=4
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 19.929 event
+19.539 vs card0 19.946. Spread
+~0.09%. act=cur=2800 throttle=0.
+20 us both at 2800. T-map
+C=10240 closed.
+
+K7 next: sibling mixer L2-out
+T=256 vs mixer L2-once T=256.
