@@ -548,10 +548,25 @@ slmht. tile-fused T=1 is 5.54
 us card1 at 2800 (2026-09-03hp)
 vs fused 7.1, max_abs_o=2.
 Do not replace fused 7.1.
-Next: split. card0: slmht
-blk=8 T=256. card1: T=1
-tile-fused scalar hsum. Loop
-every 5m.
+slmht blk=8 T=256 is 269 us
+card0 (2026-09-03hq), ~1.04x
+slmht 260. Stop blk=8 vs
+slmht. T=1 tile-fused scalar
+hsum is 6.09 us card1 at 2800
+(2026-09-03hr), wash vs tree
+hsum, max_abs_o=2. Numeric is
+the fused acc. Stop scalar
+hsum vs reduce. slmht blk=32
+T=256 is 252 us card0 at 2600
+(2026-09-03hs), ~1.03x slmht
+260. packed-o T=256 is 247 us
+card1 at 2700 (2026-09-03ht),
+~1.05x slmht 260. Possible
+leftover cuts. Do not freeze
+252 or 247 as 2800. Next:
+split. card0: sibling packed-o
+T=256. card1: sibling blk=32
+T=256. Loop every 5m.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, and
 overlapping fires serialize on gpu-run.
@@ -562,16 +577,17 @@ overlapping fires serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. slmht blk=8 T=256
-   (260 leftover; blk=16).
-2. T=1 tile-fused scalar hsum
-   (5.54 us, max_abs_o=2 vs fused 0).
+1. sibling packed-o T=256
+   (247 us card1 at 2700).
+2. sibling slmht blk=32 T=256
+   (252 us card0 at 2600).
 Park: P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 (T=64 mixer loses), C=16/C=64
 WY, rb=8, SLM-K+rb=4, blk>32,
 a/b SLM, v-prefetch, SLM-K T=1,
 tree hsum T=1, tile-fused T=1 reduce,
+T=1 scalar hsum, slmht blk=8,
 inner unroll, slmht unroll, pack a/b/v,
 SLM f32, SLM db,
 SLM LUT / u4+sign / skip-hi

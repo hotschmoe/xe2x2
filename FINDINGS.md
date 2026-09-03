@@ -3317,6 +3317,96 @@ VERDICT -> Tile-fused T=1 is 5.54
 
 Evidence: `results/k7/esimd_delta_ht_s4000_card1.txt`.
 
+## ESIMD slmht blk=8 loses to blk=16 T=256 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmht8` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=8
+  lid<8 fill. Card0. spin=0.
+  Prior: slmht 260.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  269.210. timed act 2700-2667
+  cur=2800 throttle=0.
+
+VERDICT -> slmht blk=8 T=256 is
+  269 us pipe_host card0, ~1.04x
+  slmht 260. Stop blk=8 vs
+  slmht. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht8_t256_s0_card0.txt`.
+
+## ESIMD T=1 scalar hsum does not close tile-fused numeric (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_hts` AOT
+  `intel_gpu_bmg_g31`. T=1
+  tile-fused acc, scalar hsum.
+  Card1. spin=4000. Prior: ht
+  5.54 max_abs_o=2, fused 7.1.
+
+RESULT -> cosine=1.0 max_abs
+  0.0625 / 2 ok=1. pipe_host
+  6.088 event 6.630. 525 GB/s.
+  timed act=cur=2800 throttle=0.
+
+VERDICT -> Scalar hsum T=1 is
+  6.09 us pipe_host card1 at
+  2800. Wash vs tree hsum.
+  max_abs_o=2 vs fused 0. Numeric
+  is the fused acc, not
+  esimd::reduce. Stop scalar
+  hsum vs reduce. Do not replace
+  fused 7.1. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_hts_s4000_card1.txt`.
+
+## ESIMD slmht blk=32 is 252 us T=256 card0 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmht32` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=32
+  two rows per lid. Card0. spin=0.
+  Prior: slmht 260 at 2600.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  252.173. timed act=2600
+  cur=2800 throttle=0.
+
+VERDICT -> slmht blk=32 T=256 is
+  252 us pipe_host card0 at 2600,
+  ~1.03x slmht 260. Possible
+  leftover cut. Do not freeze
+  252 as 2800. Sibling before
+  promote. Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmht32_t256_s0_card0.txt`.
+
+## ESIMD slmht packed-o is 247 us T=256 card1 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_delta_slmhto` AOT
+  `intel_gpu_bmg_g31`. T=256 blk=16
+  16-wide o store along Dv. Card1.
+  spin=0. Prior: slmht 260 at 2600.
+
+RESULT -> cosine=1.0 max_abs
+  1.5e-5 / 2.4e-4 ok=1. pipe_host
+  247.158. timed act=2700
+  cur=2800 throttle=0.
+
+VERDICT -> slmht packed-o T=256
+  is 247 us pipe_host card1 at
+  2700, ~1.05x slmht 260. Clock
+  2700 vs 2600. Possible leftover
+  cut. Do not freeze 247 as
+  2800. Sibling before promote.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_delta_slmhto_t256_s0_card1.txt`.
+
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
 CONFIG -> backend `sycl+l0`, `dpas_s8_prod`
@@ -4803,7 +4893,22 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   T=1 is 5.54 us card1 at 2800
   (2026-09-03hp) vs fused 7.1,
   max_abs_o=2. Do not replace
-  fused 7.1.
+  fused 7.1. slmht blk=8 T=256
+  is 269 us card0 (2026-09-03hq),
+  ~1.04x slmht 260. Stop blk=8
+  vs slmht. T=1 tile-fused
+  scalar hsum is 6.09 us card1
+  at 2800 (2026-09-03hr), wash
+  vs tree hsum, max_abs_o=2.
+  Stop scalar hsum vs reduce.
+  slmht blk=32 T=256 is 252 us
+  card0 at 2600 (2026-09-03hs),
+  ~1.03x slmht 260. packed-o
+  T=256 is 247 us card1 at 2700
+  (2026-09-03ht), ~1.05x slmht
+  260. Possible leftover cuts.
+  Do not freeze 252 or 247 as
+  2800. Sibling before promote.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

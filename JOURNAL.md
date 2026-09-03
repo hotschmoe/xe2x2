@@ -9848,42 +9848,137 @@ VERDICT -> ESIMD tile-fused T=1
   slmht blk=8 T=256 vs T=1
   tile-fused scalar hsum.
 
+### 2026-09-03hq - K7 ESIMD fused delta T=256 slmht blk=8 card0
 
+CONTEXT -> slmht T=256 260
+  leftover blk=16. Napkin half
+  block, more barriers. spin=0.
 
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmht8.
+  gpu-run --card 0. T=256 blk=8.
+  spin=0.
 
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht8_t256.sh 0 0
+  ```
 
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 274.242 pipe_host
+  269.210. 58.6 GB/s. timed
+  act 2700-2667 cur=2800
+  throttle=0. vs slmht 260
+  (~1.04x).
 
+VERDICT -> ESIMD slmht blk=8
+  T=256 is 269 us pipe_host
+  card0, ~1.04x slmht 260.
+  Napkin miss. Stop blk=8 vs
+  slmht. Rank pipe_host.
 
+### 2026-09-03hr - K7 ESIMD fused delta T=1 tile-fused scalar hsum card1
 
+CONTEXT -> ht T=1 5.54 at 2800
+  max_abs_o=2. Napkin scalar
+  hsum vs esimd::reduce. spin=4000
+  hold.
 
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_hts.
+  gpu-run --card 1. T=1.
+  spin=4000.
 
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_hts.sh 1 4000
+  ```
 
+RESULT -> cosine=1 max_abs=0.0625
+  cosine_o=1 max_abs_o=2 ok=1.
+  event 6.630 pipe_host 6.088.
+  525 GB/s. timed act=cur=2800
+  throttle=0. vs ht 5.54 vs
+  fused 7.1 vs tree hsum 6.09.
 
+VERDICT -> ESIMD tile-fused
+  scalar hsum T=1 is 6.09 us
+  pipe_host card1 at 2800.
+  Wash vs tree hsum. ~1.10x ht
+  reduce 5.54. max_abs_o=2 vs
+  fused 0. Numeric is the fused
+  acc, not esimd::reduce. Stop
+  scalar hsum vs reduce. Do not
+  replace fused 7.1. Rank
+  pipe_host. Next: slmht blk=32
+  T=256 vs packed-o T=256.
 
+### 2026-09-03hs - K7 ESIMD fused delta T=256 slmht blk=32 card0
 
+CONTEXT -> slmht T=256 260
+  leftover blk=16. Napkin
+  double block, fewer barriers.
+  spin=0.
 
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmht32.
+  gpu-run --card 0. T=256 blk=32.
+  spin=0.
 
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_delta_slmht32_t256.sh 0 0
+  ```
 
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 256.893 pipe_host
+  252.173. 62.6 GB/s. timed
+  act=2600 cur=2800 throttle=0.
+  vs slmht 260 at 2600 (~1.03x).
 
+VERDICT -> ESIMD slmht blk=32
+  T=256 is 252 us pipe_host
+  card0 at 2600, ~1.03x slmht
+  260. Possible leftover cut.
+  Do not freeze 252 as 2800.
+  Sibling before promote. Rank
+  pipe_host.
 
+### 2026-09-03ht - K7 ESIMD fused delta T=256 slmht packed-o card1
 
+CONTEXT -> slmht T=256 260
+  leftover. Scalar o store.
+  Napkin 16-wide o along Dv.
+  spin=0.
 
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_delta_slmhto.
+  gpu-run --card 1. T=256 blk=16.
+  spin=0.
 
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_delta_slmhto_t256.sh 1 0
+  ```
 
+RESULT -> cosine=1 max_abs=1.5e-5
+  cosine_o=1 max_abs_o=2.4e-4
+  ok=1. event 251.826 pipe_host
+  247.158. 63.8 GB/s. timed
+  act=2700 cur=2800 throttle=0.
+  vs slmht 260 at 2600 (~1.05x).
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+VERDICT -> ESIMD slmht packed-o
+  T=256 is 247 us pipe_host
+  card1 at 2700, ~1.05x slmht
+  260. Clock 2700 vs 2600.
+  Possible leftover cut. Do not
+  freeze 247 as 2800. Sibling
+  before promote. Rank
+  pipe_host. Next: sibling
+  packed-o vs sibling blk=32.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

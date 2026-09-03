@@ -754,5 +754,55 @@ pipe_host 5.542 event 6.437.
 throttle=0. ~1.28x fused 7.1.
 Do not replace fused 7.1.
 
-K7 next: slmht blk=8 T=256 vs
-T=1 tile-fused scalar hsum.
+## ESIMD fused delta T=256 slmht blk=8 card0 (2026-09-03hq)
+
+backend sycl+l0, AOT
+gdn_delta_slmht8. T=256 blk=8
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 269.210 event
+274.242. 58.6 GB/s. act 2700-
+2667 cur=2800 throttle=0.
+~1.04x slmht 260. Stop blk=8
+vs slmht.
+
+## ESIMD fused delta T=1 tile-fused scalar hsum card1 (2026-09-03hr)
+
+backend sycl+l0, AOT
+gdn_delta_hts. T=1 spin=4000.
+cosine=1 max_abs=0.0625
+cosine_o=1 max_abs_o=2 ok=1.
+pipe_host 6.088 event 6.630.
+525 GB/s. act=cur=2800
+throttle=0. Wash vs tree hsum
+6.09. max_abs_o=2. Stop scalar
+hsum vs reduce.
+
+## ESIMD fused delta T=256 slmht blk=32 card0 (2026-09-03hs)
+
+backend sycl+l0, AOT
+gdn_delta_slmht32. T=256 blk=32
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 252.173 event
+256.893. 62.6 GB/s. act=2600
+cur=2800 throttle=0. ~1.03x
+slmht 260 at 2600. Possible
+cut. Do not freeze 252 as 2800.
+Sibling before promote.
+
+## ESIMD fused delta T=256 slmht packed-o card1 (2026-09-03ht)
+
+backend sycl+l0, AOT
+gdn_delta_slmhto. T=256 blk=16
+spin=0. cosine=1 max_abs=1.5e-5
+cosine_o=1 max_abs_o=2.4e-4
+ok=1. pipe_host 247.158 event
+251.826. 63.8 GB/s. act=2700
+cur=2800 throttle=0. ~1.05x
+slmht 260 at 2600. Clock 2700
+vs 2600. Do not freeze 247 as
+2800. Sibling before promote.
+
+K7 next: sibling packed-o vs
+sibling blk=32.
