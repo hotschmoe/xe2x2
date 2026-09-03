@@ -5383,7 +5383,15 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   card0 (2026-09-03ik), ~3.36x
   packed 395, T-linear vs 471.
   throttle=1. Do not freeze 117
-  as 2800.
+  as 2800. mixer-slmht T=64 is
+  116-117 us both cards
+  (2026-09-03ik/in), throttle=1.
+  Do not freeze 117 as 2800.
+  mixer-slmht T=128 is 232 us
+  card0 (2026-09-03im), napkin
+  235, T-linear. Clocks ramped
+  1600 to 2800. Do not freeze
+  232 as 2800.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

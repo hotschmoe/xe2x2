@@ -1031,9 +1031,6 @@ max_abs_o=9.8e-4 ok=1. pipe_host
 act=cur=2800 throttle=0. 471 us
 both at 2800. Promote.
 
-K7 next: sibling mixer-slmht
-T=64 vs mixer-slmht T=128.
-
 ## ESIMD mixer-slmht T=128 card0 (2026-09-03im)
 
 backend sycl+l0, same
