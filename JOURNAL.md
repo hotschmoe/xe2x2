@@ -5182,3 +5182,68 @@ VERDICT -> Wide-N W8A8 M=64 is 201 us at
   closed. One-card. Do not freeze until
   card0. Rank us. Next: sibling W8A8
   M=64 N=17408 vs W8A8 M=64 K=17408.
+
+### 2026-09-03bv - K1/K4 oneDNN W8A8 M=64 N=17408 sibling card0
+
+CONTEXT -> card1 W8A8 M=64 N=17408 was
+  201 us at 2783/2800, throttle=1, lost
+  to w4a16 142. Sibling swap. GEMM-only.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 0.
+  spin=512 of M=64 then us_bench.
+  N=17408 K=5120. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/w8_compare/run_w8_m64_wide_hold.sh 0 512
+  ```
+
+RESULT -> out f16 [64,17408]. timed
+  act=2783 cur=2800 throttle=1. us_bench
+  202.772 vs card1 201.221 vs square 46
+  vs w4a16 142 vs s8 338.9 vs s4 94.7 vs
+  napkin 156. Spread ~0.8%. cosine=1.000
+  max_abs=0.062. 440 GB/s.
+
+VERDICT -> Sibling matches. New W8A8
+  M=64 wide-N floor 202 us both cards at
+  2783/2800, throttle=1. ~4.39x square,
+  superlinear vs 156. Loses to w4a16 142
+  (~1.42x) both cards. Crossover holds.
+  Numeric closed. Rank us.
+
+### 2026-09-03bw - K1/K4 oneDNN W8A8 M=64 K=17408 card1
+
+CONTEXT -> W8A8 M=64 square is 46 us.
+  N-wide 202. W8A8 M=1 K=17408 is 155.3.
+  w4a16 130. s8 374.7. s4 106.0. Napkin
+  46*155.3/44 ~162. FFN-down prefill.
+  GEMM-only. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 1.
+  spin=512 of M=64 then us_bench.
+  N=5120 K=17408. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/w8_compare/run_w8_m64_k17408_hold.sh 1 512
+  ```
+
+RESULT -> out f16 [64,5120]. timed
+  act=2733 cur=2800 throttle=1. us_bench
+  184.009 vs square 46 vs N-wide 202 vs
+  w4a16 130 vs s8 374.7 vs s4 106.0 vs
+  napkin 162. Ratio 184.0/46 ~4.00x.
+  Superlinear vs K-linear 156. cosine=
+  1.000 max_abs=0.124. 484 GB/s.
+
+VERDICT -> Wide-K W8A8 M=64 is 184 us at
+  2733/2800 card1, ~4.00x square. Loses
+  to w4a16 130 (~1.42x) and s4 106.0,
+  beats s8 374.7. Same crossover as N-wide.
+  Throttle=1. Numeric closed. One-card.
+  Do not freeze until card0. Rank us.
+  Next: sibling W8A8 M=64 K=17408 vs
+  K2 s2 decode tile at 5120.

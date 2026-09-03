@@ -901,7 +901,7 @@ w4a16 377 (~1.67x) and hand s8 477.4.
 Loses to s4 149.0. Spread ~2.0%. Throttle=1.
 Qwen FFN W8A8 M=256 map closed.
 
-## oneDNN W8A8 M=64 N=17408 card1 (2026-09-03bu)
+## oneDNN W8A8 M=64 N=17408 (2026-09-03bu/bv)
 
 Same GEMM-only. spin=512 of M=64.
 cosine=1.000 max_abs=0.062. timed
@@ -909,13 +909,29 @@ act=2783 cur=2800 throttle=1.
 
 | shape | card | us | square | w4a16 | s8 | s4 | napkin |
 |---|---|---:|---:|---:|---:|---:|---:|
+| 64 x 17408 x 5120 | 0 | 202.772 | 46 | 142 | 338.9 | 94.7 | 156 |
 | 64 x 17408 x 5120 | 1 | 201.221 | 46 | 142 | 338.9 | 94.7 | 156 |
 
-~4.37x square. Superlinear. Loses to
-w4a16 142 (~1.42x) and s4 94.7. Beats
-hand s8 338.9. Crossover: w4a16 wins
-M=1 and M=64 FFN-up; W8A8 wins M=256.
-One-card. Do not freeze 201 us.
+New wide-N floor 202 us both cards.
+~4.39x square. Superlinear. Loses to
+w4a16 142 (~1.42x) both cards and s4
+94.7. Beats hand s8 338.9. Crossover
+holds. Spread ~0.8%. Throttle=1.
 
-K2 next: sibling W8A8 M=64 N=17408 vs
-W8A8 M=64 K=17408.
+## oneDNN W8A8 M=64 K=17408 card1 (2026-09-03bw)
+
+Same GEMM-only. spin=512 of M=64.
+cosine=1.000 max_abs=0.124. timed
+act=2733 cur=2800 throttle=1.
+
+| shape | card | us | square | w4a16 | s8 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 64 x 5120 x 17408 | 1 | 184.009 | 46 | 130 | 374.7 | 106.0 | 162 |
+
+~4.00x square. Superlinear. Loses to
+w4a16 130 (~1.42x) and s4 106.0. Beats
+hand s8 374.7. Same crossover. One-card.
+Do not freeze 184 us.
+
+K2 next: sibling W8A8 M=64 K=17408 vs
+s2 decode tile at 5120.
