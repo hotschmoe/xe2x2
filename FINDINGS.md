@@ -1159,6 +1159,49 @@ VERDICT -> New GPTQ s4 decode floor
 Evidence: `results/k6/gptq_s4sc_n2_s4000_card0.txt`,
   `results/k6/gptq_s4sc_n2_s4000_card1.txt`.
 
+## GPTQ s4 N=17408 is 100 us card0 (K6)
+
+CONFIG -> backend `sycl+l0`, same
+  `dpas_s4_gptq_sc`. M=1 N=17408 K=5120
+  gate_proj dump. Card0. Named clock
+  2800. NT=2 spin=4000. Prior: square
+  29.9; N-linear ~102; s4 29.5.
+
+RESULT -> cosine=1.0 max_abs=6e-8.
+  timed act=cur=2800 throttle=0. M=1
+  pipe_host 100.028 vs square 29.9 vs
+  s4 29.5 vs s8xs4 38.6 vs s8 141.6 vs
+  W8A8 158.1 vs napkin 102. M=4 tracks.
+  ~3.35x square.
+
+VERDICT -> Wide-N GPTQ is near linear.
+  Beats s8 and W8A8, loses to s4 and
+  s8xs4. One-card. Do not freeze 100 us
+  until card1. Rank pipe_host.
+
+Evidence: `results/k6/gptq_s4sc_n17408_n2_s4000_card0.txt`.
+
+## s8xs4 4x8 A-db M=64 is 43.3 us card1 (K2)
+
+CONFIG -> backend `sycl+l0`, standalone
+  `dpas_s8xs4_db48`. RC=8 wg 4x8 A-db.
+  A=s8 B=s4 pack=2. M=64 N=K=5120.
+  Card1. NT=2 spin=512. Named clock
+  2800.
+
+RESULT -> cosine=1.0 max_abs=0. timed
+  act=cur=2800 throttle=0. M=64
+  pipe_host 43.286 vs 8x2-N 114 vs s4
+  33.6 vs s8 75 vs W8A8 46.
+
+VERDICT -> Mix 4x8 is ~2.64x the
+  decode tile at M=64. Beats s8 and
+  W8A8, loses to s4 (~1.29x). One-card.
+  Do not freeze 43.3 us until card0.
+  Rank pipe_host.
+
+Evidence: `results/k2/s8xs4db48_m64_n2_s512_card1.txt`.
+
 ## s8xs4 8x2-N loses at M=64 (K2)
 
 CONFIG -> backend `sycl+l0`, same
@@ -2898,7 +2941,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   decode map is closed. GPTQ s4 RC=4
   decode is 29.9 us both cards (~1.81x
   s4 16.5). s8xs4 8x2-N M=64 is 114 us
-  card1, a loss vs s4 33.6.
+  card1, a loss vs s4 33.6. GPTQ N=17408
+  is 100 us card0 (~3.35x square).
+  s8xs4 4x8 A-db M=64 is 43.3 us card1
+  (beats W8A8 46, loses to s4 33.6).
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.

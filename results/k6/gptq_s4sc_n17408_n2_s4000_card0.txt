@@ -1,0 +1,51 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4276984236938 energy2=pkg:2274691820068 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4209955769592 energy2=pkg:2354489051391 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s4_gptq_sc nt=2 spin=4000 n=17408 gptq g128
+GPTQ square 29.9. s4 N=17408 29.5. s8 141.6. Napkin 29.9*17408/5120 ~102.
+=== dump (CPU) ===
+CONFIG gptq_s4_dump path /mnt/vm_8tb/github/b70_ai_things/models/files/qwen3.8-27b/gptq-int4-mtp-bf16-9d189a60/model-00002-of-00005.safetensors gs 128
+mlp_qweight_in_shard 26
+pick model.language_model.layers.0.mlp.down_proj qweight [2176, 5120] qzeros [136, 640] scales [136, 5120] K 17408 N 5120 nibble_hist 179943,671530,1112922,2257645,4153526,6843417,9952611,12574381,13630983,12579487,9954459,6846190,4149346,2256239,1113885,852396 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+pick model.language_model.layers.0.mlp.gate_proj qweight [640, 17408] qzeros [40, 2176] scales [40, 17408] K 5120 N 17408 nibble_hist 180001,684387,1145712,2312652,4225158,6892273,9917537,12455149,13482457,12452172,9918940,6900323,4230428,2315362,1147998,868411 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+DUMP /mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_gate0_n17408.bin k 5120 n 17408 bytes 89128968 s4_min -8 s4_max 7
+DUMP_SC /mnt/vm_8tb/github/xe2x2/results/k6/gptq_s4_gate0_n17408_sc.bin k 5120 n 17408 gs 128 ng 40 sc_min 0.0020236968994140625 sc_max 0.0557861328125
+pick model.language_model.layers.0.mlp.up_proj qweight [640, 17408] qzeros [40, 2176] scales [40, 17408] K 5120 N 17408 nibble_hist 181529,684843,1143820,2314746,4232066,6900567,9929060,12448636,13443345,12451536,9933031,6901128,4235240,2318683,1144605,866125 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+pick model.language_model.layers.1.mlp.down_proj qweight [2176, 5120] qzeros [136, 640] scales [136, 5120] K 17408 N 5120 nibble_hist 179075,671716,1104595,2238431,4115936,6797382,9915882,12643567,13795884,12638180,9920488,6793862,4120314,2237795,1105342,850511 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+pick model.language_model.layers.1.mlp.gate_proj qweight [640, 17408] qzeros [40, 2176] scales [40, 17408] K 5120 N 17408 nibble_hist 180535,681321,1141842,2307387,4219755,6887471,9909767,12450159,13486331,12456394,9932582,6901050,4237031,2320705,1147749,868881 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+pick model.language_model.layers.1.mlp.up_proj qweight [640, 17408] qzeros [40, 2176] scales [40, 17408] K 5120 N 17408 nibble_hist 180483,683262,1139606,2308337,4215529,6892577,9928805,12470362,13485779,12477982,9929638,6889396,4216971,2305798,1139987,864448 z_uniq 7 z_ne_8 696320 s4_min -8 s4_max 7 s4_ov 0 g_idx_linear 1
+DONE
+dump_rc=0
+=== decode ===
+=== gptqsc nt=2 spin=4000 m=1 n=17408 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4_gptq->f16 RC=4 NT=2 unroll=16 gs=128 wg=8x2_alongN padM=RC pack=2 a_scale=0.0200 dump_k=5120 dump_n=17408 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,38.229,72.909,56.768,0.0069,1.000000,0,1,38.229,38.229,38.229
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,1,17408,5120,99.458,113.843,100.028,1.7923,1.000000,5.9605e-08,1,99.583,93.646,101.250
+=== gptqsc nt=2 spin=4000 m=4 n=17408 k=5120 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4_gptq->f16 RC=4 NT=2 unroll=16 gs=128 wg=8x2_alongN padM=RC pack=2 a_scale=0.0200 dump_k=5120 dump_n=17408 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=2300 cur=2283 power=D0 throttle=0
+timed_end act=2300 cur=2283 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,6.563,31.119,16.041,0.0399,1.000000,0,1,6.563,6.563,6.563
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,16,4,17408,5120,99.724,113.973,100.488,7.1501,1.000000,6.1035e-05,1,100.104,94.896,101.562
+bin_rc=0
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:4277577576965 energy2=pkg:2275036395385 temp2_mC=55000
+hwmon hwmon7 cap_uW=230000000 energy1=card:4210408807617 energy2=pkg:2354737788635 temp2_mC=53000

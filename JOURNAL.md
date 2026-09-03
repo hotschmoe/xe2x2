@@ -6005,3 +6005,69 @@ VERDICT -> Decode-tile s8xs4 at M=64
   Stop 8x2-N s8xs4 at prefill. One-card.
   Rank pipe_host. Next: GPTQ wide-N vs
   s8xs4 4x8 A-db M=64.
+
+### 2026-09-03cv - K6 GPTQ s4 RC=4 N=17408 card0
+
+CONTEXT -> GPTQ square is 29.9 us.
+  s4 N=17408 29.5. s8 141.6. W8A8
+  158.1. Napkin 29.9*17408/5120 ~102.
+  gate_proj dump. One-card.
+
+CONFIG -> backend sycl+l0, same AOT
+  dpas_s4_gptq_sc RC=4 NT=2 gs=128.
+  gpu-run --card 0. M=1 and M=4
+  N=17408 K=5120. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/esimd_dpas/run_gptq_s4_sc_wide.sh 0 2 4000
+  ```
+
+RESULT -> dump gate 5120x17408. check
+  cosine=1.000 max_abs=0. timed M=1
+  act=cur=2800 throttle=0. event 99.458
+  pipe_host 100.028 vs square 29.9 vs
+  s4 29.5 vs s8xs4 38.6 vs s8 141.6 vs
+  W8A8 158.1 vs napkin 102. cosine=1
+  max_abs=6e-8. M=4 pipe 100.488.
+  ~3.35x square, near linear.
+
+VERDICT -> Wide-N GPTQ is 100 us
+  pipe_host at 2800 card0. Napkin 102
+  hit. Beats s8 141.6 and W8A8 158.1,
+  loses to s4 29.5 and s8xs4 38.6.
+  One-card. Do not freeze 100 us until
+  card1. Rank pipe_host.
+
+### 2026-09-03cw - K2 s8xs4 4x8 A-db M=64 card1
+
+CONTEXT -> 8x2-N mix M=64 was 114 us.
+  s4 4x8 33.6. s8 4x8 75. W8A8 46.
+  First s8xs4 on 4x8 A-db. A=s8 B=s4.
+  Never E2M1. One-card.
+
+CONFIG -> backend sycl+l0, AOT
+  dpas_s8xs4_db48 RC=8 wg 4x8 A-db.
+  gpu-run --card 1. M=64 N=K=5120.
+  NT=2 spin=512.
+
+COMMAND ->
+  ```
+  compile_extra.sh dpas_s8xs4_db48.cpp
+  gpu-run --card 1 kernels/esimd_dpas/run_s8xs4_db48.sh 1 2 512
+  ```
+
+RESULT -> COMPILE_OK. check cosine=1
+  max_abs=0. timed M=64 act=cur=2800
+  throttle=0. event 43.260 pipe_host
+  43.286 vs 8x2-N 114 vs s4 33.6 vs
+  s8 75 vs W8A8 46. ~2.64x 8x2-N.
+
+VERDICT -> Mix 4x8 A-db is 43.3 us
+  pipe_host at 2800 card1. Numeric
+  closed. Beats s8 75 and W8A8 46,
+  loses to s4 33.6 (~1.29x). New mix
+  prefill tile. One-card. Do not freeze
+  43.3 us until card0. Rank pipe_host.
+  Next: sibling 4x8 vs sibling GPTQ
+  N=17408.

@@ -673,4 +673,19 @@ New floor 29.9 us both cards. ~1.81x
 s4. Spread ~0.4%. Beats s8 34 and
 W8A8 44.
 
-K6 next: GPTQ N=17408 decode.
+## GPTQ s4 RC=4 N=17408 card0 (2026-09-03cv)
+
+Same dpas_s4_gptq_sc. gate_proj dump
+5120x17408. NT=2 spin=4000. timed
+2800 throttle=0. cosine=1.0.
+
+| shape | card | event_us | pipe_host_us | square | s4 | s8 |
+|---|---|---:|---:|---:|---:|---:|
+| 1 x 17408 x 5120 | 0 | 99.458 | 100.028 | 29.9 | 29.5 | 141.6 |
+| 4 x 17408 x 5120 | 0 | 99.724 | 100.488 | 29.9 | 29.5 | 141.6 |
+
+100 us at 2800 card0. ~3.35x square,
+near linear. Beats s8 141.6. Loses
+to s4 29.5. One-card.
+
+K6 next: sibling N=17408.

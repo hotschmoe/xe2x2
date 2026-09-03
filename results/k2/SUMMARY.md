@@ -1049,4 +1049,18 @@ throttle=0.
 Loses to s4/s8/W8A8. Stop 8x2-N at
 prefill. One-card.
 
-K2 next: s8xs4 4x8 A-db M=64.
+## s8xs4 4x8 A-db M=64 card1 (2026-09-03cw)
+
+dpas_s8xs4_db48 RC=8 wg 4x8 A-db.
+A=s8 B=s4 pack=2. NT=2 spin=512.
+cosine=1.0 max_abs=0. timed 2800.
+
+| shape | card | event_us | pipe_host_us | s4 4x8 | s8 | W8A8 |
+|---|---|---:|---:|---:|---:|---:|
+| 64 x 5120 | 1 | 43.260 | 43.286 | 33.6 | 75 | 46 |
+
+43.3 us at 2800 card1. ~2.64x 8x2-N
+114. Beats s8 75 and W8A8 46. Loses
+to s4 33.6. One-card.
+
+K2 next: sibling 4x8 mix.

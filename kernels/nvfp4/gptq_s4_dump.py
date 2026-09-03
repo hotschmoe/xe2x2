@@ -26,6 +26,7 @@ OUT_SC = os.environ.get(
 TILE_K = int(os.environ.get("TILE_K", "256"))
 TILE_N = int(os.environ.get("TILE_N", "256"))
 GS = 128
+WANT = os.environ.get("GPTQ_WANT", "down_proj")
 
 
 def load_meta(path):
@@ -149,7 +150,7 @@ def main() -> int:
             flush=True,
         )
         shown += 1
-        if (not dumped) and prefix.endswith("down_proj"):
+        if (not dumped) and prefix.endswith(WANT):
             tk = min(TILE_K, k - (k % 64))
             tn = min(TILE_N, n - (n % 16))
             tile = s4[:tk, :tn].astype(np.int8)
