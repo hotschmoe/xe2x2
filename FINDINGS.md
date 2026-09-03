@@ -1063,24 +1063,48 @@ VERDICT -> New held-clock folded w4a16
 Evidence: `results/k6/nvfp4_w4a16_m1hold_card0.txt`,
   `results/k6/nvfp4_w4a16_m1hold_card1.txt`.
 
-## nvfp4_gemm_w4a16 M=64 is 36.8 us card1 (K6)
+## nvfp4_gemm_w4a16 M=64 is 37.1 us both cards (K6)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
-  Same v028 so. spin=1000 of M=64 then
-  us_bench M=64 5120. Card1 only.
+  Same v028 so. Card1 spin=1000, card0
+  spin=2000 of M=64 then us_bench M=64
+  5120. Both cards.
 
 RESULT -> out bf16 [64,5120]. timed
-  act=2400 cur=2800 throttle=0. Folded
-  36.761 us vs M=1 34.7 vs W8A8 46 vs s8
-  75 vs compose 68.7 vs LUT 331.6.
-  f8scale 39.047, act=2250 cur=2800.
+  act=2150/2400 cur=2800 throttle=0.
+  Folded 37.406/36.761 us vs M=1 34.7 vs
+  W8A8 46 vs s8 75 vs compose 68.7 vs LUT
+  331.6. Spread ~1.7%. f8scale
+  39.153/39.047. More spin did not raise
+  act.
 
-VERDICT -> M=64 is only ~1.06x M=1,
-  under W8A8 46 and ~2.04x s8 75.
-  Act not 2800. One-card. Do not freeze
-  36.8 us until card0.
+VERDICT -> New w4a16 M=64 floor 37.1 us
+  both cards, cur=2800, act 2150-2400.
+  ~1.07x M=1, under W8A8 46, ~2.02x s8
+  75. Not a 2800-act hold. Rank us.
 
-Evidence: `results/k6/nvfp4_w4a16_m64hold_card1.txt`.
+Evidence: `results/k6/nvfp4_w4a16_m64hold_card0.txt`,
+  `results/k6/nvfp4_w4a16_m64hold_card1.txt`.
+
+## nvfp4_gemm_w4a16 M=256 is 116 us card1 (K6)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  Same v028 so. spin=512 of M=256 then
+  us_bench M=256 5120. Card1 only.
+
+RESULT -> out bf16 [256,5120]. timed
+  act=2550/2500 cur=2800 throttle=0.
+  Folded 115.560 us vs M=64 37.1 vs W8A8
+  75 vs s8 128 vs compose 194.9 vs LUT
+  1083 vs s4 48.6. f8scale 114.151.
+
+VERDICT -> M=256 is ~3.12x M=64, loses
+  to W8A8 75 (~1.54x) and s4 48.6, beats
+  s8 128. Launch-bound story dies at
+  M=256. One-card. Do not freeze 116 us
+  until card0.
+
+Evidence: `results/k6/nvfp4_w4a16_m256hold_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2281,16 +2305,20 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   Held-clock nvfp4_gemm_w4a16 M=1 is
   34.7 us both cards at 2800 (bf16-A,
   same us class as s8 34, under W8A8
-  44). nvfp4_gemm_w4a16 M=64 is 36.8 us
-  card1 (act=2400/2800, ~1.06x M=1,
-  under W8A8 46). One-card.
+  44). nvfp4_gemm_w4a16 M=64 is 37.1 us
+  both cards (act 2150-2400/2800,
+  ~1.07x M=1, under W8A8 46).
+  nvfp4_gemm_w4a16 M=256 is 116 us
+  card1 (act~2500/2800, ~3.12x M=64,
+  loses to W8A8 75). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
   Local dump (v028 so, M=64 heat, clocks not held 2800): ~37 us
   folded / ~39 us f8scale at M=1 5120. Held 2800 both cards:
-  34.7 us folded / 37.8 us f8scale. M=64 card1: 36.8 us folded
-  at act=2400/2800. Stock mtp6 image lacks the
+  34.7 us folded / 37.8 us f8scale. M=64 both cards: 37.1 us
+  folded at act 2150-2400/2800. M=256 card1: 116 us folded
+  at act~2500/2800. Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
   on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
   and s8 K=16 dpas do not compile. Product LUT GEMV is a
