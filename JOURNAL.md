@@ -8077,6 +8077,57 @@ VERDICT -> ESIMD conv T=64 is
   until sibling. Rank pipe_host.
   Next: sibling swap.
 
+### 2026-09-03fl - K7 ESIMD conv1d T=64 sibling card0
+
+CONTEXT -> card1 conv T=64 was
+  10.2 us pipe_host at 2800.
+  First T>1. Sibling.
+
+CONFIG -> backend sycl+l0, same
+  AOT gdn_conv1d_t. gpu-run
+  --card 0. C=2048 T=64. spin=4000.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_conv1d_t64.sh 0
+  ```
+
+RESULT -> cosine=1 max_abs=0 ok=1.
+  timed act=cur=2800 throttle=0.
+  event 9.768 pipe_host 10.130 vs
+  card1 10.161. Spread ~0.3%.
+
+VERDICT -> Sibling matches. ESIMD
+  conv T=64 is 10.1 us pipe_host
+  both cards at 2800. ~11x eager
+  115. Rank pipe_host.
+
+### 2026-09-03fm - K7 packed qkv W8A8 M=64 sibling card1
+
+CONTEXT -> card0 packed qkv M=64
+  was 142 us. Sibling.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0. gpu-run --card 1.
+  int8_gemm_w8a8 M=64 n=10240
+  k=5120. heat M=64 spin=512.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_proj_qkv_w8a8_m64.sh 1
+  ```
+
+RESULT -> cosine=1 max_abs=0.062
+  ok=1. 138.079 us vs card0
+  142.053. Spread ~2.9%.
+
+VERDICT -> Sibling matches. Packed
+  qkv M=64 is 138-142 us both
+  cards, wash vs 3x 46. Rank us.
+  Next: conv T=256 vs packed qkv
+  M=256.
+
+
 
 
 

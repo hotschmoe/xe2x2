@@ -2454,45 +2454,46 @@ VERDICT -> Mixer is 8.2-8.7 us
 Evidence: `results/k7/esimd_mixer_s4000_card0.txt`,
   `results/k7/esimd_mixer_s4000_card1.txt`.
 
-## Packed qkv W8A8 M=64 is 142 us (K7)
+## Packed qkv W8A8 M=64 is 140 us (K7)
 
 CONFIG -> backend `pytorch-xpu` on
   `sycl+l0`. M=64 n=10240 k=5120.
   int8_gemm_w8a8. Heat M=64
-  spin=512. Card0. No serve.
+  spin=512. Both cards. No serve.
 
-RESULT -> cosine=1 max_abs=0.062
-  ok=1. 142.053 us. vs M=1 96 vs
-  square M=64 46 vs 3x 46 ~138.
+RESULT -> cosine=1 ok=1.
+  142.053/138.079 us. Spread
+  ~2.9%. vs M=1 96 vs 3x 46 ~138.
 
-VERDICT -> Packed qkv M=64 is 142
-  us card0, ~1.48x M=1, wash vs
-  3x 46. One-card. Do not freeze
-  142. Rank us.
+VERDICT -> Packed qkv M=64 is
+  138-142 us both cards, wash vs
+  3x 46. Rank us.
 
-Evidence: `results/k7/proj_qkv_w8a8_m64_card0.txt`.
+Evidence: `results/k7/proj_qkv_w8a8_m64_card0.txt`,
+  `results/k7/proj_qkv_w8a8_m64_card1.txt`.
 
-## ESIMD conv1d T=64 is 10.2 us at 2800 (K7)
+## ESIMD conv1d T=64 is 10.1 us at 2800 (K7)
 
 CONFIG -> backend `sycl+l0`,
   standalone `gdn_conv1d_t` AOT
   `intel_gpu_bmg_g31`. C=2048
-  T=64 K=4 f16 causal. Card1.
-  spin=4000. Prior: eager ~115,
-  decode T=1 4.4.
+  T=64 K=4 f16 causal. Both
+  cards. spin=4000. Prior: eager
+  ~115, decode T=1 4.4.
 
 RESULT -> cosine=1.0 max_abs=0.
   timed act=cur=2800 throttle=0.
-  pipe_host 10.161 event 9.771.
+  pipe_host 10.130/10.161. Spread
+  ~0.3%.
 
 VERDICT -> Prefill conv T=64 is
-  10.2 us pipe_host card1 at
+  10.1 us pipe_host both cards at
   2800, ~11x eager 115, ~2.3x
-  decode T=1. Not T-linear.
-  One-card. Do not freeze 10.2
-  until sibling. Rank pipe_host.
+  decode T=1. Not T-linear. Rank
+  pipe_host.
 
-Evidence: `results/k7/esimd_conv1d_t64_s4000_card1.txt`.
+Evidence: `results/k7/esimd_conv1d_t64_s4000_card0.txt`,
+  `results/k7/esimd_conv1d_t64_s4000_card1.txt`.
 
 ## K5 producer+GEMM N=17408 is 155 us both cards (K5)
 
@@ -3848,11 +3849,10 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   Mixer conv+delta is 8.2-8.7 us
   both cards at 2800 vs 11.5,
   spread 6.3%. Do not freeze 8.23.
-  Packed qkv M=64 is 142 us
-  card0, wash vs 3x 46. ESIMD
-  conv T=64 is 10.2 us card1 at
-  2800 vs eager 115. One-card
-  each. Sibling next.
+  Packed qkv M=64 is 138-142 us
+  both cards, wash vs 3x 46.
+  ESIMD conv T=64 is 10.1 us both
+  cards at 2800 vs eager 115.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats
