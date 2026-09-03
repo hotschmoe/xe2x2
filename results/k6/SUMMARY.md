@@ -576,19 +576,39 @@ New wide-K floor 130 us both cards.
 Loses to s4 106.0. Spread ~4.0%. Qwen FFN
 w4a16 M=64 map closed. Act not 2800.
 
-## nvfp4_gemm_w4a16 M=256 N=17408 card1 (2026-09-03bm)
+## nvfp4_gemm_w4a16 M=256 N=17408 (2026-09-03bm/bn)
 
 Same v028 so. spin=512 of M=256. timed
-act=2283-2267 cur=2800 throttle=1.
+act=2250-2300 cur=2800 throttle=1.
 
 | op | card | us_bench | square | s8 | s4 | napkin |
 |---|---|---:|---:|---:|---:|---:|
+| folded | 0 | 390.997 | 118 | 469.8 | 140.0 | 330 |
 | folded | 1 | 397.434 | 118 | 469.8 | 140.0 | 330 |
+| f8scale | 0 | 384.683 | 118 | 469.8 | 140.0 | 330 |
 | f8scale | 1 | 390.800 | 118 | 469.8 | 140.0 | 330 |
 
-~3.37x square. ~N-linear (401). Beats s8
-469.8. Loses to s4 140.0. Throttle=1.
-One-card. Do not freeze 397 us.
+New wide-N floor 394 us both cards.
+~3.34x square. ~N-linear (401). Beats s8
+469.8. Loses to s4 140.0. Spread ~1.6%.
+Throttle=1.
+
+## nvfp4_gemm_w4a16 M=256 K=17408 (2026-09-03bo/bp)
+
+Same v028 so. spin=512 of M=256. timed
+act=2250-2317 cur=2800 throttle=1.
+
+| op | card | us_bench | square | s8 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|
+| folded | 0 | 378.110 | 118 | 477.4 | 149.0 | 343 |
+| folded | 1 | 375.885 | 118 | 477.4 | 149.0 | 343 |
+| f8scale | 0 | 367.919 | 118 | 477.4 | 149.0 | 343 |
+| f8scale | 1 | 361.498 | 118 | 477.4 | 149.0 | 343 |
+
+New wide-K floor 377 us both cards.
+~3.19x square. Under K-linear (401). Beats
+s8 477.4. Loses to s4 149.0. Spread ~0.6%.
+Throttle=1. Qwen FFN w4a16 M=256 map closed.
 
 ## 12-idea sprint (2026-09-03ae)
 

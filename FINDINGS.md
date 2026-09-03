@@ -1200,26 +1200,74 @@ VERDICT -> New w4a16 M=64 wide-K floor 130
 Evidence: `results/k6/nvfp4_w4a16_m64_k17408_hold_card0.txt`,
   `results/k6/nvfp4_w4a16_m64_k17408_hold_card1.txt`.
 
-## nvfp4_gemm_w4a16 M=256 N=17408 is 397 us card1 (K6)
+## nvfp4_gemm_w4a16 M=256 N=17408 is 394 us both cards (K6)
 
 CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
   Same v028 so. spin=512 of M=256 then
-  us_bench M=256 N=17408 K=5120. Card1 only.
+  us_bench M=256 N=17408 K=5120. Both cards.
 
 RESULT -> out bf16 [256,17408]. timed
-  act=2283-2267 cur=2800 throttle=1. Folded
-  397.434 us vs square 118 vs M=64 N=17408
-  142 vs s8 469.8 vs s4 140.0 vs compose
-  984.3 vs LUT 3138 vs napkin 330. f8scale
-  390.800. ~N-linear (118*17408/5120 ~401).
+  act=2250-2300 cur=2800 throttle=1.
+  Folded 390.997/397.434 us vs square 118
+  vs M=64 N=17408 142 vs s8 469.8 vs s4
+  140.0 vs compose 984.3 vs LUT 3138 vs
+  napkin 330. Spread ~1.6%. f8scale
+  384.683/390.800. ~N-linear
+  (118*17408/5120 ~401).
 
-VERDICT -> Wide-N M=256 is ~3.37x square,
-  N-linear held, beats s8 469.8, loses to
-  s4 140.0 (~2.84x). Napkin 330 missed.
-  Throttle=1. One-card. Do not freeze 397
-  us until card0.
+VERDICT -> New w4a16 M=256 wide-N floor 394
+  us both cards, cur=2800, act 2250-2300,
+  throttle=1. ~3.34x square, N-linear held,
+  beats s8 469.8, loses to s4 140.0. Rank us.
 
-Evidence: `results/k6/nvfp4_w4a16_m256_n17408_hold_card1.txt`.
+Evidence: `results/k6/nvfp4_w4a16_m256_n17408_hold_card0.txt`,
+  `results/k6/nvfp4_w4a16_m256_n17408_hold_card1.txt`.
+
+## nvfp4_gemm_w4a16 M=256 K=17408 is 377 us both cards (K6)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  Same v028 so. spin=512 of M=256 then
+  us_bench M=256 N=5120 K=17408. Both cards.
+
+RESULT -> out bf16 [256,5120]. timed
+  act=2250-2317 cur=2800 throttle=1.
+  Folded 378.110/375.885 us vs square 118
+  vs M=64 K=17408 130 vs N-wide 394 vs s8
+  477.4 vs s4 149.0 vs compose 968.7 vs
+  LUT 3428 vs napkin 343. Spread ~0.6%.
+  f8scale 367.919/361.498. Under K-linear
+  (118*17408/5120 ~401).
+
+VERDICT -> New w4a16 M=256 wide-K floor 377
+  us both cards, cur=2800, act 2250-2317,
+  throttle=1. ~3.19x square, under K-linear,
+  beats s8 477.4, loses to s4 149.0. Qwen
+  FFN w4a16 M=256 map is closed. Rank us.
+
+Evidence: `results/k6/nvfp4_w4a16_m256_k17408_hold_card0.txt`,
+  `results/k6/nvfp4_w4a16_m256_k17408_hold_card1.txt`.
+
+## oneDNN W8A8 M=256 N=17408 is 248 us card1 (K1/K4)
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`.
+  mtp6 `int8_gemm_w8a8` GEMM-only. spin=512
+  of M=256 then us_bench M=256 N=17408
+  K=5120. Card1 only. Oracle after timed.
+
+RESULT -> out f16 [256,17408]. timed
+  act=2517-2500 cur=2800 throttle=1.
+  248.116 us vs square 75 vs w4a16 394 vs
+  s8 469.8 vs s4 140.0 vs napkin 255.
+  cosine=1.000 max_abs=0.062. 359 GB/s.
+
+VERDICT -> Wide-N W8A8 M=256 is ~3.31x
+  square, N-linear held, beats w4a16 394
+  (~1.59x) and hand s8 469.8, loses to s4
+  140.0. Throttle=1. Numeric closed.
+  One-card. Do not freeze 248 us until
+  card0.
+
+Evidence: `results/k2/w8a8_m256_n17408_hold_card1.txt`.
 
 ## 27B NVFP4 persist-s8 is 29.0 GiB weights-only (K6)
 
@@ -2439,9 +2487,16 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   2100-2400/2800, ~3.51x square, ~K-linear,
   beats s8 374.7). Qwen FFN w4a16 M=64
   map is closed. nvfp4_gemm_w4a16 M=256
-  N=17408 is 397 us card1 (act~2280/2800,
-  throttle=1, ~3.37x square, ~N-linear,
-  beats s8 469.8). One-card.
+  N=17408 is 394 us both cards (act
+  2250-2300/2800, throttle=1, ~3.34x
+  square, ~N-linear, beats s8 469.8).
+  nvfp4_gemm_w4a16 M=256 K=17408 is 377 us
+  both cards (act 2250-2317/2800, throttle=1,
+  ~3.19x square, under K-linear, beats s8
+  477.4). Qwen FFN w4a16 M=256 map is
+  closed. oneDNN W8A8 M=256 N=17408 is
+  248 us card1 (act~2510/2800, throttle=1,
+  ~3.31x square, beats w4a16 394). One-card.
 - Load-time s8 NVFP4 spoof fit 8B and not 27B on one 30.3 GiB card.
   Local envelope: persist-s8 weights 29.0 GiB, resident 20.4 GiB.
 - `nvfp4_gemm_w4a16` is 4-bit resident decompress, not INT4 XMX.
@@ -2454,8 +2509,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   101 us folded, throttle=1. M=64 N=17408 both
   cards: 142 us folded, act 2050-2300/2800.
   M=64 K=17408 both cards: 130 us folded,
-  act 2100-2400/2800. M=256 N=17408 card1:
-  397 us folded, throttle=1. Stock mtp6 image lacks the
+  act 2100-2400/2800. M=256 N=17408 both
+  cards: 394 us folded, throttle=1. M=256
+  K=17408 both cards: 377 us folded,
+  throttle=1.
+  Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
   on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights; s2xs4
   and s8 K=16 dpas do not compile. Product LUT GEMV is a

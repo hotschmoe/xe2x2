@@ -867,3 +867,20 @@ timed act=cur=2800 throttle=0.
 loses ~1.68x. Sibling card0 155.310 us (cp).
 New oneDNN wide-K floor 155.3 us both cards.
 Qwen FFN oneDNN W8A8 decode map closed.
+
+## oneDNN W8A8 M=256 N=17408 card1 (2026-09-03bq)
+
+pytorch-xpu on sycl+l0, int8_gemm_w8a8 GEMM-only.
+spin=512 of M=256. cosine=1.000 max_abs=0.062.
+timed act=2517-2500 cur=2800 throttle=1.
+
+| shape | card | us | square | w4a16 | s8 | s4 | napkin |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 256 x 17408 x 5120 | 1 | 248.116 | 75 | 394 | 469.8 | 140.0 | 255 |
+
+~3.31x square. ~N-linear. Beats w4a16 394
+(~1.59x) and hand s8 469.8. Loses to s4
+140.0. One-card. Do not freeze 248 us.
+
+K2 next: sibling W8A8 M=256 N=17408 vs
+W8A8 M=256 K=17408.

@@ -4910,3 +4910,142 @@ VERDICT -> Wide-N w4a16 M=256 is 397 us
   One-card. Do not freeze until card0.
   Rank us. Next: sibling w4a16 M=256
   N=17408 vs w4a16 M=256 K=17408.
+
+### 2026-09-03bn - K6 nvfp4_gemm_w4a16 M=256 N=17408 sibling card0
+
+CONTEXT -> card1 w4a16 M=256 N=17408 was
+  397 us at act~2280/2800, throttle=1.
+  Sibling swap. A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. spin=512 of M=256 then us_bench.
+  N=17408 K=5120.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m256_wide_hold.sh 0 512
+  ```
+
+RESULT -> out bf16 [256,17408]. timed
+  act=2250-2300 cur=2800 throttle=0 then
+  1. us_bench folded 390.997 vs card1
+  397.434 vs square 118 vs M=64 N=17408
+  142 vs s8 469.8 vs s4 140.0 vs compose
+  984.3 vs LUT 3138 vs napkin 330.
+  Spread ~1.6%. f8scale 384.683 vs
+  card1 390.800, act=2350-2317
+  throttle=1.
+
+VERDICT -> Sibling matches. New w4a16
+  M=256 wide-N floor 394 us both cards,
+  cur=2800, act 2250-2300, throttle=1.
+  ~3.34x square, ~N-linear (401), beats
+  s8 469.8 and compose 984.3, loses to
+  s4 140.0. Rank us.
+
+### 2026-09-03bo - K6 nvfp4_gemm_w4a16 M=256 K=17408 card1
+
+CONTEXT -> w4a16 M=256 square is 118 us.
+  M=64 K=17408 is 130 (~3.51x). N-wide
+  394. s8 477.4. s4 149.0. compose 968.7.
+  LUT 3428. Napkin 118*101/34.7 ~343.
+  FFN-down prefill. A=bf16. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 1. Packed NT
+  g16. spin=512 of M=256 then us_bench.
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/nvfp4/run_bench_nvfp4_m256_k17408_hold.sh 1 512
+  ```
+
+RESULT -> out bf16 [256,5120]. timed
+  act=2317-2283 cur=2800 throttle=1.
+  us_bench folded 375.885 vs square 118
+  vs M=64 K=17408 130 vs N-wide 394 vs
+  s8 477.4 vs s4 149.0 vs compose 968.7
+  vs LUT 3428 vs napkin 343. Ratio
+  375.9/118 ~3.19x. Under K-linear
+  (118*17408/5120 ~401). f8scale
+  361.498, act=2333-2300 throttle=1.
+
+VERDICT -> Wide-K w4a16 M=256 is 376 us
+  at act~2300/2800 card1, ~3.19x square
+  (napkin 343 close, under K-linear),
+  beats s8 477.4 and compose 968.7,
+  loses to s4 149.0 (~2.52x). Throttle=1.
+  One-card. Do not freeze until card0.
+  Rank us. Next: sibling w4a16 M=256
+  K=17408 vs oneDNN W8A8 M=256 N=17408.
+
+### 2026-09-03bp - K6 nvfp4_gemm_w4a16 M=256 K=17408 sibling card0
+
+CONTEXT -> card1 w4a16 M=256 K=17408 was
+  376 us at act~2300/2800, throttle=1.
+  Sibling swap. A=bf16.
+
+CONFIG -> pytorch-xpu on sycl+l0, same
+  v028 so, gpu-run --card 0. Packed NT
+  g16. spin=512 of M=256 then us_bench.
+  N=5120 K=17408.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/nvfp4/run_bench_nvfp4_m256_k17408_hold.sh 0 512
+  ```
+
+RESULT -> out bf16 [256,5120]. timed
+  act=2283-2250 cur=2800 throttle=1.
+  us_bench folded 378.110 vs card1
+  375.885 vs square 118 vs M=64 K=17408
+  130 vs N-wide 394 vs s8 477.4 vs s4
+  149.0 vs compose 968.7 vs LUT 3428 vs
+  napkin 343. Spread ~0.6%. f8scale
+  367.919 vs card1 361.498, act=2267-2233
+  throttle=1.
+
+VERDICT -> Sibling matches. New w4a16
+  M=256 wide-K floor 377 us both cards,
+  cur=2800, act 2250-2317, throttle=1.
+  ~3.19x square, under K-linear (401),
+  beats s8 477.4 and compose 968.7,
+  loses to s4 149.0. Qwen FFN w4a16
+  M=256 map is closed. Rank us.
+
+### 2026-09-03bq - K1/K4 oneDNN W8A8 M=256 N=17408 card1
+
+CONTEXT -> W8A8 M=256 square is 75 us.
+  W8A8 M=1 N=17408 is 158.1. w4a16 394.
+  s8 469.8. s4 140.0. Napkin
+  75*17408/5120 ~255. FFN-up prefill.
+  GEMM-only. One-card.
+
+CONFIG -> pytorch-xpu on sycl+l0, mtp6
+  int8_gemm_w8a8, gpu-run --card 1.
+  spin=512 of M=256 then us_bench.
+  N=17408 K=5120. Oracle after timed.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/w8_compare/run_w8_m256_wide_hold.sh 1 512
+  ```
+
+RESULT -> out f16 [256,17408]. timed
+  act=2517-2500 cur=2800 throttle=1.
+  us_bench 248.116 vs square 75 vs
+  w4a16 394 vs s8 469.8 vs s4 140.0 vs
+  napkin 255. Ratio 248.1/75 ~3.31x.
+  ~N-linear (255). cosine=1.000
+  max_abs=0.062. 359 GB/s.
+
+VERDICT -> Wide-N W8A8 M=256 is 248 us
+  at act~2510/2800 card1, ~3.31x square
+  (napkin 255 held), beats w4a16 394
+  (~1.59x) and s8 469.8, loses to s4
+  140.0 (~1.77x). Throttle=1. Numeric
+  closed. One-card. Do not freeze until
+  card0. Rank us. Next: sibling W8A8
+  M=256 N=17408 vs W8A8 M=256 K=17408.
