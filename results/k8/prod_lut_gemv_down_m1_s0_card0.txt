@@ -1,0 +1,14 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7496969452697 energy2=pkg:4382986664001 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7448861208312 energy2=pkg:4537484610229 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=prod_lut_gemv_n1856 table16x16 m=1 n=1856 k=2688 lightning_expert_down_gemv never_bitcast_s4 spin=0
+Expert down GEMV orientation requested as n=1856 k=2688. Rank pipe_host.
+=== product LUT GEMV m=1 n=1856 k=2688 spin=0 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=prod_lut_gemv_n1856 W4A4 table16x16 never_bitcast_s4 m=1 n=1856 k=2688 warmup=50 iters=40 card=0 spin=0 mhz=2400 heat=none
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,m,n,k,event_us,wait_host_us,pipe_host_us,cosine,max_abs,ok,median_us,min_us,max_us
+timed,1,1856,2688,447.888,462.750,448.180,0.000000,0,0,447.917,447.291,448.230

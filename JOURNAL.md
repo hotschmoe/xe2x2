@@ -14915,3 +14915,2672 @@ Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
 
+### 2026-09-04at - K8 ESIMD grouped 6-expert s8 DOWN-proj M=1 card0
+
+CONTEXT -> K8 grouped decode
+  DOWN: 6 routed experts,
+  each s8 M=1 n=2688 k=1856,
+  one in-order queue. U=14/16
+  cannot divide k=1856; k64
+  loop. Priors: grouped UP
+  165.223 us card1 at 2800
+  (04ag). one-expert UP s8
+  16.060 (04ad). W8A8 UP
+  44.285 (04ae). Napkin:
+  launch-bound ~165 or
+  K-linear
+  165.223*(1856/2688)=114.087.
+  Rank pipe_host of all 6.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  moe_group_s8_m1. gpu-run
+  --card 0. experts=6 m=1
+  n=2688 k=1856. spin=4000.
+  RC=4 NT=2 kstep=64
+  wg=8x2_alongN scale 0.02
+  out f16. Six launches
+  share A and one in-order
+  queue. Not U=14. P2P off.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_moe_group_s8_down_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  119.487 last_event 23.487
+  wait_host 188.079
+  pipe_host 120.502. TOPS
+  0.4968. median_sum 119.375
+  min 112.187 max 137.604.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 15 samples.
+  GPU-window act=0,0,0,0,0
+  then 6x 2800 then 3x 0.
+  Two samples cur=400
+  (act=0). start act=0
+  cur=2800 throttle=0 D3hot.
+  end act=0 cur=2800
+  throttle=0 D0. vs grouped-up
+  165.223 (~0.73x) vs
+  6*16.060=96.360 (~1.25x)
+  vs K-linear 114.087
+  (~1.06x) vs
+  6*44.285=265.710 (~0.45x).
+  gpu-run 2s.
+
+VERDICT -> ESIMD grouped 6
+  routed-expert s8 DOWN-proj
+  M=1 is 120.502 us
+  pipe_host card0 at 2800.
+  K-linear vs grouped-up
+  165, not launch-bound.
+  Beats 6x W8A8 266 napkin.
+  Loses to 6x U=14 96 napkin
+  (~1.25x): this binary is
+  k64-loop not U=14; mean
+  event 19.9 us/expert vs
+  UP 27.4. pipe_host ~ event
+  sum, so the in-order queue
+  packed the six launches.
+  Numeric closed. Clocks
+  held. One-card enough
+  (matched s8 RC=4 family).
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04au - K8 ESIMD s8 Lightning routed expert UP-proj M=64 card1
+
+CONTEXT -> K8 Lightning routed
+  expert UP-proj M=64 n=1856
+  k=2688 using existing
+  dpas_s8_sc_u14 (U=14
+  divides 2688). ONE expert,
+  not grouped-6. Priors: M=1
+  s8 16.060 (04ad). W8A8 M=1
+  44.285 (04ae). Prior M=64
+  4x8 A-db ~75 us at 5120
+  (K2/K4). Napkin N-linear
+  is wrong at M=1; at M=64
+  expect leaving launch-
+  class. Rank pipe_host.
+  One-card on s8 U=14 family.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14. gpu-run
+  --card 1. NT=2 U=14 m=64
+  n=1856 k=2688. spin=512
+  (M=64 heat; not 4000).
+  Fill s8 [-64,64] scales
+  0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+  P2P off. No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_esimd_s8_moe_up_m64.sh 1 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  32.286 pipe_host 31.198
+  wait_host 47.071. median
+  32.291 min 31.562 max
+  33.646. TOPS 19.7787.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 12 samples.
+  GPU-window act=0,0,0,0,0,
+  0,0,0,400 then 3x 0.
+  start D0 act=0 cur=1883
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  M=1 s8 16.060 (~1.94x)
+  vs W8A8 M=1 44.285
+  (~0.70x) vs 5120 M=64 75
+  (~0.42x) vs M-linear
+  16.060*64=1028 (~0.030x)
+  vs N-linear
+  75*(1856/5120)~27.2
+  (~1.15x). gpu-run 2s.
+
+VERDICT -> ESIMD s8 routed
+  expert UP-proj M=64 is
+  31.198 us pipe_host card1
+  at 2800. Left launch-class
+  16 (M=1 16.060 is ~1.94x
+  for 64x M), not M-linear
+  1028. Tracks N-linear from
+  5120 M=64 75 (~27 us).
+  Beats W8A8 decode 44.285.
+  Numeric closed. Clocks
+  held. One-card enough
+  (matched s8 U=14 RC=4
+  family, cosine closed,
+  clocks held). ONE expert,
+  not grouped-6. Rank
+  pipe_host.
+Do not drop below 5m: M=64 spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04av - K8 ESIMD fused conv+SSU T=1 card0
+
+CONTEXT -> K8 first fuse:
+  sequential-in-one-go conv
+  K=4 C=4096 THEN Mamba-2 SSU
+  T=1, two in-order launches,
+  last event. Not GDN delta.
+  Priors: conv 4.355 us card1
+  (04ai), SSU 80.064 us card0
+  (04ah). Napkin 4.355+80.064
+  =84.419. Rank pipe_host.
+  First fuse: one-card first
+  light. Sibling later.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT mamba_fuse_t1
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. T=1 C=4096 k=4
+  heads=64 d_head=64
+  d_state=128 groups=8. Two
+  in-order launches. spin=4000
+  mhz=2400. P2P off. No serve.
+  No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_mamba_fuse_t1.sh 0 4000
+  ```
+
+RESULT -> conv_cosine=1.000000
+  conv_max_abs=0 ssu_cosine=
+  1.000000 ssu_max_abs=
+  1.9073e-06 ok=1. last_event
+  79.544 wait_host 98.638
+  pipe_host 81.075. baseline
+  84.419. median_last 79.375
+  min 78.541 max 80.834.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 12 samples.
+  GPU-window act=0,0,0,0,517
+  then 4x 2800 then 3x 0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  napkin 84.419 (~0.96x) vs
+  SSU 80.064 (~1.01x; +1.011
+  us). last_event 79.544 vs
+  SSU event 79.531 (wash).
+  gpu-run 2s.
+
+VERDICT -> ESIMD fused
+  conv+SSU T=1 is 81.075 us
+  pipe_host card0 at 2800.
+  Two in-order launches pack
+  the conv launch: last_event
+  is SSU, pipe_host ~ SSU
+  +1 us not +4.355. Beats
+  84.419 sequential napkin
+  (~0.96x). Numeric closed.
+  Clocks held. One-card first
+  fuse; sibling not yet. SSU
+  is not GDN delta. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04aw - K8 ESIMD Lightning MoE router M=1 card1
+
+CONTEXT -> K8 Lightning MoE
+  router decode M=1: f16 GEMV
+  2688->128, sigmoid, global
+  top-6 of 128. n_groups=8
+  topk_group=1 is a later
+  steal; this arm is simple
+  global_top6. No expert bias.
+  Timed kernel is GEMV+sigmoid;
+  top-6 is host-side of GPU
+  scores vs host oracle. Rank
+  pipe_host vs eager. Napkin:
+  BW 694 KiB / 608 GB/s ~1.14
+  us, or launch-class 16 like
+  s8 expert-up. Priors: grouped
+  UP 165.223 (04ag), s8 UP
+  16.060 (04ad), o-proj 23.115
+  (04ap). New numeric.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT moe_router
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. M=1 hidden=2688
+  n_experts=128 n_groups=8
+  topk_group=1 topk=6
+  selection=global_top6.
+  dtype f16xf16 acc f32
+  sigmoid. spin=4000 mhz=2400.
+  P2P off. No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_moe_router.sh 1 4000
+  ```
+
+RESULT -> host_top6=gpu_top6
+  indices=87,10,64,111,99,71.
+  cosine=1.000000
+  max_abs=8.9407e-08 set_ok=1
+  ok=1. event 26.932 wait_host
+  40.508 pipe_host 27.333.
+  median 26.875 min 26.770
+  max 27.188. spin_done
+  act=cur=2800 throttle=0.
+  timed act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,0,400,
+  2800,0,0,0. start D0 act=0
+  cur=2800 throttle=0. end D0
+  act=0 cur=2800 throttle=0.
+  vs eager wait_host 40.508
+  (~0.67x) vs event 26.932
+  (~1.01x) vs s8 UP 16.060
+  (~1.70x) vs o-proj 23.115
+  (~1.18x) vs grouped-up
+  165.223 (~0.17x) vs BW 1.14
+  (~24x). gpu-run 1s.
+
+VERDICT -> ESIMD Lightning MoE
+  router M=1 is 27.333 us
+  pipe_host card1 at 2800.
+  GEMV+sigmoid, not XMX: 27-
+  class not launch-class 16
+  and not BW 1.14. pipe ~ event
+  so 27 us is kernel not host.
+  Eager wait_host 40.5. Router
+  is not free (~0.17x of
+  grouped-up 165). Numeric
+  closed (same top-6 set,
+  cosine=1). Clocks held.
+  One-card first; sibling not
+  yet. Grouped topk_group=1
+  later. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ax - K8 NVFP4 closed-form nibble LUT U=14 Lightning routed expert UP-proj M=1 card0
+
+CONTEXT -> K8 closed-form (exp/mant)
+  nibble->s8 U=14 steal on
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Merge LUT U=14 is 83.659
+  (04an). Closed-form 5120 is
+  134.8 (03ad) vs merge 158.
+  Binary nibble_lut_scf_u14
+  COMPILE_OK (icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31). Priors:
+  s8 U=14 16.060 (04ad),
+  W8A8 44.285 (04ae), two-term
+  15.518 (04ao). Napkin
+  K-linear 134.8*(2688/5120)
+  ~70.8; N-linear
+  134.8*(1856/5120)~48.9;
+  merge-ratio
+  83.659*(134.8/158)~71.4
+  (CONFIG). Packed E2M1.
+  Never bitcast s4. STOP if
+  us > 4x W8A8 (176). One-card
+  closed-form LUT family +
+  U=14 unroll.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  nibble_lut_scf_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896 (three blocks).
+  m=1 n=1856 k=2688.
+  spin=4000. Packed E2M1 B
+  2/byte along K, closed-form
+  exp/mant decode, VNNI4,
+  RC=4 8x2-N s8 scale-to-f16.
+  dpas=56. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nibble_lut_scf_u14.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  71.359 pipe_host 71.715
+  wait_host 85.663. median
+  71.354 min 70.625 max
+  71.770. TOPS 0.1398.
+  GBs_packedB 34.956.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 11 samples.
+  GPU-window act=0,0,0,0,550
+  then 3x 2800 then 3x 0.
+  start D0 act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  merge LUT 83.659 (~0.857x)
+  vs s8 16.060 (~4.47x) vs
+  two-term 15.518 (~4.62x) vs
+  W8A8 44.285 (~1.62x) vs
+  closed-form 5120 134.8
+  (~0.532x) vs napkin
+  K-linear ~70.8 (~1.01x) vs
+  N-linear ~48.9 (~1.47x).
+  Under STOP 4x W8A8 176.
+  gpu-run 2s exit 0.
+
+VERDICT -> NVFP4 closed-form
+  nibble LUT U=14 Lightning
+  expert-up M=1 is 71.715 us
+  pipe_host card0 at 2800.
+  Numeric closed. Clocks
+  held. Beats merge LUT
+  83.659 (~0.857x). Loses to
+  s8 16.060, two-term 15.518,
+  and W8A8 44.285. Tracks
+  5120 closed-form 134.8 by
+  K, not launch-class like
+  s8/W8A8. LUT tax (35 GB/s),
+  not HBM. Packed E2M1, never
+  bitcast s4. One-card enough
+  (closed-form LUT family
+  already both-card at 5120;
+  this is U=14 unroll/k-block).
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ay - K8 ESIMD dequant-to-bf16 GEMV hail-mary M=1 card1
+
+CONTEXT -> K8 hail-mary:
+  dequant-to-bf16 GEMV at
+  Lightning routed expert
+  UP-proj M=1 N=1856 K=2688.
+  Tiny-N may beat LUT+XMX.
+  Priors: LUT U=14 83.659
+  (04an), s8 U=14 16.060
+  (04ad), W8A8 44.285
+  (04ae), two-term 15.518
+  (04ao), nvfp4 39.255
+  (04as). STOP if us > 4x
+  W8A8 ~177. Rank pipe_host.
+  New numeric. GEMV-only,
+  not a dequant launch.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gemv_bf16_m1
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. hail-mary. M=1
+  N=1856 K=2688. bf16 A/B,
+  f32 acc, f16 out. XVE FMA
+  VL=16 4-out/WI WG=16, not
+  DPAS. spin=4000 mhz=2400.
+  P2P off. No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_gemv_bf16_moe_up_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  26.609 wait_host 41.037
+  pipe_host 26.962. TOPS
+  0.3701. median 26.563 min
+  26.458 max 26.771.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,0,
+  400,2800,2800,0,0. start
+  D0 act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  LUT 83.659 (~0.32x, a
+  beat) vs s8 16.060
+  (~1.68x) vs W8A8 44.285
+  (~0.61x, a beat) vs
+  two-term 15.518 (~1.74x)
+  vs nvfp4 39.255 (~0.69x)
+  vs router 27.333 (~0.99x)
+  vs event 26.609 (~1.01x)
+  vs STOP 177 (~0.15x).
+  gpu-run 2s.
+
+VERDICT -> hail-mary
+  dequant-to-bf16 GEMV M=1
+  N=1856 is 26.962 us
+  pipe_host card1 at 2800.
+  Beats LUT 83.659, loses
+  to s8 16.060 (~1.68x,
+  not badly). Beats W8A8
+  44.285. 27-class like
+  router 27.333, not LUT
+  84 and not XMX 16. pipe
+  ~ event so 27 us is
+  kernel not host. XVE
+  FMA, not DPAS. Numeric
+  closed. Clocks held.
+  One-card first; sibling
+  not yet. No STOP (us <<
+  4x W8A8). Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04az - K8 ESIMD Mamba-2 SSD prefill T=256 card0
+
+CONTEXT -> K8 first chunked
+  prefill: Mamba-2 SSD T=256
+  chunk_size=128. Serial state
+  carry over T. Not GDN delta.
+  Priors: SSU T=1 80.064 us
+  (04ah), fused conv+SSU T=1
+  81.075 us (04av). Napkin
+  256*80.064=20496.384. Rank
+  pipe_host. One-card first.
+  spin=0 (script default).
+
+CONFIG -> backend sycl+l0,
+  standalone AOT mamba_ssd_t256
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. T=256
+  chunk_size=128 heads=64
+  d_head=64 d_state=128
+  groups=8. Serial T, state
+  carries. spin=0 mhz=2400.
+  P2P off. No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_mamba_ssd_t256.sh 0 0
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=6.1035e-05 ok=1.
+  oracle_s=0.434 score_y=full
+  score_state=final
+  samples=1572864. event
+  21082.469 wait_host 21114.645
+  pipe_host 21114.404. napkin
+  20496.384. median 21053.698
+  min 20890.104 max 21390.625.
+  timed act=cur=2800
+  throttle=0 both ends. freq
+  50 ms throttle=0 all 19
+  samples. GPU-window
+  act=0,0,0,0,400 then 5x 0
+  then 6x 2800 then 3x 0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  napkin 20496.384 (~1.03x)
+  vs fused T=1 81.075*256=
+  20755.2 (~1.017x) vs SSU
+  T=1 80.064 per token
+  82.478 (~1.03x). pipe ~
+  event (~1.00x). gpu-run 3s
+  exit 0.
+
+VERDICT -> ESIMD Mamba-2 SSD
+  prefill T=256 chunk=128 is
+  21114.404 us pipe_host
+  card0. Serial T, T-linear
+  vs SSU 80.064 (~1.03x
+  napkin). Combined wall, not
+  a beat of sequential SSU or
+  fused 81.075. Chunk=128 is
+  a serial nest, not a
+  parallel scan. Numeric
+  closed (full y+state
+  cosine=1). spin=0 but timed
+  act=cur=2800 (kernel ~21 ms
+  ramps). Do not freeze as a
+  spin=4000 both-card floor.
+  One-card first; sibling not
+  yet. SSU is not GDN delta.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ba - K8 GPTQ s4 g128 U=14 Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 true INT4 XMX
+  control: synthetic GPTQ-s4
+  g128 U=14 at Lightning
+  routed expert UP-proj M=1
+  n=1856 k=2688. Not NVFP4.
+  No Lightning GPTQ ckpt;
+  omit --b-bin for
+  deterministic synthetic
+  s4 B and g128 f16 scales.
+  Binary dpas_s4_gptq_sc_u14
+  COMPILE_OK. NT=2 U=14
+  inner_k=896 divides k=2688.
+  gs=128. 2688%128=0. Priors:
+  s8 U=14 16.060 (04ad),
+  two-term 15.518 (04ao),
+  nvfp4 dump 39.255 (04as),
+  W8A8 44.285 (04ae), GPTQ
+  square ~29.9 at 5120
+  (03cs). Never bitcast
+  E2M1. Rank pipe_host.
+  New numeric. One-card
+  first if cosine closes.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s4_gptq_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. NT=2 U=14
+  inner_k=896 (three blocks).
+  m=1 n=1856 k=2688. gs=128.
+  RC=4 8x2-N s4xs4_gptq
+  scale-to-f16. weights=
+  SYNTHETIC. spin=4000.
+  mhz=2400. P2P off. No
+  serve. Never E2M1.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_gptq_s4_moe_up_u14.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  15.807 pipe_host 16.224
+  wait_host 30.068. median
+  15.833 min 15.520 max
+  16.250. TOPS 0.6312.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,0,
+  400,2800,2800,0,0. start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  s8 16.060 (~1.01x) vs
+  two-term 15.518 (~1.05x)
+  vs nvfp4 39.255 (~0.41x)
+  vs W8A8 44.285 (~0.37x)
+  vs GPTQ 5120 29.9 (~0.54x)
+  vs napkin K-linear
+  29.9*(2688/5120)~15.7
+  (~1.03x) vs N-linear
+  29.9*(1856/5120)~10.8
+  (~1.50x) vs event 15.807
+  (~1.03x). Under STOP 4x
+  W8A8 177. gpu-run 2s
+  exit 0.
+
+VERDICT -> Synthetic GPTQ
+  s4 g128 U=14 Lightning
+  expert-up M=1 is 16.224
+  us pipe_host card1 at
+  2800. True INT4 XMX
+  control, not NVFP4.
+  Launch class vs s8
+  16.060 / two-term 15.518.
+  Beats nvfp4 39.255 and
+  W8A8 44.285. Tracks
+  K-linear from GPTQ 5120
+  29.9, not N-linear.
+  Scale tax that was ~13
+  us at 5120 (29.9 vs s4
+  16.5) is washed on this
+  16-class launch floor.
+  Numeric closed. Clocks
+  held. One-card first;
+  sibling not yet (new
+  Lightning MNK numeric,
+  synthetic dump). Never
+  bitcast E2M1. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bc - K8 E2M1 two-term s4 k64 Lightning routed expert DOWN-proj M=1 card1
+
+CONTEXT -> K8 NVFP4 spoof:
+  two-term s4 compose
+  w_lo+8*w_hi k64 loop at
+  Lightning routed expert
+  DOWN-proj M=1 n=2688
+  k=1856. A=s4. Never
+  bitcast. New k64 compose
+  (U=14 inner_k=896 and
+  U=16 inner_k=1024 refuse
+  1856%896=64 /
+  1856%1024=832). Priors:
+  two-term UP 15.518
+  (04ao), grouped down s8
+  120.502 (04at), GPTQ
+  16.224 (04ba), s8 U=14
+  UP 16.060, W8A8 44.285.
+  Rank pipe_host. One-card
+  first if cosine closes.
+  STOP if us > 4x W8A8
+  177.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  compose_e2m1_k64
+  intel_gpu_bmg_g31.
+  gpu-run --card 1. NT=2
+  unroll=1 kstep=64 m=1
+  n=2688 k=1856. spin=4000.
+  mhz=2400. A=s4, B=E2M1
+  split two s4 planes,
+  acc=acc_lo+8*acc_hi.
+  RC=4 wg=8x2_alongN
+  dpas_lo_hi_per_kstep=4.
+  P2P off. No serve. Never
+  bitcast.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_e2m1_twoterm_down_k64.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  10.656 pipe_host 11.008
+  wait_host 24.378. median
+  10.625 min 10.312 max
+  10.938. TOPS 0.9363.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,0,
+  400,750,0,2800,0. start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0.
+  check 4x32x64 cosine=1
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  two-term UP 15.518
+  (~0.71x) vs K-linear from
+  UP 15.518*(1856/2688)
+  ~10.715 (~1.03x) vs
+  grouped-down s8/6 20.084
+  (~0.55x) vs GPTQ 16.224
+  (~0.68x) vs s8 U=14 UP
+  16.060 (~0.69x) vs W8A8
+  44.285 (~0.25x) vs 5120
+  two-term 28.5 (~0.39x)
+  vs K-linear 28.5*
+  (1856/5120)~10.33
+  (~1.07x) vs N-linear
+  from UP 15.518*
+  (2688/1856)~22.47
+  (~0.49x) vs event 10.656
+  (~1.03x) vs STOP 177
+  (~0.06x). Under STOP 4x
+  W8A8. gpu-run 1s exit 0.
+
+VERDICT -> E2M1 two-term s4
+  k64 Lightning expert
+  DOWN-proj M=1 is 11.008
+  us pipe_host card1 at
+  2800. Beats two-term UP
+  15.518, GPTQ 16.224, and
+  W8A8 44.285. Tracks
+  K-linear from UP 10.715,
+  not the 16-class launch
+  floor and not N-linear.
+  Beats grouped-down s8
+  mean 19.9 us/expert
+  (~0.55x) on the same
+  k=1856 k64 MNK. K6 prior
+  "not at FFN-down" is the
+  wide-K 17408 shape, not
+  this expert-down. New
+  k64 compose. Numeric
+  closed. Clocks held.
+  One-card first; sibling
+  not yet. Never bitcast
+  E2M1. Rank pipe_host.
+  No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bb - K8 NVFP4 nibble LUT k64 Lightning routed expert DOWN-proj M=1 card0
+
+CONTEXT -> K8 packed E2M1 nibble
+  LUT plus s8 DPAS k64 loop at
+  Lightning routed expert
+  DOWN-proj M=1 n=2688 k=1856.
+  Stock U=14/16 cannot divide
+  k=1856 (1856%896=64,
+  1856%1024=832). Do not fire
+  stock. Binary nibble_lut_k64
+  COMPILE_OK. NT=2 unroll=1
+  kstep=64 divides k=1856
+  (29 blocks). Never bitcast.
+  Priors: LUT up U=14 83.659
+  (04an), grouped down s8
+  120.502/6 ~20.084 (04at),
+  s8 one-expert up 16.060
+  (04ad), W8A8 44.285 (04ae).
+  Napkin K-linear
+  83.659*(1856/2688)~57.765;
+  same packed bytes as up
+  ~83.659; N-linear
+  83.659*(2688/1856)~121.161
+  (CONFIG). STOP if us > 4x
+  W8A8 44 (~177) with no new
+  trick. Rank pipe_host.
+  spin=4000. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT nibble_lut_k64
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 unroll=1
+  kstep=64. m=1 n=2688 k=1856.
+  Packed E2M1 B 2/byte along
+  K, simd nibble LUT, VNNI4,
+  RC=4 8x2-N s8 scale-to-f16.
+  dpas=4. spin=4000. mhz=2400.
+  Never bitcast s4. No P2P.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nibble_lut_down_k64.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  37.961 pipe_host 38.351
+  wait_host 51.914. median
+  37.917 min 37.812 max
+  38.125. TOPS 0.2628.
+  GBs_packedB 65.711.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 10 samples.
+  GPU-window act=0,0,0,0,400
+  then 2x 2800 then 3x 0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x64 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  LUT up 83.659 (~0.458x) vs
+  s8 16.060 (~2.39x) vs
+  grouped-down/6 20.084
+  (~1.91x) vs W8A8 44.285
+  (~0.866x) vs napkin
+  K-linear ~57.765 (~0.664x)
+  vs same-bytes 83.659
+  (~0.458x) vs N-linear
+  ~121 (~0.317x) vs event
+  37.961 (~1.01x) vs STOP
+  177 (~0.217x). gpu-run 2s
+  exit 0.
+
+VERDICT -> NVFP4 nibble LUT
+  k64 Lightning expert-down
+  M=1 is 38.351 us pipe_host
+  card0 at 2800. Numeric
+  closed. Clocks held. Beats
+  LUT up 83.659 at the same
+  packed bytes, and beats
+  W8A8 44.285. Loses to s8
+  16.060 (~2.39x) and
+  grouped-down/6 ~20 (~1.91x).
+  Faster than K-linear napkin
+  58. LUT tax shrinks (66
+  GB/s vs up 30) but is not
+  HBM. Stock U=14/16 not
+  fired (cannot divide k).
+  Never bitcast. No STOP
+  (us << 4x W8A8). One-card
+  first; sibling not yet
+  (new Lightning down MNK;
+  LUT family both-card at
+  5120). Rank pipe_host.
+
+### 2026-09-04be - K8 oneDNN nvfp4_gemm_w4a16 Lightning routed expert DOWN-proj M=1 card0
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN nvfp4_gemm_w4a16 at
+  Lightning routed expert
+  DOWN-proj M=1 n=2688 k=1856.
+  Priors: UP dump 39.255
+  (04as), two-term down
+  11.008 (04bc), LUT down
+  38.351 (04bb), W8A8 44.285
+  (04ae), s8 U=14 16.060
+  (04ad), GPTQ 16.224
+  (04ba). ONE expert
+  GEMM-only. Same FLOPs and
+  packed B bytes as UP
+  (2*M*N*K=9977856, B
+  2494464). Not 6-expert
+  grouped. Not a serve.
+  ABSENT/EXC is a RESULT.
+  STOP if us > 4x W8A8 177.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 0.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. Load
+  v028 /mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so
+  via B70_XPU_C_SO. Folded
+  bf16 scale g16. B packed NT
+  stride(0)=1. A bf16. M=1
+  n=2688 k=1856. warmup 10
+  iters 20. No M=64 heat
+  (unlike K6 5120 dump).
+  Rank us. P2P off. No serve.
+  Clocks may not hold; do not
+  freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nvfp4_moe_down_m1.sh 0
+  ```
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  True HAS f8scale True.
+  load_library v028 ok. out
+  bf16 [1,2688]. B (928,2688)
+  stride (1,928).
+  39.224 us. vs UP 39.255
+  (~1.00x) vs two-term down
+  11.008 (~3.56x) vs LUT down
+  38.351 (~1.02x) vs W8A8
+  44.285 (~0.89x) vs s8
+  16.060 (~2.44x) vs GPTQ
+  16.224 (~2.42x) vs grouped
+  down s8/6 20.084 (~1.95x)
+  vs unheld 5120 37.169
+  (~1.06x) vs held 34.7
+  (~1.13x) vs napkin
+  N-linear 39.255*(2688/1856)
+  ~56.85 (~0.69x) vs napkin
+  K-linear 39.255*(1856/2688)
+  ~27.10 (~1.45x) vs STOP
+  177 (~0.22x). No E2M1
+  cosine this dump. f8scale
+  not timed. GPU-window
+  act=1600,1450,1350,1200,
+  1200 cur=1567,1450,1500,
+  1183,1183 throttle=0.
+  Zero samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  152 samples. start act=0
+  cur=2800 throttle=0 D3hot.
+  end act=0 cur=1183
+  throttle=0 D0. gpu-run 13s
+  exit 0.
+
+VERDICT -> oneDNN
+  nvfp4_gemm_w4a16 Lightning
+  routed expert DOWN-proj M=1
+  is 39.224 us card0, 37-class
+  launch like UP 39.255 and
+  square 5120, not N-linear
+  and not K-linear. Same
+  packed E2M1 bytes and FLOPs
+  as UP. Beats W8A8 44.285,
+  wash vs LUT down 38.351,
+  loses to two-term down
+  11.008 and s8 16.060. A is
+  bf16, not s8. Packed E2M1
+  in VRAM. throttle=0. Do
+  not freeze (act not held
+  2800; no M=64 heat). One-
+  card enough (w4a16 family
+  already matched both cards
+  at 5120). Rank us. No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bd - K8 hail-mary 16-entry iselect nibble LUT U=14 Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 hail-mary: 16-entry
+  iselect table nibble LUT U=14
+  at Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Lost ~6.46x at 5120 (1022 us
+  vs merge 158, 02cr). One fire
+  then STOP if still a loss vs
+  merge LUT 83.659 / s8 16.060.
+  Binary nibble_lut_sct_u14
+  COMPILE_OK. inner_k=896
+  divides k=2688. Never bitcast.
+  Priors: merge LUT U=14 83.659
+  (04an), closed-form 71.715
+  (04ax), s8 U=14 16.060 (04ad),
+  W8A8 44.285 (04ae), two-term
+  15.518 (04ao). Napkin K-linear
+  1021.73*(2688/5120)~536.4;
+  N-linear
+  1021.73*(1856/5120)~370.5;
+  merge-ratio
+  83.659*(1021.73/158)~541
+  (CONFIG). STOP if loss vs
+  merge LUT. Rank pipe_host.
+  spin=4000. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  nibble_lut_sct_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. hail-mary. NT=2
+  U=14 inner_k=896 (three
+  blocks). m=1 n=1856 k=2688.
+  Packed E2M1 B 2/byte along
+  K, 16-entry GRF table +
+  iselect, VNNI4, RC=4 8x2-N
+  s8 scale-to-f16. dpas=56.
+  spin=4000. mhz=2400. Never
+  bitcast s4. No P2P. No
+  serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nibble_lut_sct_u14.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  536.547 pipe_host 537.031
+  wait_host 552.430. median
+  536.562 min 536.354 max
+  536.875. TOPS 0.0186.
+  GBs_packedB 4.649.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 33 samples.
+  GPU-window act=0,0,0,0 then
+  25x 2800 then 4x 0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=550
+  (not Lightning timed). vs
+  merge LUT 83.659 (~6.42x)
+  vs closed-form 71.715
+  (~7.49x) vs s8 16.060
+  (~33.4x) vs two-term
+  15.518 (~34.6x) vs W8A8
+  44.285 (~12.1x) vs 5120
+  iselect 1022 (~0.526x) vs
+  napkin K-linear ~536.4
+  (~1.00x) vs N-linear ~370.5
+  (~1.45x) vs event 536.547
+  (~1.00x) vs STOP 177
+  (~3.03x). Over 4x W8A8.
+  gpu-run 4s exit 0.
+
+VERDICT -> hail-mary 16-entry
+  iselect table LUT U=14
+  Lightning expert-up M=1 is
+  537.031 us pipe_host card1
+  at 2800. Numeric closed.
+  Clocks held. Still a loss
+  vs merge LUT 83.659 (~6.42x)
+  and closed-form 71.715
+  (~7.49x) and s8 16.060
+  (~33.4x). Tracks 5120
+  iselect 1022 by K, not
+  launch-class. LUT tax (4.6
+  GB/s). Packed E2M1, never
+  bitcast s4. STOP rewrite.
+  One-card enough (iselect
+  family already both-card at
+  5120; shape steal still
+  lost). Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bf - K8 s8-A x s4-B U=14 Lightning routed expert UP-proj M=1 card0
+
+CONTEXT -> K8 integer mix
+  control: s8-A x s4-B U=14
+  at Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Not E2M1 bitcast. Not
+  E2M1-as-s8 LUT (that is
+  nibble_lut 83.659 already).
+  Binary dpas_s8xs4_sc_u14
+  COMPILE_OK. NT=2 U=14
+  inner_k=448 divides k=2688
+  (six blocks). Priors: s8
+  U=14 16.060 (04ad), GPTQ
+  16.224 (04ba), two-term
+  15.518 (04ao), W8A8 44.285
+  (04ae), s8xs4 5120 21.961
+  (03cl), s2xs8 14.1. CONFIG
+  prior ~34 like s8 or ~14
+  like s2xs8. Rank pipe_host.
+  spin=4000. P2P off. New
+  u14 mix: one-card first if
+  cosine closes.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8xs4_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=448 (six blocks).
+  m=1 n=1856 k=2688. A=s8
+  B=s4 packed 2/byte. RC=4
+  8x2-N s8xs4 scale-to-f16.
+  dpas=28. spin=4000.
+  mhz=2400. Never bitcast
+  E2M1. No P2P. No serve.
+  No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_s8xs4_moe_up_u14.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  12.958 pipe_host 13.458
+  wait_host 27.291. median
+  12.916 min 12.604 max
+  13.438. TOPS 0.7700.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=1200,0,0,0,
+  400,2800,2800,0,0. start
+  D3hot act=0 cur=1183
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x448 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  s8 16.060 (~0.84x) vs
+  GPTQ 16.224 (~0.83x) vs
+  two-term 15.518 (~0.87x)
+  vs W8A8 44.285 (~0.30x)
+  vs nvfp4 39.255 (~0.34x)
+  vs LUT 83.659 (~0.16x) vs
+  s8xs4 5120 21.961 (~0.61x)
+  vs napkin K-linear
+  21.961*(2688/5120)~11.53
+  (~1.17x) vs N-linear
+  21.961*(1856/5120)~7.96
+  (~1.69x) vs s2xs8 14.1
+  (~0.95x) vs event 12.958
+  (~1.04x) vs STOP 177
+  (~0.08x). Under 4x W8A8.
+  gpu-run 1s exit 0.
+
+VERDICT -> s8-A x s4-B U=14
+  Lightning expert-up M=1 is
+  13.458 us pipe_host card0
+  at 2800. Integer mix
+  control, not E2M1 bitcast
+  and not E2M1-as-s8 LUT.
+  Numeric closed. Clocks
+  held. Beats two-term
+  15.518 / s8 16.060 / GPTQ
+  16.224 / W8A8 44.285.
+  13.5-class, below the
+  16-class launch floor.
+  Tracks nearer s2xs8 14.1
+  than s8 34 (CONFIG prior
+  ~14 was closer). Not
+  N-linear. Never bitcast.
+  One-card first; sibling
+  not yet (new Lightning
+  mix us vs two-term 15.518;
+  both-card before freeze as
+  a floor). Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bg - K8 hail-mary bitcast E2M1 onto s4 DPAS Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 hail-mary:
+  bitcast E2M1 nibbles onto
+  s4 DPAS at Lightning
+  routed expert UP-proj M=1
+  n=1856 k=2688. Expect
+  cosine death. Explicit
+  negative. Never promote as
+  a floor. Binary
+  bitcast_e2m1_s4 COMPILE_OK.
+  RC=8 K=64 N=16. Priors: K6
+  check 8x16x64 max_abs=352
+  ok=0, timed 256^3
+  max_abs=1408 ok=0. two-term
+  15.518 (04ao), s8 16.060
+  (04ad), W8A8 44.285
+  (04ae). Oracle E2M1
+  q={0,+-1,+-2,+-3,+-4,+-6,
+  +-8,+-12}. s4 range
+  [-8,7]. Rank cosine vs
+  E2M1 dequant oracle AND us
+  vs two-term / s8. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone bitcast_e2m1_s4
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. hail-mary.
+  m=1 n=1856 k=2688. RC=8
+  padM=RC (M=1 not aligned).
+  Packed nibbles as s4 two's
+  complement into dpas<s4,s4>.
+  warmup=20 iters=20. No
+  spin. No P2P. No serve.
+  No CCL. Never a floor.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_bitcast_e2m1_s4_moe_up_m1.sh 1
+  ```
+
+RESULT -> M=1 n=1856 k=2688
+  not aligned (1%8!=0)
+  bitcast_m1_rc=2. padM=8
+  check 8x16x64 event 23.505
+  max_abs=352 ok=0 (matches
+  K6 352). timed 8x1856x2688
+  event 45.104 TOPS 1.7697
+  max_abs=14784 ok=0
+  bitcast_padm8_rc=1. host
+  cosine vs E2M1 dequant
+  oracle (same fill) check
+  cosine=0.663320 max_abs=352
+  ok=0; timed_padM8
+  cosine=0.663320
+  max_abs=14784 ok=0. GPU
+  max_abs matches host. freq
+  50 ms throttle=0 all 14
+  samples. GPU-window act=
+  0,0,0,0,400 then 9x 0.
+  cur=2800 x4 then 400,550
+  then 8x 600. Zero samples
+  act=cur=2800. start D3hot
+  act=0 cur=2800 throttle=0.
+  end D0 act=0 cur=600
+  throttle=0. vs two-term
+  15.518 (~2.91x) vs s8
+  16.060 (~2.81x) vs W8A8
+  44.285 (~1.02x) vs STOP
+  177 (~0.25x). Cosine death
+  (0.66 != 1). Clocks not
+  held. gpu-run 2s exit 0.
+
+VERDICT -> hail-mary bitcast
+  E2M1 onto s4 DPAS at
+  Lightning expert-up is
+  cosine=0.663320 max_abs=
+  14784 ok=0 card1. Explicit
+  negative on this histogram.
+  M=1 RC=8 unaligned; padM=8
+  event 45.104 us. Do not
+  freeze us (act not held
+  2800; no spin; padM=8 not
+  M=1). Never a floor. Same
+  mapping death as K6 352 /
+  1408. Compile was not the
+  failure; the numeric is.
+  One-card enough (bitcast
+  family already both-card at
+  K6). Rank cosine. P2P off.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bh - K8 E2M1 two-term s4 U=14 Lightning routed expert UP-proj M=64 card0
+
+CONTEXT -> K8 NVFP4 spoof:
+  two-term s4 compose
+  w_lo+8*w_hi U=14 at
+  Lightning routed expert
+  UP-proj M=64 n=1856 k=2688.
+  A=s4. Never bitcast. Same
+  compose_e2m1_sc_u14 as M=1
+  15.518 (04ao). Prior:
+  large-M loses vs W8A8 at
+  5120 (8x2-N 217.92 vs
+  W8A8 46). Rank pipe_host
+  vs M=1 two-term 15.518,
+  s8 M=64 31.198 (04au),
+  W8A8 M=1 44.285 (04ae).
+  Napkin N-linear
+  217.92*(1856/5120)~79;
+  K-linear
+  217.92*(2688/5120)~114;
+  M-linear 15.518*64~993;
+  4x8 N-linear
+  68.7*(1856/5120)~24.9
+  (CONFIG). spin=512 not
+  4000. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  compose_e2m1_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896 (three
+  blocks). m=64 n=1856
+  k=2688. A=s4, B=E2M1
+  split two s4 planes,
+  acc=acc_lo+8*acc_hi. RC=4
+  wg=8x2_alongN
+  dpas_lo_hi=56. spin=512.
+  mhz=2400. Never bitcast
+  s4. No P2P. No serve. No
+  CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_e2m1_twoterm_moe_up_m64.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  28.833 pipe_host 29.637
+  wait_host 43.655. median
+  29.010 min 27.604 max
+  29.688. TOPS 22.1474.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 12 samples.
+  GPU-window act=0,0,0,0,
+  400,0,0,0,400,0,0,0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  M=1 two-term 15.518
+  (~1.91x) vs s8 M=64 31.198
+  (~0.95x) vs W8A8 M=1
+  44.285 (~0.67x) vs 5120
+  8x2-N 217.92 (~0.14x) vs
+  napkin N-linear ~79
+  (~0.38x) vs K-linear ~114
+  (~0.26x) vs M-linear ~993
+  (~0.030x) vs 4x8 N-linear
+  ~24.9 (~1.19x) vs event
+  28.833 (~1.03x) vs STOP
+  177 (~0.17x). Under 4x
+  W8A8. gpu-run 3s exit 0.
+
+VERDICT -> E2M1 two-term s4
+  U=14 Lightning routed
+  expert UP-proj M=64 is
+  29.637 us pipe_host card0
+  at 2800. Numeric closed.
+  Clocks held. Beats s8 M=64
+  31.198 (~0.95x) and W8A8
+  M=1 44.285 (~0.67x). Left
+  launch-class vs M=1 15.518
+  (~1.91x), same as s8 M=64
+  vs M=1 (~1.94x). CONFIG
+  prior large-M loses vs
+  W8A8 at 5120 does not hold
+  on this expert tile.
+  Tracks nearer 4x8 N-linear
+  24.9 than 8x2-N 79. Never
+  bitcast. One-card enough
+  (matched two-term RC=4
+  family, cosine closed,
+  clocks held). Rank
+  pipe_host. P2P off. M=256
+  still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bi - K8 oneDNN nvfp4_gemm_w4a16 Lightning shared expert M=1 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN nvfp4_gemm_w4a16 at
+  Lightning shared expert
+  M=1 n=3712 k=2688. Priors:
+  UP dump 39.255 (04as),
+  DOWN dump 39.224 (04be),
+  shared s8 U=14 16.541
+  (04ar), shared W8A8 42.273
+  (04am). ONE shared expert
+  GEMM-only. 2x FLOPs and
+  packed B bytes vs UP
+  (2*M*N*K=19955712, B
+  4988928). Not 6-expert
+  grouped. Not a serve.
+  ABSENT/EXC is a RESULT.
+  STOP if us > 4x W8A8 177.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. Load
+  v028 /mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so
+  via B70_XPU_C_SO. Folded
+  bf16 scale g16. B packed NT
+  stride(0)=1. A bf16. M=1
+  n=3712 k=2688. warmup 10
+  iters 20. No M=64 heat
+  (unlike K6 5120 dump).
+  Rank us. P2P off. No serve.
+  Clocks may not hold; do not
+  freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nvfp4_moe_shared_m1.sh 1
+  ```
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  True HAS f8scale True.
+  load_library v028 ok. out
+  bf16 [1,3712]. B (1344,3712)
+  stride (1,1344).
+  38.266 us. vs UP 39.255
+  (~0.97x) vs DOWN 39.224
+  (~0.98x) vs shared s8
+  16.541 (~2.31x) vs shared
+  W8A8 42.273 (~0.91x) vs
+  s8 16.060 (~2.38x) vs
+  two-term 15.518 (~2.47x)
+  vs GPTQ 16.224 (~2.36x)
+  vs LUT 83.659 (~0.46x) vs
+  unheld 5120 37.169
+  (~1.03x) vs held 34.7
+  (~1.10x) vs napkin
+  N-linear 39.255*(3712/1856)
+  ~78.51 (~0.49x) vs STOP
+  177 (~0.22x). No E2M1
+  cosine this dump. f8scale
+  not timed. GPU-window
+  act=400,900,900,900,1350,
+  1350 cur=400,900,900,883,
+  1333,1333 throttle=0.
+  Zero samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  165 samples. start act=0
+  cur=600 throttle=0 D3hot.
+  end act=0 cur=1333
+  throttle=0 D0. gpu-run 14s
+  exit 0.
+
+VERDICT -> oneDNN
+  nvfp4_gemm_w4a16 Lightning
+  shared expert M=1 is
+  38.266 us card1, 37-class
+  launch like UP 39.255 and
+  DOWN 39.224, not N-linear
+  ~78 despite 2x N / 2x
+  packed B vs UP. Beats
+  shared W8A8 42.273, loses
+  to shared s8 16.541. A is
+  bf16, not s8. Packed E2M1
+  in VRAM. throttle=0. Do
+  not freeze (act not held
+  2800; no M=64 heat). One-
+  card enough (w4a16 family
+  already matched both cards
+  at 5120). Rank us. No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bj - K8 ESIMD s8 packed qkv M=64 card0
+
+CONTEXT -> K8 Lightning packed
+  qkv M=64 n=4608 k=2688 using
+  existing dpas_s8_sc_u14
+  (U=14 divides 2688). Packed
+  Q 4096 + K 256 + V 256.
+  Priors: M=1 qkv s8 16.609
+  (04al). s8 expert M=64
+  31.198 (04au). two-term
+  M=64 29.637 (04bh). W8A8
+  qkv M=1 41.320 (04aq).
+  Napkin N-linear from expert
+  M=64 31.198*(4608/1856)~77.5;
+  M-linear 16.609*64~1063.
+  Rank pipe_host. spin=512
+  not 4000. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896. m=64 n=4608
+  k=2688. Fill s8 [-64,64]
+  scales 0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+  spin=512. mhz=2400. No P2P.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_esimd_s8_qkv_m64.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  109.099 pipe_host 106.287
+  wait_host 124.061. median
+  108.906 min 104.167 max
+  116.250. TOPS 14.5322.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 35 samples.
+  GPU-window act=0,0,0,0,
+  400 then 26x 0, 2800 then
+  3x 0. start D0 act=0
+  cur=2800 throttle=0. end
+  D0 act=0 cur=2800
+  throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  M=1 qkv 16.609 (~6.40x) vs
+  s8 expert M=64 31.198
+  (~3.41x) vs two-term M=64
+  29.637 (~3.59x) vs W8A8
+  qkv M=1 41.320 (~2.57x) vs
+  napkin N-linear ~77.5
+  (~1.37x) vs M-linear ~1063
+  (~0.100x) vs event 109.099
+  (~0.97x) vs K7 4x8 A-db
+  214 (~0.50x) vs STOP 165
+  (~0.64x). Under 4x W8A8.
+  gpu-run 5s exit 0.
+
+VERDICT -> ESIMD s8 packed
+  qkv M=64 is 106.287 us
+  pipe_host card0 at 2800.
+  Numeric closed. Clocks
+  held. Left launch-class vs
+  M=1 16.609 (~6.40x), more
+  than expert M=64 vs M=1
+  (~1.94x). Fat N=4608 is
+  2.48x expert N=1856 but
+  3.41x us vs expert M=64
+  31.198; tracks 1.37x of
+  N-linear 77.5, not launch
+  class 16. Loses to W8A8
+  decode 41.320; Lightning
+  W8A8 M=64 still open. Do
+  not claim a W8A8 beat.
+  One-card enough (matched
+  s8 U=14 RC=4 family,
+  cosine closed, clocks
+  held). Rank pipe_host.
+  P2P off. M=256 still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bk - K8 oneDNN W8A8 Lightning o-proj / mamba out_proj M=1 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN int8_gemm_w8a8 at
+  Lightning attn o-proj /
+  mamba out_proj M=1 n=2688
+  k=4096. Same MNK. Priors:
+  s8 o-proj 23.115 (04ap).
+  packed qkv W8A8 41.320
+  (04aq). expert-up W8A8
+  44.285 (04ae). shared
+  42.273 (04am). nvfp4
+  39-class (04as/be/bi).
+  Expect 44-class if launch
+  bound. Napkin N-linear
+  44.285*(2688/1856)~64.14;
+  K-linear
+  44.285*(4096/2688)~67.48
+  (CONFIG). GEMM-only. Not
+  a serve. Clocks may not
+  hold. P2P off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  int8_gemm_w8a8. heat M=64
+  spin=512. m=1 n=2688 k=4096.
+  Rank us. No P2P. No serve.
+  Clocks may not hold; do not
+  freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_w8a8_oproj_m1.sh 1
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0.031166 ok=1.
+  44.081 us. 249.768 GB/s.
+  vs s8 o-proj 23.115
+  (~1.91x; s8 wins) vs
+  packed qkv W8A8 41.320
+  (~1.07x) vs expert-up
+  44.285 (~1.00x) vs shared
+  42.273 (~1.04x) vs nvfp4
+  UP 39.255 (~1.12x) vs
+  napkin N-linear ~64.14
+  (~0.69x) vs K-linear
+  ~67.48 (~0.65x) vs square
+  44 vs Qwen W8A8 47
+  (~0.94x). GPU-window
+  act=1350,550,1050,0,0,
+  1350 cur=1333,1017,1017,
+  1000,1150,1500. Zero
+  samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  149 samples. start act=0
+  cur=1333 throttle=0 D3hot.
+  end act=0 cur=2800
+  throttle=0 D0. gpu-run 13s
+  exit 0.
+
+VERDICT -> oneDNN W8A8 Lightning
+  o-proj / mamba out_proj M=1
+  is 44.081 us card1, 44-class
+  launch like expert-up 44.285
+  and qkv 41.320, not N-linear
+  ~64 or K-linear ~67 despite
+  k=4096. Loses to s8 23.115
+  (~1.91x). Same MNK covers
+  mamba out_proj W8A8. Numeric
+  closed. throttle=0. Do not
+  freeze (act not held 2800).
+  One-card enough (W8A8 family
+  already matched both cards).
+  Rank us. P2P off. No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bl - K8 ESIMD s8 mamba in_proj M=1 card0
+
+CONTEXT -> K8 Lightning mamba
+  in_proj M=1 n=10304 k=2688
+  using existing dpas_s8_sc_u14
+  (U=14 divides 2688). N napkin
+  z/x 4096+4096 + B/C 1024+1024
+  + dt 64 = 10304. n%32=0 so
+  NT=2 tn=32 accepts. Official
+  PTQ is FP8; s8 is the beat-me
+  control. Priors: packed qkv
+  s8 16.609 (04al). expert-up
+  s8 16.060 (04ad). shared s8
+  16.541 (04ar). o-proj s8
+  23.115 (04ap). Napkin
+  N-linear 16.060*(10304/1856)
+  ~89. Rank pipe_host.
+  spin=4000. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896. m=1 n=10304
+  k=2688. Fill s8 [-64,64]
+  scales 0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+  spin=4000. mhz=2400. No P2P.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_esimd_s8_mamba_in_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  22.922 pipe_host 23.504
+  wait_host 36.842. median
+  22.917 min 22.188 max
+  24.271. TOPS 2.4167.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 11 samples.
+  GPU-window act=0,0,0,0,400,0,
+  600 then 2x 2800 then 2x 0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  packed qkv 16.609 (~1.42x)
+  vs expert-up 16.060 (~1.46x)
+  vs shared 16.541 (~1.42x)
+  vs o-proj 23.115 (~1.02x)
+  vs napkin N-linear ~89
+  (~0.264x) vs event 22.922
+  (~1.03x) vs W8A8 qkv 41.320
+  (~0.57x) vs W8A8 expert
+  44.285 (~0.53x). n=10304
+  accepted (n%32=0). gpu-run
+  2s exit 0.
+
+VERDICT -> ESIMD s8 mamba
+  in_proj M=1 is 23.504 us
+  pipe_host card0 at 2800.
+  Numeric closed. Clocks
+  held. Left 16-class vs
+  packed qkv 16.609 (~1.42x)
+  and expert-up 16.060
+  (~1.46x). Fat N=10304 is
+  5.55x expert N=1856 but
+  1.46x us; 2.24x qkv N=4608
+  but 1.42x us. Not N-linear
+  ~89. 23-class wash vs
+  o-proj 23.115 (that was
+  extra K; this is extra N,
+  same k=2688). Official PTQ
+  is FP8; s8 is the beat-me
+  control. Do not claim an
+  FP8 beat. One-card enough
+  (matched s8 U=14 RC=4
+  family, cosine closed,
+  clocks held). Rank
+  pipe_host. P2P off. M=64
+  and FP8 still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bm - K8 oneDNN fp8_gemm_w8a16 Lightning mamba in_proj M=1 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN fp8_gemm_w8a16 at
+  Lightning mamba in_proj M=1
+  n=10304 k=2688. Official
+  PTQ is FP8 here, not NVFP4.
+  Sibling s8 23.504 (04bl).
+  Priors: packed qkv W8A8
+  41.320 (04aq). expert-up
+  W8A8 44.285 (04ae). o-proj
+  W8A8 44.081 (04bk). nvfp4
+  39-class (04as). square fp8
+  M=1 5120 70.340 (K4 card1).
+  Napkin N-linear from square
+  fp8 70.340*(10304/5120)
+  ~141.6; from W8A8 44.285*
+  (10304/1856)~245.9; launch
+  44-class if bound (CONFIG).
+  GEMM-only. Not a serve.
+  ABSENT/EXC is a RESULT.
+  Clocks may not hold. P2P
+  off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  fp8_gemm_w8a16. m=1 n=10304
+  k=2688. warmup 10 iters 20.
+  A bf16, B e4m3fn, scale
+  f32 [1,N]. Rank us vs s8
+  in_proj. No P2P. No serve.
+  Clocks may not hold; do not
+  freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_fp8_mamba_in_m1.sh 1
+  ```
+
+RESULT -> HAS fp8_gemm_w8a16
+  True. imported
+  vllm_xpu_kernels._xpu_C.
+  torch 2.13.0+xpu. out bf16
+  [1,10304]. 51.036 us.
+  542.700 GB/s. No host
+  cosine this dump. vs s8
+  in_proj 23.504 (~2.17x; s8
+  wins) vs packed qkv W8A8
+  41.320 (~1.24x) vs expert-
+  up 44.285 (~1.15x) vs
+  o-proj W8A8 44.081 (~1.16x)
+  vs nvfp4 UP 39.255 (~1.30x)
+  vs square fp8 70.340
+  (~0.73x) vs napkin N-linear
+  ~141.6 (~0.36x) vs W8A8
+  N-linear ~245.9 (~0.21x)
+  vs 44-class (~1.15x).
+  GPU-window act=400,1600,0,
+  0,0,0,0,0,0,1500
+  cur=400,1583,1550,1550,
+  1550,1500,1500,1500,1500,
+  1500. Zero samples
+  act=cur=2800. freq 50 ms
+  throttle=0 all 167 samples.
+  start act=0 cur=2800
+  throttle=0 D3hot. end
+  act=0 cur=1500 throttle=0
+  D0. gpu-run 14s exit 0.
+
+VERDICT -> oneDNN
+  fp8_gemm_w8a16 Lightning
+  mamba in_proj M=1 is 51.036
+  us card1. Loses to s8
+  23.504 (~2.17x). Fat N=
+  10304 left 44-class (~1.15x
+  of W8A8 44.285), not
+  N-linear ~142 / ~246.
+  543 GB/s of 608 (~0.89x
+  roof) on 27.7 MB B.
+  Official PTQ incumbent,
+  not an E2M1 spoof. HAS
+  True in mtp6 image. No
+  host cosine. throttle=0.
+  Do not freeze (act not
+  held 2800). One-card
+  enough (fp8_gemm_w8a16
+  family already both-card
+  at 5120). Rank us. P2P
+  off. No STOP. out_proj
+  still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bn - K8 pytorch-xpu SDPA Lightning GQA 32/2 T_kv=1 card0
+
+CONTEXT -> K8 Lightning GQA
+  decode attn vs Mamba SSU
+  80.064 (04ah). 32 q / 2 kv
+  heads d=128 T_kv=1. Six
+  layers only. Not a flash-
+  attn campaign. CONFIG prior:
+  expect attn << SSU (at long
+  T). Rank us. P2P off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 0.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. torch
+  2.13.0+xpu.
+  F.scaled_dot_product_attention
+  enable_gqa. bf16. q
+  [1,32,1,128] k/v [1,2,1,128].
+  warmup 20 iters 40 host
+  sync. No P2P. No serve.
+  Clocks may not hold; do not
+  freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_gqa_t1.sh 0
+  ```
+
+RESULT -> out (1, 32, 1, 128)
+  torch.bfloat16. sdpa_gqa
+  t=1 54.944 us. vs SSU
+  80.064 (~0.686x). 6-layer
+  napkin 6*54.944=329.664 vs
+  23*SSU 1841.472 (~0.179x).
+  No host cosine this dump.
+  GPU-window act=1500,1400
+  then 517,400 cur=1483,
+  1400,1550,900,400. Zero
+  samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  183 samples. start act=0
+  cur=2800 throttle=0 D3hot.
+  end act=0 cur=400
+  throttle=0 D0. gpu-run 16s
+  exit 0.
+
+VERDICT -> pytorch-xpu SDPA
+  Lightning GQA 32/2 T_kv=1
+  is 54.944 us card0. Faster
+  than held SSU 80.064
+  (~0.69x) but same 50-80
+  class, not <<. CONFIG prior
+  << is long T; T=256 still
+  open. Tiny T=1 (Q 8 KiB,
+  KV 1 KiB). Host-sync us vs
+  SSU pipe_host. Do not
+  freeze (act not held 2800;
+  still beats held SSU).
+  throttle=0. Not flash-attn.
+  Six layers. One-card first;
+  sibling not yet. Rank us.
+  P2P off.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bo - K8 oneDNN fp8_gemm_w8a16 Lightning mamba out_proj M=1 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN fp8_gemm_w8a16 at
+  Lightning mamba out_proj M=1
+  n=2688 k=4096. Same MNK as
+  attn o-proj. Official PTQ
+  is FP8 here, not NVFP4.
+  Sibling s8 o-proj 23.115
+  (04ap). W8A8 o-proj 44.081
+  (04bk). FP8 in_proj 51.036
+  (04bm). Priors: packed qkv
+  W8A8 41.320 (04aq). expert-
+  up W8A8 44.285 (04ae).
+  nvfp4 39-class (04as).
+  square fp8 M=1 5120 70.340
+  (K4 card1). Napkin launch
+  44-class if bound; K-linear
+  square 70.340*(4096/5120)
+  ~56.3; N-linear square
+  70.340*(2688/5120)~36.9;
+  byte-linear vs in_proj
+  51.036*(11.01/27.7)~20.3
+  (CONFIG). GEMM-only. Not a
+  serve. ABSENT/EXC is a
+  RESULT. Clocks may not
+  hold. P2P off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  fp8_gemm_w8a16. m=1 n=2688
+  k=4096. warmup 10 iters 20.
+  A bf16, B e4m3fn, scale
+  f32 [1,N]. Rank us vs s8
+  o-proj 23.115, W8A8 o-proj
+  44.081, FP8 in_proj 51.036.
+  No P2P. No serve. Clocks
+  may not hold; do not freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_fp8_mamba_out_m1.sh 1
+  ```
+
+RESULT -> HAS fp8_gemm_w8a16
+  True. imported
+  vllm_xpu_kernels._xpu_C.
+  torch 2.13.0+xpu. out bf16
+  [1,2688]. 43.694 us.
+  251.982 GB/s. No host
+  cosine this dump. vs s8
+  o-proj 23.115 (~1.89x; s8
+  wins) vs W8A8 o-proj 44.081
+  (~0.991x) vs FP8 in_proj
+  51.036 (~0.856x) vs expert-
+  up W8A8 44.285 (~0.987x)
+  vs packed qkv W8A8 41.320
+  (~1.057x) vs nvfp4 UP
+  39.255 (~1.113x) vs square
+  fp8 70.340 (~0.621x) vs
+  napkin K-linear ~56.3
+  (~0.776x) vs N-linear ~36.9
+  (~1.183x) vs byte-linear
+  ~20.3 (~2.15x) vs 44-class
+  (~0.991x). GPU-window
+  act=400,1550 then 0
+  cur=400,1517,1450,2400.
+  Zero samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  159 samples. start act=0
+  cur=1500 throttle=0 D3hot.
+  end act=0 cur=2400
+  throttle=0 D0. gpu-run 14s
+  exit 0.
+
+VERDICT -> oneDNN
+  fp8_gemm_w8a16 Lightning
+  mamba out_proj M=1 is
+  43.694 us card1. Wash vs
+  W8A8 o-proj 44.081 (~0.99x)
+  44-class launch, same MNK.
+  Loses to s8 o-proj 23.115
+  (~1.89x). Beats FP8 in_proj
+  51.036 (~0.86x) but not
+  byte-linear (0.40x bytes,
+  0.86x us). 252 GB/s of 608
+  (~0.41x roof) on 11.01 MB
+  B. Official PTQ incumbent,
+  not an E2M1 spoof. HAS
+  True in mtp6 image. No
+  host cosine. throttle=0.
+  Do not freeze (act not
+  held 2800). One-card
+  enough (fp8_gemm_w8a16
+  family already both-card
+  at 5120). Rank us. P2P
+  off. No STOP. s8 out_proj
+  still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bp - K8 pytorch-xpu SDPA Lightning GQA 32/2 T_kv=256 card0
+
+CONTEXT -> K8 Lightning GQA
+  decode attn vs Mamba SSU
+  80.064 (04ah). 32 q / 2 kv
+  heads d=128 T_kv=256. Six
+  layers only. Not a flash-
+  attn campaign. Sibling T=1
+  54.944 us (04bn). SSD T=256
+  21114.404 (04az). CONFIG
+  prior: expect attn << SSU
+  at long T. Rank us. P2P
+  off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 0.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. torch
+  2.13.0+xpu.
+  F.scaled_dot_product_attention
+  enable_gqa. bf16. q
+  [1,32,1,128] k/v
+  [1,2,256,128]. warmup 20
+  iters 40 host sync. No P2P.
+  No serve. Clocks may not
+  hold; do not freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_gqa_t256.sh 0
+  ```
+
+RESULT -> out (1, 32, 1, 128)
+  torch.bfloat16. sdpa_gqa
+  t=256 48.560 us. vs SSU
+  80.064 (~0.607x) vs GQA T=1
+  54.944 (~0.884x) vs SSD
+  T=256 21114.404 (~0.0023x,
+  435x). 6-layer napkin
+  6*48.560=291.360 vs 23*SSU
+  1841.472 (~0.158x). T-linear
+  napkin 54.944*256=14065.664
+  (~0.00345x). No host cosine
+  this dump. GPU-window
+  act=400,1000 then 517,400
+  cur=400,983 then 1117,400.
+  Zero samples act=cur=2800.
+  freq 50 ms throttle=0 all
+  195 samples. start act=400
+  cur=400 throttle=0 D3hot.
+  end act=0 cur=400
+  throttle=0 D0. gpu-run 17s
+  exit 0.
+
+VERDICT -> pytorch-xpu SDPA
+  Lightning GQA 32/2 T_kv=256
+  is 48.560 us card0. Faster
+  than held SSU 80.064
+  (~0.61x) but same 50-80
+  class, not << vs decode
+  SSU. IS << vs SSD prefill
+  21114 (~435x). Wash vs T=1
+  54.944 (~0.88x), not T-
+  linear. Launch-class at
+  T=256 (Q 8 KiB, KV 256
+  KiB). CONFIG prior << holds
+  vs SSD not vs SSU decode.
+  Host-sync us vs SSU/SSD
+  pipe_host. Do not freeze
+  (act not held 2800; still
+  beats held SSU). throttle=0.
+  Not flash-attn. Six layers.
+  One-card first; sibling not
+  yet. Rank us. P2P off.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bq - K8 oneDNN nvfp4_gemm_w4a16 Lightning routed expert UP-proj M=64 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN nvfp4_gemm_w4a16 at
+  Lightning routed expert
+  UP-proj M=64 n=1856 k=2688.
+  Rank vs M=1 dump 39.255
+  (04as), s8 M=64 31.198,
+  two-term M=64 29.637.
+  K6 square M=64 37.1 / M=1
+  34.7 (~1.07x). W8A8 M=1
+  44.285. LUT 83.659. ONE
+  expert GEMM-only. Not
+  6-expert grouped. Not a
+  serve. ABSENT/EXC is a
+  RESULT. Clocks may not
+  hold. P2P off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. Load
+  v028 /mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so
+  via B70_XPU_C_SO. Folded
+  bf16 scale g16. B packed NT
+  stride(0)=1. A bf16. M=64
+  n=1856 k=2688. warmup 10
+  iters 20. No extra M=64
+  heat (unlike K6 5120). Rank
+  us. No P2P. No serve.
+  Clocks may not hold; do
+  not freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_nvfp4_moe_up_m64.sh 1
+  ```
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  True HAS f8scale True.
+  load_library v028 ok. out
+  bf16 [64,1856]. B (1344,
+  1856) stride (1,1344).
+  40.184 us. vs M=1 39.255
+  (~1.02x) vs s8 M=64 31.198
+  (~1.29x) vs two-term M=64
+  29.637 (~1.36x) vs W8A8
+  44.285 (~0.91x) vs LUT
+  83.659 (~0.48x) vs K6 M=64
+  37.1 (~1.08x) vs unheld
+  5120 37.169 (~1.08x) vs
+  held 34.7 (~1.16x) vs
+  napkin K6 1.07x M=1 ~42.0
+  (~0.96x) vs N-linear
+  37.1*(1856/5120)~13.45
+  (~2.99x). No E2M1 cosine
+  this dump. f8scale not
+  timed. GPU-window
+  act=400,1600,1550,1650,
+  1800 cur=400,1583,1550,
+  1617,1767. Zero samples
+  act=cur=2800. freq 50 ms
+  throttle=0 all 164 samples.
+  start act=0 cur=2400
+  throttle=0 D3hot. end
+  act=0 cur=1767 throttle=0
+  D0. gpu-run 15s exit 0.
+
+VERDICT -> oneDNN
+  nvfp4_gemm_w4a16 Lightning
+  routed expert UP-proj M=64
+  is 40.184 us card1, 40-
+  class launch like M=1
+  39.255 (~1.02x), not M-
+  linear. Loses to s8 M=64
+  31.198 (~1.29x) and two-
+  term 29.637 (~1.36x). Beats
+  W8A8 44.285 (~0.91x) and
+  LUT 83.659 (~0.48x). A is
+  bf16, not s8. Packed E2M1
+  in VRAM. throttle=0. Do
+  not freeze (act not held
+  2800). One-card enough
+  (w4a16 family already
+  matched both cards at
+  5120). Rank us. P2P off.
+  No STOP. M=256 still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04br - K8 ESIMD s8 lm_head M=1 card0
+
+CONTEXT -> K8 Lightning lm_head
+  M=1 n=131072 k=2688 using
+  existing dpas_s8_sc_u14
+  (U=14 divides 2688). Wide-N
+  leftover. n%32=0 so NT=2
+  tn=32 accepts. Rank
+  pipe_host vs packed qkv
+  16.609 launch-class (04al).
+  expert-up s8 16.060 (04ad).
+  Napkin N-linear
+  16.060*(131072/1856)~1134.
+  Host cosine on 131072 may
+  be heavy; still close
+  numeric. spin=4000. P2P
+  off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896. m=1 n=131072
+  k=2688. Fill s8 [-64,64]
+  scales 0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+  spin=4000. mhz=2400. No P2P.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_esimd_s8_lmhead_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  1027.229 pipe_host 1012.237
+  wait_host 1043.496. median
+  1030.261 min 992.604 max
+  1074.480. TOPS 0.6860.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 99 samples.
+  GPU-window act=400,0,400,0
+  then 47x 2800 then 3x 0.
+  cur=400,550,400,2800.
+  47 samples act=cur=2800.
+  start D3hot act=400 cur=400
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  packed qkv 16.609 (~60.9x)
+  vs expert-up 16.060 (~63.0x)
+  vs shared 16.541 (~61.2x)
+  vs o-proj 23.115 (~43.8x)
+  vs mamba in 23.504 (~43.1x)
+  vs napkin N-linear ~1134
+  (~0.892x) vs event 1027.229
+  (~0.985x). n=131072 accepted
+  (n%32=0). Host cosine closed
+  in the 10s gpu-run, not
+  heavy. 336 MiB B. 348 GB/s
+  of 608 (~0.57x roof).
+  gpu-run 10s exit 0.
+
+VERDICT -> ESIMD s8 lm_head
+  M=1 is 1012.237 us
+  pipe_host card0 at 2800.
+  Numeric closed. Clocks
+  held. Left 16-class vs
+  packed qkv 16.609 (~60.9x)
+  and expert-up 16.060
+  (~63.0x). Fat N=131072 is
+  70.6x expert N=1856 and
+  63.0x us; tracks napkin
+  N-linear ~1134 (~0.89x).
+  Wide-N leftover IS N-
+  linear, not launch-class
+  (unlike qkv 16.6 vs napkin
+  40 / mamba in 23.5 vs
+  napkin 89). 348 GB/s of
+  608 (~0.57x). Host cosine
+  on 131072 closed
+  (cosine=1 max_abs=0), not
+  heavy. One-card enough
+  (matched s8 U=14 RC=4
+  family, cosine closed,
+  clocks held). Rank
+  pipe_host. P2P off. MTP-M
+  still open. No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bt - K8 oneDNN W8A8 Lightning routed expert UP-proj M=64 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN int8_gemm_w8a8 at
+  Lightning routed expert
+  UP-proj M=64 n=1856 k=2688.
+  Rank vs s8 M=64 31.198,
+  two-term M=64 29.637, nvfp4
+  M=64 40.184, W8A8 M=1
+  44.285. ONE expert
+  GEMM-only. Not 6-expert
+  grouped. Not in_proj. Not a
+  serve. Clocks may not hold.
+  P2P off.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  int8_gemm_w8a8. heat M=64
+  spin=512. m=64 n=1856 k=2688.
+  Rank us. No P2P. No serve.
+  Clocks may not hold; do
+  not freeze.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_w8a8_moe_up_m64.sh 1
+  ```
+
+RESULT -> cosine=0.999998
+  max_abs=0.031235 ok=1.
+  39.907 us. 125.014 GB/s.
+  vs s8 M=64 31.198 (~1.28x)
+  vs two-term M=64 29.637
+  (~1.35x) vs nvfp4 M=64
+  40.184 (~0.99x) vs W8A8 M=1
+  44.285 (~0.90x) vs LUT
+  83.659 (~0.48x) vs M-linear
+  44.285*64=2834 (~0.014x).
+  GPU-window act=400,1000,
+  1000,2800,2633,2800,2800
+  cur=400,983,967,2800,2800,
+  2800,2800. Three samples
+  act=cur=2800. freq 50 ms
+  throttle=0 all 136 samples.
+  start act=0 cur=1767
+  throttle=0 D3hot. end
+  act=0 cur=2800 throttle=0
+  D0. gpu-run 12s exit 0.
+
+VERDICT -> oneDNN W8A8 Lightning
+  routed expert UP-proj M=64 is
+  39.907 us card1, 40-class
+  launch like nvfp4 M=64 40.184
+  (~0.99x, wash) and W8A8 M=1
+  44.285 (~0.90x), not M-
+  linear. Loses to s8 M=64
+  31.198 (~1.28x) and two-term
+  29.637 (~1.35x). Beats LUT
+  83.659 (~0.48x). Matched-M
+  W8A8 does not lose to nvfp4
+  (04bq 0.91x was vs M=1
+  44.285). throttle=0. Do not
+  freeze (act not held 2800).
+  One-card enough (W8A8 family
+  already matched both cards).
+  Rank us. P2P off. No STOP.
+  Grouped M=64 still open.
+  in_proj W8A8 still open.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bs - K8 ESIMD grouped 6-expert s8 UP M=64 card0
+
+CONTEXT -> K8 grouped prefill:
+  6 routed experts, each s8
+  M=64 n=1856 k=2688, one
+  in-order queue. Not 64
+  one-expert launches. Priors:
+  grouped M=1 UP 165.223
+  (04ag). one-expert M=64 s8
+  U=14 31.198 (04au). napkin
+  6*31.198=187. W8A8 M=64
+  39.907 (04bt), 6*39.907=239.
+  k64 loop not U=14. Rank
+  pipe_host of all 6. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  moe_group_s8_m1. gpu-run
+  --card 0. experts=6 m=64
+  n=1856 k=2688. spin=512
+  (not 4000). RC=4 NT=2
+  kstep=64 wg=8x2_alongN
+  scale 0.02 out f16. warmup
+  10 iters 10. Six launches
+  share A and one in-order
+  queue. Host oracle may be
+  heavy (6*64*1856*2688).
+  No P2P. No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_moe_group_s8_up_m64.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  230.343 last_event 41.250
+  wait_host 295.807
+  pipe_host 231.179. TOPS
+  16.5737. median_sum 227.916
+  min 222.917 max 241.043.
+  spin_done act=2783 cur=2800
+  throttle=1. timed
+  act=2783 cur=2800 throttle=1
+  both ends. freq 50 ms
+  throttle=1 in 1 of 25
+  samples. GPU-window act=0,0,
+  400 then 16x 0 then 2800,
+  2783,2800 then 2x 0.
+  cur=2800,2800,2800,400 then
+  16x 400 then 5x 2800. 2
+  samples act=cur=2800. start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  grouped M=1 165.223 (~1.40x)
+  vs 6*31.198=187.188 (~1.23x)
+  vs 6*39.907=239.442 (~0.97x)
+  vs 6*44.285=265.710 (~0.87x)
+  vs 6*16.060=96.360 (~2.40x)
+  vs M-linear 165.223*64=10574
+  (~0.022x) vs 6*29.637=177.822
+  (~1.30x) vs 6*40.184=241.104
+  (~0.96x). mean event 38.4
+  us/expert vs U=14 31.198.
+  pipe_host ~ event sum. Host
+  cosine closed in 3s gpu-run,
+  not heavy. gpu-run 3s exit 0.
+
+VERDICT -> ESIMD grouped 6
+  routed-expert s8 UP M=64 is
+  231.179 us pipe_host card0.
+  Left 165-class vs grouped
+  M=1 165.223 (~1.40x for 64x
+  M), not M-linear. Loses to
+  6x U=14 M=64 187 napkin
+  (~1.23x): k64-loop not U=14;
+  mean 38.4 us/expert vs
+  31.198. Beats 6x W8A8 M=64
+  239 napkin (~0.97x) and 6x
+  W8A8 M=1 266 (~0.87x).
+  In-order queue packed (pipe
+  ~ event sum). Numeric
+  closed. throttle=1 during
+  timed (act=2783 cur=2800).
+  Do not freeze as held 2800.
+  Host oracle not heavy.
+  One-card first; sibling
+  later (throttle=1, event
+  spread ~8%). Rank
+  pipe_host. P2P off. M=256
+  grouped still open. No STOP.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bu - K8 hail-mary dyadic s2/s4 planes Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 hail-mary:
+  dyadic s2/s4 planes
+  {0.5,1,2,4} plus residual
+  {1.5,3,6} at Lightning
+  routed expert UP-proj M=1
+  n=1856 k=2688. Binary
+  dyadic_s2 COMPILE_OK (K6).
+  s2xs2 one-plane control;
+  4-plane E2M1 is unfused
+  sequential 4x this (K6
+  "4-plane not fused").
+  s2xs4 COMPILE_REFUSED
+  (K6). residual {1.5,3,6}
+  are pairwise sums of
+  {0.5,1,2,4}, not extra
+  unique planes. IGC s2
+  range [-2,1], not E2M1.
+  Never bitcast. Rank vs
+  two-term 15.518 (04ao),
+  s8 16.060 (04ad), s8xs4
+  13.458 (04bf), W8A8
+  44.285 (04ae). STOP if
+  us > 4x W8A8 ~177 with
+  no new trick. P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone dyadic_s2
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. hail-mary.
+  m=1 n=1856 k=2688. RC=8
+  K=64 N=16 OPC=8. padM=RC
+  (M=1 not aligned).
+  warmup=20 iters=20. No
+  spin. No P2P. No serve.
+  No CCL. Never a floor.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_dyadic_s2_moe_up_m1.sh 1
+  ```
+
+RESULT -> M=1 n=1856 k=2688
+  not aligned (1%8!=0)
+  dyadic_m1_rc=2. padM=8
+  check 8x16x64 event 23.443
+  max_abs=0 ok=1. timed
+  8x1856x2688 event 41.615
+  TOPS 1.9181 max_abs=0
+  ok=1 dyadic_padm8_rc=0.
+  cosine=1.000000 (s2xs2
+  host s32, not E2M1).
+  four_plane_napkin 166.460
+  is CONFIG (4x one-plane),
+  not a fused 4-plane
+  RESULT. freq 50 ms
+  throttle=0 all 10 samples.
+  GPU-window act=0,0,0,0,
+  400,550,600,0,0,0.
+  cur=2800 x4 then 400,550
+  then 4x 600. Zero samples
+  act=cur=2800. start D3hot
+  act=0 cur=2800 throttle=0.
+  end D0 act=0 cur=600
+  throttle=0. vs two-term
+  15.518 (~2.68x one-plane
+  / ~10.7x 4-plane napkin)
+  vs s8 16.060 (~2.59x /
+  ~10.4x) vs s8xs4 13.458
+  (~3.09x / ~12.4x) vs
+  W8A8 44.285 (~0.94x /
+  ~3.76x) vs LUT 83.659
+  (~0.50x / ~1.99x) vs
+  bitcast padM=8 45.104
+  (~0.92x) vs STOP 177
+  (~0.235x / ~0.94x).
+  41-class launch like
+  W8A8 44 / bitcast 45,
+  not 16-class. No
+  pipe_host (event only).
+  Clocks not held. gpu-run
+  2s exit 0.
+
+VERDICT -> hail-mary dyadic
+  s2xs2 one-plane at
+  Lightning expert-up is
+  41.615 us event card1
+  padM=8, cosine=1.000000
+  max_abs=0 ok=1. M=1 RC=8
+  unaligned. Unfused 4-plane
+  napkin 166.460 (CONFIG)
+  loses to two-term 15.518
+  (~10.7x) and sits under
+  STOP 177 (~0.94x). One
+  plane beats W8A8 44.285
+  (~0.94x) but loses to
+  two-term / s8 / s8xs4.
+  residual {1.5,3,6} need
+  no extra unique planes.
+  s2xs4 still COMPILE_REFUSED
+  (K6). Do not freeze us
+  (act not held 2800; no
+  spin; padM=8 not M=1).
+  Never a floor. One-card
+  enough (s2xs2 family
+  already numeric-closed at
+  K6). Rank event us. P2P
+  off. No STOP (166 < 177).
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04bv - K8 hail-mary 16-code product LUT GEMV Lightning expert-down M=1 card0
+
+CONTEXT -> K8 hail-mary: 16x16
+  E2M1 product LUT GEMV at
+  Lightning M=1 n=1856 k=2688
+  (script labels expert-down
+  GEMV; same MNK as UP LUT
+  83.659). Lost at 5120
+  (697/1106 us, 03ae idea 4).
+  Maybe wins at 1856 vs LUT
+  83.659 / s8 16.060 / GEMV
+  bf16 26.962. Binary
+  prod_lut_gemv_n1856 AOT.
+  Naive XVE k-loop, not DPAS.
+  spin=0 (not 4000: k-loop
+  spin can take minutes).
+  Never bitcast. STOP if loss
+  vs LUT/s8/GEMV or us > 4x
+  W8A8 ~177. Rank pipe_host.
+  P2P off.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  prod_lut_gemv_n1856
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. hail-mary. W4A4
+  table16x16. m=1 n=1856
+  k=2688. A/B E2M1 nibble
+  codes, 256-entry product
+  table, per-column scalar
+  k-loop. warmup=50 iters=40.
+  spin=0 mhz=2400 heat=none.
+  Never bitcast s4. No P2P.
+  No serve. No CCL.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash /mnt/vm_8tb/github/xe2x2/kernels/nemotron/run_prod_lut_gemv_down_m1.sh 0 0
+  ```
+
+RESULT -> cosine=0.000000
+  max_abs=0 ok=0. event
+  447.888 wait_host 462.750
+  pipe_host 448.180. median
+  447.917 min 447.291 max
+  448.230. TOPS 0.0223.
+  unpackedB 11.13 GB/s.
+  timed act=cur=2800
+  throttle=0 both ends.
+  spin=0 (no spin_done).
+  freq 50 ms throttle=0 all
+  6 samples. GPU-window
+  act=0,0,0,0,400,2800
+  cur=2800,2800,2800,2800,
+  400,2800. start D3hot
+  act=0 cur=2800 throttle=0.
+  clocks end skipped (ok=0
+  tripped set -e). vs LUT
+  83.659 (~5.36x) vs s8
+  16.060 (~27.9x) vs GEMV
+  bf16 26.962 (~16.6x) vs
+  W8A8 44.285 (~10.1x) vs
+  LUT down 38.351 (~11.7x)
+  vs two-term down 11.008
+  (~40.7x) vs nvfp4 down
+  39.224 (~11.4x) vs 5120
+  697 (~0.643x) / 1106
+  (~0.405x) vs napkin
+  K-linear
+  697*(2688/5120)~366
+  (~1.23x) vs N-linear ~253
+  (~1.77x) vs FLOP ~133
+  (~3.38x) vs event 447.888
+  (~1.00x) vs STOP 177
+  (~2.53x). Over 4x W8A8.
+  All-zero C: N%16==0 plus
+  (i*17)&15 / (i*13)&15
+  makes B constant along K
+  and sum q(A)=0, so C=0;
+  5120 max_abs=0 was
+  vacuous. gpu-run 2s
+  exit 1.
+
+VERDICT -> hail-mary 16-code
+  product LUT GEMV Lightning
+  M=1 n=1856 k=2688 is
+  448.180 us pipe_host card0
+  at timed 2800. Still a
+  loss vs LUT 83.659 (~5.36x)
+  and s8 16.060 (~27.9x) and
+  GEMV bf16 26.962 (~16.6x).
+  Over STOP 177 (~2.53x).
+  Naive XVE k-loop, not
+  launch-class 16. LUT tax
+  (11 GB/s). cosine=0
+  max_abs=0: all-zero C from
+  the synthetic pattern, not
+  a GPU/host mismatch. 5120
+  numeric was the same
+  vacuous max_abs=0. Never
+  bitcast s4. STOP rewrite.
+  One-card enough (product
+  LUT family already both-
+  card at 5120; shape steal
+  still lost). Rank
+  pipe_host. P2P off.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+

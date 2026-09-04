@@ -1,0 +1,20 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7336524261901 energy2=pkg:4300229020324 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7287880521423 energy2=pkg:4452816536010 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=gemv_bf16_m1 spin=4000 M=1 N=1856 K=2688 dtype=bf16xbf16_accf32_outf16
+Dequant-to-bf16 hail-mary; rank pipe_host vs LUT 84 us and s8 16 us.
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=gemv_bf16_m1 M=1 N=1856 K=2688 dtype=bf16xbf16_accf32_outf16 arm=dequant_to_bf16_hail_mary rank=pipe_host floors_us=lut84_s8_16 warmup=50 iters=40 card=1 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,M,N,K,event_us,wait_host_us,pipe_host_us,TOPS,lut_floor_us,s8_floor_us,cosine,max_abs,ok,median_us,min_us,max_us
+timed,1,1856,2688,26.609,41.037,26.962,0.3701,84.000,16.000,1.000000,0,1,26.563,26.458,26.771
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7336549363037 energy2=pkg:4300243282043 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7287920960327 energy2=pkg:4452844317382 temp2_mC=55000

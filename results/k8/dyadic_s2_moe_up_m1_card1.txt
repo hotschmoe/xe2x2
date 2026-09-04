@@ -1,0 +1,28 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7493579598510 energy2=pkg:4381245913818 temp2_mC=49000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7445439437988 energy2=pkg:4535687226623 temp2_mC=52000
+CONFIG backend=sycl+l0 card=1 arm=dyadic_s2 hail-mary m=1 n=1856 k=2688 lightning_moe_up
+Planes {0.5,1,2,4} plus residual {1.5,3,6}. vs two-term 15.518 s8 16.060 s8xs4 13.458 W8A8 44.285. STOP if us > 4x W8A8 ~177 with no new trick. P2P off.
+s2xs2 one-plane control. 4-plane E2M1 is unfused sequential 4x this (K6). s2xs4 COMPILE_REFUSED. residual {1.5,3,6} are pairwise sums of {0.5,1,2,4}, not extra unique planes. Never bitcast.
+=== dyadic s2 moe-up m=1 n=1856 k=2688 ===
+dpas_s2: shape m=1 n=1856 k=2688 not aligned
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s2xs2s32 RC=8 K=64 N=16 OPC=8 s2_range=[-2,1] Bload=lsc_load_2d_Transformed warmup=20 iters=20
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,20.458,0.0008,0,1
+dyadic_m1_rc=2
+=== padM=RC=8 (M=1 not aligned to RC=8) n=1856 k=2688 one s2xs2 plane ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s2xs2s32 RC=8 K=64 N=16 OPC=8 s2_range=[-2,1] Bload=lsc_load_2d_Transformed warmup=20 iters=20
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,23.443,0.0007,0,1
+timed,8,1856,2688,41.615,1.9181,0,1
+dyadic_padm8_rc=0
+one_plane_event_us=41.615 four_plane_napkin_us=166.460 residual_pairwise_no_extra_unique_planes cosine=1.000000 max_abs=0 ok=1 vs_STOP_177 four_vs_stop=0.940
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=600 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7493607042846 energy2=pkg:4381261830261 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7445468314941 energy2=pkg:4535704333618 temp2_mC=53000

@@ -1,0 +1,29 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7402029653015 energy2=pkg:4333845750732 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7353896997741 energy2=pkg:4487470983947 temp2_mC=52000
+CONFIG backend=sycl+l0 card=1 arm=bitcast_e2m1_s4 hail-mary m=1 n=1856 k=2688 lightning_moe_up
+Expect cosine death vs E2M1 dequant oracle. Label hail-mary. Never promote as a floor.
+=== bitcast e2m1-as-s4 moe-up m=1 n=1856 k=2688 ===
+bitcast_e2m1_s4: shape m=1 n=1856 k=2688 not aligned
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=20 iters=20
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,22.162,0.0007,352,0
+bitcast_m1_rc=2
+=== padM=RC=8 (M=1 not aligned to RC=8) n=1856 k=2688 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s4xs4s32 RC=8 K=64 N=16 Bload=lsc_load_2d_Transformed packed_s4_along_K warmup=20 iters=20
+phase,m,n,k,us,TOPS,max_abs,ok
+check,8,16,64,23.505,0.0007,352,0
+timed,8,1856,2688,45.104,1.7697,14784,0
+bitcast_padm8_rc=1
+=== host cosine vs E2M1 dequant oracle (same fill as bitcast_e2m1_s4.cpp) ===
+host_oracle check m=8 n=16 k=64 cosine=0.663320 max_abs=352 ok=0
+host_oracle timed_padM8 m=8 n=1856 k=2688 cosine=0.663320 max_abs=14784 ok=0
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=600 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7402071218933 energy2=pkg:4333869426696 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7353939297668 energy2=pkg:4487495890197 temp2_mC=53000

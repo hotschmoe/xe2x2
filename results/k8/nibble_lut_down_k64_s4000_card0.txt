@@ -1,0 +1,25 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7366447437438 energy2=pkg:4315578460327 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7318019121520 energy2=pkg:4468626746520 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=nibble_lut_k64 nt=2 unroll=1 kstep=64 m=1 n=2688 k=1856 lightning_down never_bitcast_s4 spin=4000
+k=1856 divides kstep=64; this arm does not use the 896 or 1024 inner-k loops.
+=== nibble LUT DOWN m=1 n=2688 k=1856 nt=2 kstep=64 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_lut_k64 never_bitcast_s4 packedB=K/2 kstep=64 dtype=s8xE2M1->f16_scaled RC=4 NT=2 unroll=1 dpas=4 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,1,4,32,64,16.459,50.146,33.684,0.0010,0.062,1.000000,0,1,16.459,16.459,16.459
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,1,1,2688,1856,37.961,51.914,38.351,0.2628,65.711,1.000000,0,1,37.917,37.812,38.125
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7366487590270 energy2=pkg:4315604344909 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7318046009704 energy2=pkg:4468642540771 temp2_mC=53000

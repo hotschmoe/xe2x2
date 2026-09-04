@@ -1,0 +1,25 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7430547251342 energy2=pkg:4348497426208 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7382684224182 energy2=pkg:4502629679199 temp2_mC=54000
+CONFIG backend=sycl+l0 card=0 arm=dpas_s8_sc_u14 nt=2 spin=4000 m=1 n=10304 k=2688 lightning_mamba_in
+Official PTQ is FP8. s8 is the beat-me control. packed qkv 16.609 launch-class.
+=== esimd s8 mamba-in m=1 n=10304 k=2688 nt=2 u=14 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 dtype=s8xs8->f16_scaled RC=4 NT=2 unroll=14 dpas=56 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=400 cur=400 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,14,4,32,896,31.666,66.958,50.526,0.0072,1.000000,0,1,31.666,31.666,31.666
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,14,1,10304,2688,22.922,36.842,23.504,2.4167,1.000000,0,1,22.917,22.188,24.271
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7430597626403 energy2=pkg:4348528208923 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7382714355590 energy2=pkg:4502647357971 temp2_mC=53000

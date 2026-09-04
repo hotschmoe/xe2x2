@@ -1,0 +1,20 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7354141388916 energy2=pkg:4309254114990 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7305662033996 energy2=pkg:4462146417602 temp2_mC=55000
+CONFIG backend=sycl+l0 card=0 arm=mamba_ssd_t256 spin=0 T=256 chunk_size=128 heads=64 d_head=64 d_state=128 groups=8
+Serial state carry over T; rank pipe_host vs 256*80.064 = 20496.384 us. SSU is not GDN delta.
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=mamba2_ssd_prefill serial_T=1 T=256 chunk_size=128 heads=64 d_head=64 d_state=128 groups=8 dtype=h=f32_xdtbc_y=f16 rank=pipe_host napkin_us=20496.384 warmup=5 iters=10 card=0 spin=0 mhz=2400 heat=none
+oracle_s=0.434 score_y=full score_state=final samples=1572864
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,T,chunk_size,heads,d_head,d_state,groups,event_us,wait_host_us,pipe_host_us,napkin_us,cosine,max_abs,ok,median_us,min_us,max_us
+timed,256,128,64,64,128,8,21082.469,21114.645,21114.404,20496.384,1.000000,6.1035e-05,1,21053.698,20890.104,21390.625
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7354237485839 energy2=pkg:4309316199890 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7305727840454 energy2=pkg:4462184107482 temp2_mC=55000

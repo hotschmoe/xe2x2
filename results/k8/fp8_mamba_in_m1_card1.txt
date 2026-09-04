@@ -1,0 +1,21 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7437769958435 energy2=pkg:4352200150390 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7389957084350 energy2=pkg:4506445747558 temp2_mC=53000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=fp8_gemm_w8a16 lightning_mamba_in n=10304 k=2688
+Official PTQ FP8. s8 control still open. ABSENT is a RESULT.
+CONFIG backend=pytorch-xpu on sycl+l0 op=fp8_gemm_w8a16 arm lightning_mamba_in m 1 n 10304 k 2688 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+imported vllm_xpu_kernels._xpu_C
+HAS fp8_gemm_w8a16 True
+shape 1 10304 2688
+out (1, 10304) torch.bfloat16
+fp8_gemm_w8a16,1,10304,2688,51.036,542.700
+DONE
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=1500 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7438361781005 energy2=pkg:4352504243652 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7390606235534 energy2=pkg:4506824929809 temp2_mC=53000

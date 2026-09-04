@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# K8: ESIMD s8 routed-up M=64 n=1856 k=2688 U=14.
+# K8 closed-form NVFP4 nibble LUT, NT=2 unroll=14.
 # Usage: gpu-run --card N bash this.sh N [SPIN]
 set -euo pipefail
 CARD="${1:?card}"
-SPIN="${2:-512}"
+SPIN="${2:-4000}"
 ROOT=/mnt/vm_8tb/github/xe2x2
 ONEAPI=/mnt/vm_8tb/b70/steve-repro/qwen38-fp8-neural-20260901/oneapi-root/opt/intel/oneapi
-BIN="$ROOT/kernels/esimd_dpas/bin/dpas_s8_sc_u14"
-NT=2
-OUT="$ROOT/results/k8/esimd_s8_moe_up_m64_s${SPIN}_card${CARD}.txt"
-FREQ="$ROOT/results/k8/esimd_s8_moe_up_m64_s${SPIN}_card${CARD}.freq"
+BIN="$ROOT/kernels/nvfp4/bin/nibble_lut_scf_u14"
+OUT="$ROOT/results/k8/nibble_lut_scf_u14_s${SPIN}_card${CARD}.txt"
+FREQ="$ROOT/results/k8/nibble_lut_scf_u14_s${SPIN}_card${CARD}.freq"
 GT="/sys/class/drm/card${CARD}/device/tile0/gt0/freq0"
 mkdir -p "$ROOT/results/k8"
 set +u
@@ -31,10 +30,9 @@ trap cleanup EXIT
 {
   echo "=== clocks start ==="
   bash "$ROOT/scripts/clocks.sh" "$CARD"
-  echo "CONFIG backend=sycl+l0 card=$CARD arm=dpas_s8_sc_u14 nt=$NT spin=$SPIN m=64 n=1856 k=2688 lightning_moe_up"
-  echo "M=1 s8 16.060. W8A8 M=1 44.285. Prior M=64 4x8 A-db 75 at 5120."
-  echo "=== esimd s8 moe-up m=64 n=1856 k=2688 nt=$NT u=14 spin=$SPIN ==="
-  "$BIN" --nt "$NT" --m 64 --n 1856 --k 2688 --warmup 20 --iters 20 \
+  echo "CONFIG backend=sycl+l0 card=$CARD arm=nibble_lut_scf_u14 nt=2 unroll=14 spin=$SPIN M=1 N=1856 K=2688 never_bitcast_s4"
+  echo "Packed E2M1 closed-form decode; inner_k=896 divides K=2688. Rank pipe_host."
+  "$BIN" --nt 2 --m 1 --n 1856 --k 2688 --warmup 50 --iters 40 \
     --card "$CARD" --spin "$SPIN" --mhz 2400
   echo "=== clocks end ==="
   bash "$ROOT/scripts/clocks.sh" "$CARD"

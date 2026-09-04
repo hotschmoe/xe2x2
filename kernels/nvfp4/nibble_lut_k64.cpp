@@ -1,8 +1,9 @@
-// K6 closed-form E2M1 decode (exp/mant shift), no merge-chain LUT.
+// K8 Lightning DOWN: packed E2M1 nibble LUT plus s8 DPAS, kstep=64.
+// RC=4 NT=2. The k64 loop accepts k=1856 (1856 % 64 == 0).
 // Backend: sycl+l0. AOT intel_gpu_bmg_g31. Standalone icpx (intel/llvm#21741).
 // Never bitcast E2M1 onto s4. Packed nibbles stay in HBM (2 per byte along K).
 //
-// Tile: same as K2 dpas_s8_sc. RC=4, 64x dpas.8x4, wg 8x2 along N, scale-to-f16.
+// Tile: same as K2 dpas_s8_sc. RC=4, wg 8x2 along N, scale-to-f16.
 // B load is packed uint8 Transformed=false, then simd LUT + VNNI4, then s8 DPAS.
 // CONFIG prior: scalar in-register LUT lost (2316 us); simd LUT at 1024^3 was
 // clock-bound vs two-launch unpack. Decode M=1 cannot afford a 25 MiB unpack
@@ -27,16 +28,6 @@
 namespace esimd = sycl::ext::intel::esimd;
 namespace xesimd = sycl::ext::intel::experimental::esimd;
 
-#ifndef NIBBLE_LUT_SCF_PROGRAM
-#define NIBBLE_LUT_SCF_PROGRAM "nibble_lut_scf"
-#endif
-#ifndef NIBBLE_LUT_SCF_ARM
-#define NIBBLE_LUT_SCF_ARM "e2m1_nibble_lut_scf"
-#endif
-#ifndef NIBBLE_LUT_SCF_NT2_UNROLL
-#define NIBBLE_LUT_SCF_NT2_UNROLL 16
-#endif
-
 namespace {
 
 constexpr int kRc = 4;
@@ -51,8 +42,8 @@ constexpr int kPackedN = kPackedH * kExecN;
 constexpr float kScale = 0.02f;
 constexpr int8_t kMag2[8] = {0, 1, 2, 3, 4, 6, 8, 12};
 
-struct DpasLutNt2Name {};
-struct DpasLutNt4Name {};
+struct DpasLutK64Nt2Name {};
+struct DpasLutK64Nt4Name {};
 
 int g_card = 0;
 int g_spin = 0;
@@ -61,7 +52,7 @@ int g_mhz = 2400;
 sycl::device pick_device() {
     auto devs = sycl::device::get_devices(sycl::info::device_type::gpu);
     if (devs.empty()) {
-        std::fprintf(stderr, "%s: no GPU\n", NIBBLE_LUT_SCF_PROGRAM);
+        std::fprintf(stderr, "nibble_lut_k64: no GPU\n");
         std::exit(2);
     }
     return devs[0];
@@ -165,17 +156,15 @@ double median_of(std::vector<double> v) {
 
 inline esimd::simd<int8_t, kPackedN>
 decode_nibbles(const esimd::simd<uint8_t, kPackedN> &nib) {
-    const esimd::simd<int16_t, kPackedN> e =
-        esimd::convert<int16_t>((nib >> uint8_t(1)) & uint8_t(3));
-    const esimd::simd<int16_t, kPackedN> m =
-        esimd::convert<int16_t>(nib & uint8_t(1));
-    esimd::simd<int16_t, kPackedN> mag = m;
-    esimd::simd<int16_t, kPackedN> sh = e - int16_t(1);
-    sh.merge(int16_t(0), e == int16_t(0));
-    esimd::simd<int16_t, kPackedN> nz = (m + int16_t(2)) << sh;
-    mag.merge(nz, e != int16_t(0));
-    mag.merge(-mag, (nib & uint8_t(8)) != uint8_t(0));
-    return esimd::convert<int8_t>(mag);
+    const esimd::simd<int16_t, kPackedN> idx =
+        esimd::convert<int16_t>(nib & uint8_t(7));
+    esimd::simd<int16_t, kPackedN> mag = idx;
+    mag.merge(mag + int16_t(1), idx > int16_t(4));
+    mag.merge(mag + int16_t(1), idx > int16_t(5));
+    mag.merge(mag + int16_t(3), idx > int16_t(6));
+    esimd::simd<int16_t, kPackedN> q = mag;
+    q.merge(-mag, (nib & uint8_t(8)) != uint8_t(0));
+    return esimd::convert<int8_t>(q);
 }
 
 inline esimd::simd<int8_t, kKc * kExecN>
@@ -207,12 +196,11 @@ pack_vnni4(esimd::simd<int8_t, kKc * kExecN> brm) {
     return bv;
 }
 
-template <typename Name, int NT, int kUnroll>
+template <typename Name, int NT>
 sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
                    const float *asd, const float *bsd, sycl::half *cd, int rows,
                    int cols, int dk) {
     constexpr int kTN = NT * kExecN;
-    constexpr int kInnerK = kUnroll * kK64;
     const int packed_rows = dk / 2;
     const int64_t m_blocks = rows / kRc;
     const int64_t n_groups = cols / kTN;
@@ -234,11 +222,7 @@ sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
 #pragma unroll
             for (int t = 0; t < NT; ++t)
                 acc[t] = 0;
-            const int outer = dk / kInnerK;
-            for (int o = 0; o < outer; ++o) {
-#pragma unroll
-                for (int u = 0; u < kUnroll; ++u) {
-                    const int k0 = o * kInnerK + u * kK64;
+            for (int k0 = 0; k0 < dk; k0 += kK64) {
                     const esimd::simd<int8_t, kRc * kKc> a0 =
                         xesimd::lsc_load_2d<int8_t, kKc, kRc>(
                             ad, unsigned(dk - 1), unsigned(rows - 1),
@@ -272,7 +256,6 @@ sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
                                                   int8_t, int8_t>(acc[t], b1,
                                                                   a1);
                     }
-                }
             }
             esimd::simd<float, kRc> asv;
             asv.copy_from(asd + row0);
@@ -307,8 +290,8 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
     const int inner_k = unroll * kK64;
     if (m < 1 || n % tn != 0 || k % inner_k != 0) {
         std::fprintf(stderr,
-                     "%s: shape m=%d n=%d k=%d nt=%d unroll=%d\n",
-                     NIBBLE_LUT_SCF_PROGRAM, m, n, k, nt, unroll);
+                     "nibble_lut_k64: shape m=%d n=%d k=%d nt=%d unroll=%d\n", m,
+                     n, k, nt, unroll);
         *rc = 2;
         return;
     }
@@ -351,10 +334,10 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
 
     auto go = [&]() -> sycl::event {
         if (nt == 4)
-            return launch<DpasLutNt4Name, 4, 8>(q, ad, pd, asd, bsd, cd, rows,
+            return launch<DpasLutK64Nt4Name, 4>(q, ad, pd, asd, bsd, cd, rows,
                                                 n, k);
-        return launch<DpasLutNt2Name, 2, NIBBLE_LUT_SCF_NT2_UNROLL>(
-            q, ad, pd, asd, bsd, cd, rows, n, k);
+        return launch<DpasLutK64Nt2Name, 2>(q, ad, pd, asd, bsd, cd, rows, n,
+                                            k);
     };
 
     go().wait_and_throw();
@@ -458,7 +441,7 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
 
 int main(int argc, char **argv) {
     int nt = 2;
-    int timed_m = 1, timed_n = 5120, timed_k = 5120;
+    int timed_m = 1, timed_n = 2688, timed_k = 1856;
     int warmup = 50, iters = 40;
     const char *aff = std::getenv("ZE_AFFINITY_MASK");
     if (aff && aff[0])
@@ -489,21 +472,18 @@ int main(int argc, char **argv) {
             take(g_mhz);
         else if (a == "-h" || a == "--help") {
             std::fprintf(stderr,
-                         "%s --nt 2|4 [--m 1] [--spin 4000]\n",
-                         NIBBLE_LUT_SCF_PROGRAM);
+                         "nibble_lut_k64 --nt 2|4 [--m 1] [--spin 4000]\n");
             return 0;
         } else {
-            std::fprintf(stderr, "%s: unknown arg %s\n",
-                         NIBBLE_LUT_SCF_PROGRAM, a.c_str());
+            std::fprintf(stderr, "nibble_lut_k64: unknown arg %s\n", a.c_str());
             return 2;
         }
     }
     if (nt != 2 && nt != 4) {
-        std::fprintf(stderr, "%s: --nt must be 2 or 4\n",
-                     NIBBLE_LUT_SCF_PROGRAM);
+        std::fprintf(stderr, "nibble_lut_k64: --nt must be 2 or 4\n");
         return 2;
     }
-    const int unroll = (nt == 4) ? 8 : NIBBLE_LUT_SCF_NT2_UNROLL;
+    const int unroll = 1;
     sycl::device dev = pick_device();
     sycl::queue q(dev, {sycl::property::queue::in_order{},
                         sycl::property::queue::enable_profiling{}});
@@ -513,12 +493,11 @@ int main(int argc, char **argv) {
                               ? "sycl+l0"
                               : "sycl+other";
     std::printf("# CONFIG backend=%s device=\"%s\" driver=%s "
-                "arm=%s closed_form_exp_mant never_bitcast_s4 packedB=K/2 "
+                "arm=e2m1_nibble_lut_k64 never_bitcast_s4 packedB=K/2 kstep=64 "
                 "dtype=s8xE2M1->f16_scaled RC=%d NT=%d unroll=%d dpas=%d "
                 "wg=%dx%d_alongN padM=RC a_scale=b_scale=%.4f out=f16 "
                 "warmup=%d iters=%d card=%d spin=%d heat=none\n",
-                backend, name.c_str(), driver.c_str(), NIBBLE_LUT_SCF_ARM,
-                kRc, nt, unroll,
+                backend, name.c_str(), driver.c_str(), kRc, nt, unroll,
                 2 * nt * unroll, kWgX, kWgY, double(kScale), warmup, iters,
                 g_card, g_spin);
     int rc = 0;

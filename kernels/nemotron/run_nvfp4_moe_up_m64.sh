@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# K8: oneDNN W8A8 Lightning routed-up M=64 n=1856 k=2688.
+# K8: dump oneDNN nvfp4_gemm_w4a16 Lightning routed-up M=64 n=1856 k=2688.
 # Usage: gpu-run --card N bash this.sh N
 set -euo pipefail
 CARD="${1:?card}"
 ROOT=/mnt/vm_8tb/github/xe2x2
 IMG=b70-sglang-xpu-int8-runtime:20260826-mtp6
-OUT="$ROOT/results/k8/w8a8_moe_up_m64_card${CARD}.txt"
-FREQ="$ROOT/results/k8/w8a8_moe_up_m64_card${CARD}.freq"
+OUT="$ROOT/results/k8/nvfp4_moe_up_m64_card${CARD}.txt"
+FREQ="$ROOT/results/k8/nvfp4_moe_up_m64_card${CARD}.freq"
 GT="/sys/class/drm/card${CARD}/device/tile0/gt0/freq0"
 mkdir -p "$ROOT/results/k8"
 sample() {
@@ -22,15 +22,18 @@ trap cleanup EXIT
 {
   echo "=== clocks start ==="
   bash "$ROOT/scripts/clocks.sh" "$CARD"
-  echo "CONFIG backend=pytorch-xpu on sycl+l0 card=$CARD op=int8_gemm_w8a8 lightning_moe_up m=64 n=1856 k=2688"
+  echo "CONFIG backend=pytorch-xpu on sycl+l0 card=$CARD op=nvfp4_gemm_w4a16 lightning_moe_up m=64 n=1856 k=2688"
+  echo "M=1 dump 39.255. ABSENT is a RESULT."
   docker run --rm --device /dev/dri \
     -v /dev/dri/by-path:/dev/dri/by-path \
     -v "$ROOT:/work:ro" \
+    -v /mnt/vm_8tb/b70/nvfp4_kernel_v028:/opt/nvfp4:ro \
     -e ZE_AFFINITY_MASK="$CARD" \
     -e ONEAPI_DEVICE_SELECTOR=level_zero:gpu \
     -e ZES_ENABLE_SYSMAN=1 \
+    -e B70_XPU_C_SO=/opt/nvfp4/_xpu_C.abi3.so \
     --entrypoint python3 \
-    "$IMG" /work/kernels/gdn/bench_proj_w8a8.py --m 64 --n 1856 --k 2688 --name lightning_moe_up_m64
+    "$IMG" /work/kernels/nemotron/bench_nvfp4_lightning.py --m 64 --n 1856 --k 2688 --name lightning_moe_up_m64
   echo "=== clocks end ==="
   bash "$ROOT/scripts/clocks.sh" "$CARD"
 } | tee "$OUT"

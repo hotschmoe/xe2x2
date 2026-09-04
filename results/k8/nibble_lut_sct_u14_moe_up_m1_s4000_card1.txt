@@ -1,0 +1,25 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7379250924377 energy2=pkg:4322178478576 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7330862639709 energy2=pkg:4475364779418 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=nibble_lut_sct_u14 nt=2 unroll=14 m=1 n=1856 k=2688 lightning_moe_up never_bitcast_s4 spin=4000
+16-entry iselect-table hail-mary. inner_k=896 divides k=2688.
+=== nibble LUT table16 routed-up m=1 n=1856 k=2688 nt=2 u=14 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_lut_sct_u14 table16 never_bitcast_s4 packedB=K/2 dtype=s8xE2M1->f16_scaled RC=4 NT=2 unroll=14 dpas=56 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=1 spin=4000 heat=none
+timed_begin act=550 cur=550 power=D0 throttle=0
+timed_end act=550 cur=550 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,14,4,32,896,911.146,942.988,927.708,0.0003,0.016,1.000000,0,1,911.146,911.146,911.146
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+timed,2,14,1,1856,2688,536.547,552.430,537.031,0.0186,4.649,1.000000,0,1,536.562,536.354,536.875
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7379370583374 energy2=pkg:4322244981384 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7331094002502 energy2=pkg:4475534877380 temp2_mC=55000

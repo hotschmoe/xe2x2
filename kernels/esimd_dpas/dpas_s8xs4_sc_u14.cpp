@@ -1,14 +1,11 @@
-// K6 closed-form E2M1 decode (exp/mant shift), no merge-chain LUT.
+// K8 ESIMD s8xs4 control for Lightning routed-up, RC=4, 8x2 along N.
+// NT=2 unroll=14 gives inner_k=448, which divides hidden 2688.
 // Backend: sycl+l0. AOT intel_gpu_bmg_g31. Standalone icpx (intel/llvm#21741).
-// Never bitcast E2M1 onto s4. Packed nibbles stay in HBM (2 per byte along K).
 //
-// Tile: same as K2 dpas_s8_sc. RC=4, 64x dpas.8x4, wg 8x2 along N, scale-to-f16.
-// B load is packed uint8 Transformed=false, then simd LUT + VNNI4, then s8 DPAS.
-// CONFIG prior: scalar in-register LUT lost (2316 us); simd LUT at 1024^3 was
-// clock-bound vs two-launch unpack. Decode M=1 cannot afford a 25 MiB unpack
-// of B every token if weights stay 4-bit resident. Rank pipe_host vs s8 34 us
-// and W8A8 44 us at held 2800. Fill A s8 [-64,64]. B random E2M1 nibbles.
-// CSV: phase,... event_us,wait_host_us,pipe_host_us,cosine,max_abs,ok
+// Mix: B=s4 packed 2/byte, A=s8, dpas K=32 (OPC=4, A is s8).
+// CONFIG prior: ~34 us like s8, or ~14 like s2xs8 (fewer B bytes).
+// s4 [-8,7]. Never E2M1 bitcast.
+// Rank pipe_host vs s2xs8 14.1, s4 16.5, s8 34.
 
 #include <sycl/ext/intel/esimd.hpp>
 #include <sycl/ext/intel/esimd/xmx/dpas.hpp>
@@ -26,33 +23,23 @@
 
 namespace esimd = sycl::ext::intel::esimd;
 namespace xesimd = sycl::ext::intel::experimental::esimd;
-
-#ifndef NIBBLE_LUT_SCF_PROGRAM
-#define NIBBLE_LUT_SCF_PROGRAM "nibble_lut_scf"
-#endif
-#ifndef NIBBLE_LUT_SCF_ARM
-#define NIBBLE_LUT_SCF_ARM "e2m1_nibble_lut_scf"
-#endif
-#ifndef NIBBLE_LUT_SCF_NT2_UNROLL
-#define NIBBLE_LUT_SCF_NT2_UNROLL 16
-#endif
+namespace xmx = sycl::ext::intel::esimd::xmx;
 
 namespace {
 
 constexpr int kRc = 4;
 constexpr int kKc = 32;
-constexpr int kK64 = 64;
+constexpr int kKStep = 32;
 constexpr int kExecN = 16;
 constexpr int kWgX = 8;
 constexpr int kWgY = 2;
 constexpr int kWgN = kWgX * kWgY;
-constexpr int kPackedH = kKc / 2;
-constexpr int kPackedN = kPackedH * kExecN;
+constexpr int kPackB = 2;
+constexpr int kBPackedH = kKc / kPackB;
 constexpr float kScale = 0.02f;
-constexpr int8_t kMag2[8] = {0, 1, 2, 3, 4, 6, 8, 12};
 
-struct DpasLutNt2Name {};
-struct DpasLutNt4Name {};
+struct DpasS8xS4ScU14Nt2Name {};
+struct DpasS8xS4ScU14Nt4Name {};
 
 int g_card = 0;
 int g_spin = 0;
@@ -61,44 +48,31 @@ int g_mhz = 2400;
 sycl::device pick_device() {
     auto devs = sycl::device::get_devices(sycl::info::device_type::gpu);
     if (devs.empty()) {
-        std::fprintf(stderr, "%s: no GPU\n", NIBBLE_LUT_SCF_PROGRAM);
+        std::fprintf(stderr, "dpas_s8xs4_sc_u14: no GPU\n");
         std::exit(2);
     }
     return devs[0];
 }
 
+uint8_t pack_s4(int8_t lo, int8_t hi) {
+    return uint8_t((uint8_t(lo) & 0xf) | ((uint8_t(hi) & 0xf) << 4));
+}
+
+void fill_s4(int8_t *p, size_t n, unsigned seed) {
+    for (size_t i = 0; i < n; ++i)
+        p[i] = int8_t(int((i * 17u + seed) % 16u) - 8);
+}
+
 void fill_s8(int8_t *p, size_t n, unsigned seed) {
     for (size_t i = 0; i < n; ++i)
-        p[i] = int8_t(int((i * 17u + seed) % 129u) - 64);
+        p[i] = int8_t(int((i * 17u + seed) % 255u) - 128);
 }
 
-void fill_nibbles(uint8_t *p, size_t n, unsigned seed) {
-    for (size_t i = 0; i < n; ++i)
-        p[i] = uint8_t((i * 13u + seed) & 15u);
-}
-
-inline int8_t nibble_to_q(uint8_t nib) {
-    int8_t q = kMag2[nib & 7];
-    if (nib & 8)
-        q = int8_t(-q);
-    return q;
-}
-
-void pack_b(const uint8_t *nib, uint8_t *packed, int k, int n) {
-    for (int kk = 0; kk < k; kk += 2)
+void pack_b(const int8_t *b, uint8_t *out, int k, int n) {
+    for (int kk = 0; kk < k; kk += kPackB)
         for (int j = 0; j < n; ++j)
-            packed[(kk / 2) * n + j] =
-                uint8_t((nib[kk * n + j] & 15) |
-                        ((nib[(kk + 1) * n + j] & 15) << 4));
-}
-
-void unpack_host(const uint8_t *packed, int8_t *s8, int k, int n) {
-    for (int kk = 0; kk < k; kk += 2)
-        for (int j = 0; j < n; ++j) {
-            const uint8_t p = packed[(kk / 2) * n + j];
-            s8[kk * n + j] = nibble_to_q(uint8_t(p & 15));
-            s8[(kk + 1) * n + j] = nibble_to_q(uint8_t(p >> 4));
-        }
+            out[(kk / kPackB) * n + j] =
+                pack_s4(b[kk * n + j], b[(kk + 1) * n + j]);
 }
 
 static size_t round_up(int64_t n, int w) {
@@ -163,57 +137,13 @@ double median_of(std::vector<double> v) {
     return 0.5 * (v[n / 2 - 1] + v[n / 2]);
 }
 
-inline esimd::simd<int8_t, kPackedN>
-decode_nibbles(const esimd::simd<uint8_t, kPackedN> &nib) {
-    const esimd::simd<int16_t, kPackedN> e =
-        esimd::convert<int16_t>((nib >> uint8_t(1)) & uint8_t(3));
-    const esimd::simd<int16_t, kPackedN> m =
-        esimd::convert<int16_t>(nib & uint8_t(1));
-    esimd::simd<int16_t, kPackedN> mag = m;
-    esimd::simd<int16_t, kPackedN> sh = e - int16_t(1);
-    sh.merge(int16_t(0), e == int16_t(0));
-    esimd::simd<int16_t, kPackedN> nz = (m + int16_t(2)) << sh;
-    mag.merge(nz, e != int16_t(0));
-    mag.merge(-mag, (nib & uint8_t(8)) != uint8_t(0));
-    return esimd::convert<int8_t>(mag);
-}
-
-inline esimd::simd<int8_t, kKc * kExecN>
-lut_packed_to_s8(const esimd::simd<uint8_t, kPackedN> &p) {
-    esimd::simd<int8_t, kPackedN> qlo = decode_nibbles(p & uint8_t(15));
-    esimd::simd<int8_t, kPackedN> qhi = decode_nibbles(p >> uint8_t(4));
-    esimd::simd<int8_t, kKc * kExecN> brm(0);
-#pragma unroll
-    for (int r = 0; r < kPackedH; ++r) {
-        brm.template select<kExecN, 1>((2 * r) * kExecN) =
-            qlo.template select<kExecN, 1>(r * kExecN);
-        brm.template select<kExecN, 1>((2 * r + 1) * kExecN) =
-            qhi.template select<kExecN, 1>(r * kExecN);
-    }
-    return brm;
-}
-
-inline esimd::simd<int8_t, kKc * kExecN>
-pack_vnni4(esimd::simd<int8_t, kKc * kExecN> brm) {
-    esimd::simd<int8_t, kKc * kExecN> bv(0);
-#pragma unroll
-    for (int g = 0; g < kKc / 4; ++g) {
-#pragma unroll
-        for (int r = 0; r < 4; ++r) {
-            bv.template select<kExecN, 4>((g * kExecN) * 4 + r) =
-                brm.template select<kExecN, 1>((g * 4 + r) * kExecN);
-        }
-    }
-    return bv;
-}
-
 template <typename Name, int NT, int kUnroll>
-sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
+sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *bd,
                    const float *asd, const float *bsd, sycl::half *cd, int rows,
                    int cols, int dk) {
     constexpr int kTN = NT * kExecN;
-    constexpr int kInnerK = kUnroll * kK64;
-    const int packed_rows = dk / 2;
+    constexpr int kInnerK = kUnroll * kKStep;
+    const int b_rows = dk / kPackB;
     const int64_t m_blocks = rows / kRc;
     const int64_t n_groups = cols / kTN;
     const size_t n_wgs = round_up(n_groups, kWgN) / size_t(kWgN);
@@ -238,39 +168,23 @@ sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
             for (int o = 0; o < outer; ++o) {
 #pragma unroll
                 for (int u = 0; u < kUnroll; ++u) {
-                    const int k0 = o * kInnerK + u * kK64;
+                    const int k0 = o * kInnerK + u * kKStep;
+                    const int pk0 = k0 / kPackB;
                     const esimd::simd<int8_t, kRc * kKc> a0 =
                         xesimd::lsc_load_2d<int8_t, kKc, kRc>(
                             ad, unsigned(dk - 1), unsigned(rows - 1),
                             unsigned(dk - 1), k0, row0);
-                    const esimd::simd<int8_t, kRc * kKc> a1 =
-                        xesimd::lsc_load_2d<int8_t, kKc, kRc>(
-                            ad, unsigned(dk - 1), unsigned(rows - 1),
-                            unsigned(dk - 1), k0 + kKc, row0);
 #pragma unroll
                     for (int t = 0; t < NT; ++t) {
-                        const esimd::simd<uint8_t, kPackedN> p0 =
-                            xesimd::lsc_load_2d<uint8_t, kExecN, kPackedH, 1,
-                                                false, false>(
-                                pd, unsigned(cols - 1),
-                                unsigned(packed_rows - 1), unsigned(cols - 1),
-                                col0 + t * kExecN, k0 / 2);
-                        const esimd::simd<int8_t, kKc * kExecN> b0 =
-                            pack_vnni4(lut_packed_to_s8(p0));
-                        acc[t] = esimd::xmx::dpas<8, kRc, int32_t, int32_t,
-                                                  int8_t, int8_t>(acc[t], b0,
-                                                                  a0);
-                        const esimd::simd<uint8_t, kPackedN> p1 =
-                            xesimd::lsc_load_2d<uint8_t, kExecN, kPackedH, 1,
-                                                false, false>(
-                                pd, unsigned(cols - 1),
-                                unsigned(packed_rows - 1), unsigned(cols - 1),
-                                col0 + t * kExecN, (k0 + kKc) / 2);
-                        const esimd::simd<int8_t, kKc * kExecN> b1 =
-                            pack_vnni4(lut_packed_to_s8(p1));
-                        acc[t] = esimd::xmx::dpas<8, kRc, int32_t, int32_t,
-                                                  int8_t, int8_t>(acc[t], b1,
-                                                                  a1);
+                        const esimd::simd<uint8_t, kBPackedH * kExecN> bt =
+                            xesimd::lsc_load_2d<uint8_t, kExecN, kBPackedH, 1,
+                                                false, true>(
+                                bd, unsigned(cols - 1), unsigned(b_rows - 1),
+                                unsigned(cols - 1), col0 + t * kExecN, pk0);
+                        acc[t] = xmx::dpas<8, kRc, int32_t, int32_t, uint8_t,
+                                           int8_t, xmx::dpas_argument_type::s4,
+                                           xmx::dpas_argument_type::s8>(
+                            acc[t], bt, a0);
                     }
                 }
             }
@@ -304,28 +218,27 @@ sycl::event launch(sycl::queue &q, const int8_t *ad, const uint8_t *pd,
 void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
                int n, int k, int warmup, int iters, int *rc, int do_spin) {
     const int tn = nt * kExecN;
-    const int inner_k = unroll * kK64;
-    if (m < 1 || n % tn != 0 || k % inner_k != 0) {
+    const int inner_k = unroll * kKStep;
+    if (m < 1 || n % tn != 0 || k % inner_k != 0 || k % kPackB != 0) {
         std::fprintf(stderr,
-                     "%s: shape m=%d n=%d k=%d nt=%d unroll=%d\n",
-                     NIBBLE_LUT_SCF_PROGRAM, m, n, k, nt, unroll);
+                     "dpas_s8xs4_sc_u14: shape m=%d n=%d k=%d nt=%d unroll=%d\n", m,
+                     n, k, nt, unroll);
         *rc = 2;
         return;
     }
     const int rows = ((m + kRc - 1) / kRc) * kRc;
     const size_t na = size_t(rows) * size_t(k);
     const size_t nb = size_t(k) * size_t(n);
-    const size_t np = size_t(k / 2) * size_t(n);
+    const size_t nb_p = size_t(k / kPackB) * size_t(n);
     const size_t nc_pad = size_t(rows) * size_t(n);
     const size_t nc = size_t(m) * size_t(n);
     std::vector<int8_t> ha(na, 0), hb(nb);
-    std::vector<uint8_t> nib(nb), packed(np);
+    std::vector<uint8_t> pb(nb_p);
     std::vector<float> has(size_t(rows), 0.f), hbs(size_t(n), kScale);
     std::vector<sycl::half> href(nc), hgot(nc), hpad(nc_pad);
     fill_s8(ha.data(), size_t(m) * size_t(k), 1);
-    fill_nibbles(nib.data(), nb, 9);
-    pack_b(nib.data(), packed.data(), k, n);
-    unpack_host(packed.data(), hb.data(), k, n);
+    fill_s4(hb.data(), nb, 9);
+    pack_b(hb.data(), pb.data(), k, n);
     for (int i = 0; i < m; ++i)
         has[size_t(i)] = kScale;
     for (int i = 0; i < m; ++i) {
@@ -340,21 +253,21 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
     }
 
     int8_t *ad = sycl::malloc_device<int8_t>(na, q);
-    uint8_t *pd = sycl::malloc_device<uint8_t>(np, q);
+    uint8_t *bd = sycl::malloc_device<uint8_t>(nb_p, q);
     float *asd = sycl::malloc_device<float>(size_t(rows), q);
     float *bsd = sycl::malloc_device<float>(size_t(n), q);
     sycl::half *cd = sycl::malloc_device<sycl::half>(nc_pad, q);
     q.memcpy(ad, ha.data(), na).wait();
-    q.memcpy(pd, packed.data(), np).wait();
+    q.memcpy(bd, pb.data(), nb_p).wait();
     q.memcpy(asd, has.data(), size_t(rows) * sizeof(float)).wait();
     q.memcpy(bsd, hbs.data(), size_t(n) * sizeof(float)).wait();
 
     auto go = [&]() -> sycl::event {
         if (nt == 4)
-            return launch<DpasLutNt4Name, 4, 8>(q, ad, pd, asd, bsd, cd, rows,
-                                                n, k);
-        return launch<DpasLutNt2Name, 2, NIBBLE_LUT_SCF_NT2_UNROLL>(
-            q, ad, pd, asd, bsd, cd, rows, n, k);
+            return launch<DpasS8xS4ScU14Nt4Name, 4, 6>(q, ad, bd, asd, bsd, cd,
+                                                    rows, n, k);
+        return launch<DpasS8xS4ScU14Nt2Name, 2, 14>(q, ad, bd, asd, bsd, cd, rows,
+                                                 n, k);
     };
 
     go().wait_and_throw();
@@ -435,12 +348,11 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
     const double us = (double(ns_sum) / 1000.0) / double(iters);
     const double ops = 2.0 * double(m) * double(n) * double(k);
     const double tops = (ops / 1.0e12) / (us * 1.0e-6);
-    const double gbs = (double(k) * double(n) * 0.5 / 1.0e9) / (us * 1.0e-6);
     std::printf("phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,"
-                "GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us\n");
-    std::printf("%s,%d,%d,%d,%d,%d,%.3f,%.3f,%.3f,%.4f,%.3f,%.6f,%.5g,%d,%.3f,"
-                "%.3f,%.3f\n",
-                phase, nt, unroll, m, n, k, us, wait_host, pipe_us, tops, gbs,
+                "cosine,max_abs,ok,median_us,min_us,max_us\n");
+    std::printf("%s,%d,%d,%d,%d,%d,%.3f,%.3f,%.3f,%.4f,%.6f,%.5g,%d,%.3f,%.3f,"
+                "%.3f\n",
+                phase, nt, unroll, m, n, k, us, wait_host, pipe_us, tops,
                 cosine, mx, ok, median_of(all_us),
                 all_us.empty() ? -1.0
                                : *std::min_element(all_us.begin(), all_us.end()),
@@ -448,7 +360,7 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
                                : *std::max_element(all_us.begin(), all_us.end()));
 
     sycl::free(ad, q);
-    sycl::free(pd, q);
+    sycl::free(bd, q);
     sycl::free(asd, q);
     sycl::free(bsd, q);
     sycl::free(cd, q);
@@ -458,7 +370,7 @@ void run_shape(sycl::queue &q, int nt, int unroll, const char *phase, int m,
 
 int main(int argc, char **argv) {
     int nt = 2;
-    int timed_m = 1, timed_n = 5120, timed_k = 5120;
+    int timed_m = 1, timed_n = 1856, timed_k = 2688;
     int warmup = 50, iters = 40;
     const char *aff = std::getenv("ZE_AFFINITY_MASK");
     if (aff && aff[0])
@@ -489,21 +401,18 @@ int main(int argc, char **argv) {
             take(g_mhz);
         else if (a == "-h" || a == "--help") {
             std::fprintf(stderr,
-                         "%s --nt 2|4 [--m 1] [--spin 4000]\n",
-                         NIBBLE_LUT_SCF_PROGRAM);
+                         "dpas_s8xs4_sc_u14 --nt 2|4 [--m 1] [--spin 4000]\n");
             return 0;
         } else {
-            std::fprintf(stderr, "%s: unknown arg %s\n",
-                         NIBBLE_LUT_SCF_PROGRAM, a.c_str());
+            std::fprintf(stderr, "dpas_s8xs4_sc_u14: unknown arg %s\n", a.c_str());
             return 2;
         }
     }
     if (nt != 2 && nt != 4) {
-        std::fprintf(stderr, "%s: --nt must be 2 or 4\n",
-                     NIBBLE_LUT_SCF_PROGRAM);
+        std::fprintf(stderr, "dpas_s8xs4_sc_u14: --nt must be 2 or 4\n");
         return 2;
     }
-    const int unroll = (nt == 4) ? 8 : NIBBLE_LUT_SCF_NT2_UNROLL;
+    const int unroll = (nt == 4) ? 6 : 14;
     sycl::device dev = pick_device();
     sycl::queue q(dev, {sycl::property::queue::in_order{},
                         sycl::property::queue::enable_profiling{}});
@@ -513,18 +422,17 @@ int main(int argc, char **argv) {
                               ? "sycl+l0"
                               : "sycl+other";
     std::printf("# CONFIG backend=%s device=\"%s\" driver=%s "
-                "arm=%s closed_form_exp_mant never_bitcast_s4 packedB=K/2 "
-                "dtype=s8xE2M1->f16_scaled RC=%d NT=%d unroll=%d dpas=%d "
-                "wg=%dx%d_alongN padM=RC a_scale=b_scale=%.4f out=f16 "
+                "dtype=s8xs4->f16_scaled RC=%d NT=%d unroll=%d dpas=%d "
+                "wg=%dx%d_alongN padM=RC packB=2 a_scale=b_scale=%.4f out=f16 "
                 "warmup=%d iters=%d card=%d spin=%d heat=none\n",
-                backend, name.c_str(), driver.c_str(), NIBBLE_LUT_SCF_ARM,
-                kRc, nt, unroll,
-                2 * nt * unroll, kWgX, kWgY, double(kScale), warmup, iters,
-                g_card, g_spin);
+                backend, name.c_str(), driver.c_str(), kRc, nt, unroll,
+                nt * unroll, kWgX, kWgY, double(kScale), warmup, iters, g_card,
+                g_spin);
     int rc = 0;
-    run_shape(q, nt, unroll, "check", kRc, nt * kExecN, unroll * kK64, 1, 1, &rc,
+    run_shape(q, nt, unroll, "check", kRc, nt * kExecN, unroll * kKStep, 1, 1, &rc,
               0);
     run_shape(q, nt, unroll, "timed", timed_m, timed_n, timed_k, warmup, iters,
               &rc, 1);
     return rc;
 }
+

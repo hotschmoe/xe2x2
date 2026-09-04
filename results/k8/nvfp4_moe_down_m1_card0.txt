@@ -1,0 +1,21 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7378701203186 energy2=pkg:4321865089843 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7330350495361 energy2=pkg:4475089917297 temp2_mC=53000
+CONFIG backend=pytorch-xpu on sycl+l0 card=0 op=nvfp4_gemm_w4a16 lightning_moe_down n=2688 k=1856
+UP dump 39.255. ABSENT is a RESULT.
+CONFIG backend=pytorch-xpu on sycl+l0 op=nvfp4_gemm_w4a16 arm lightning_moe_down m 1 n 2688 k 1856 torch 2.13.0+xpu ZE_AFFINITY_MASK 0
+load_library /opt/nvfp4/_xpu_C.abi3.so ok
+HAS nvfp4_gemm_w4a16 True HAS f8scale True
+shape 1 2688 1856 B (928, 2688) stride (1, 928)
+out (1, 2688) torch.bfloat16
+nvfp4_gemm_w4a16,1,2688,1856,39.224
+DONE
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1183 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7379287261230 energy2=pkg:4322199115112 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7330929570312 energy2=pkg:4475413889099 temp2_mC=55000

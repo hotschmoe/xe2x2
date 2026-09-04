@@ -1,0 +1,20 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7323024120422 energy2=pkg:4293299392578 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7274318985839 energy2=pkg:4445695859985 temp2_mC=55000
+CONFIG backend=sycl+l0 card=0 arm=mamba_fuse_t1 spin=4000 T=1 C=4096 k=4 heads=64 d_head=64 d_state=128 groups=8
+Two in-order launches; rank pipe_host vs 4.355 + 80.064 = 84.419 us. SSU is not GDN delta.
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=mamba_conv_k4_then_mamba2_ssu_t1 launches=2 in_order=1 C=4096 heads=64 d_head=64 d_state=128 groups=8 dtype=f16_f32 rank=pipe_host baseline_us=84.419 warmup=50 iters=40 card=0 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,T,C,kconv,heads,d_head,d_state,groups,last_event_us,wait_host_us,pipe_host_us,baseline_us,conv_cosine,conv_max_abs,ssu_cosine,ssu_max_abs,ok,median_last_us,min_last_us,max_last_us
+timed,1,4096,4,64,64,128,8,79.544,98.638,81.075,84.419,1.000000,0,1.000000,1.9073e-06,1,79.375,78.541,80.834
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7323080309936 energy2=pkg:4293336434020 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7274354340515 energy2=pkg:4445716552612 temp2_mC=55000
