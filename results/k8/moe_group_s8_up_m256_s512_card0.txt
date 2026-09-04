@@ -1,0 +1,21 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7529130308105 energy2=pkg:4399497371215 temp2_mC=49000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7481284294006 energy2=pkg:4554536511474 temp2_mC=53000
+CONFIG backend=sycl+l0 card=0 arm=moe_group_s8_m1 spin=512 experts=6 m=256 n=1856 k=2688 lightning_up
+M=64 grouped-up 231.179. Do not use spin=4000.
+=== esimd grouped s8 UP experts=6 m=256 n=1856 k=2688 spin=512 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=moe_group_s8_m1 dtype=s8xs8_to_f16 experts=6 m=256 n=1856 k=2688 scale=0.0200 RC=4 NT=2 kstep=64 wg=8x2_alongN warmup=5 iters=8 card=0 spin=512 mhz=2400 heat=none
+spin_done n=512 act=2683 cur=2800 power=D0 throttle=1
+timed_begin act=2683 cur=2800 power=D0 throttle=1
+timed_end act=2683 cur=2800 power=D0 throttle=1
+phase,experts,m,n,k,event_us,last_event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_sum_us,min_sum_us,max_sum_us
+timed,6,256,1856,2688,642.774,107.695,706.208,654.497,23.4164,1.000000,0,1,641.355,618.957,672.814
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7529487234619 energy2=pkg:4399710870971 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7481557407165 energy2=pkg:4554684922729 temp2_mC=53000

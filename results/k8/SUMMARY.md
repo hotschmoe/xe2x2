@@ -1979,3 +1979,369 @@ Rank pipe_host.
 
 Evidence: `results/k8/prod_lut_gemv_down_m1_s0_card0.txt`,
 `results/k8/prod_lut_gemv_down_m1_s0_card0.freq`.
+
+## E2M1 two-term s4 U=14 routed expert UP-proj M=256 card1 (2026-09-04bx)
+
+backend sycl+l0, standalone AOT
+compose_e2m1_sc_u14. NT=2 U=14
+m=256 n=1856 k=2688 spin=512.
+A=s4. B=E2M1 split two s4
+planes, acc=acc_lo+8*acc_hi.
+RC=4 wg=8x2_alongN
+dpas_lo_hi=56. Never bitcast.
+Rank pipe_host vs M=64 two-term
+29.637, s8 M=64 31.198, W8A8
+M=1 44.285 / M=64 39.907.
+Prior: large-M loses vs W8A8
+at 5120.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 3s.
+
+| card | event_us | wait_host_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 103.385 | 118.316 | 100.811 | 24.7069 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 23 samples.
+GPU-window act=0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,2800,0,0,0,0.
+start D3hot act=0 cur=600
+throttle=0. end D0 act=0
+cur=2800 throttle=0. vs M=1
+two-term 15.518 (~6.50x); vs
+M=64 two-term 29.637 (~3.40x);
+vs s8 M=64 31.198 (~3.23x); vs
+W8A8 M=1 44.285 (~2.28x); vs
+W8A8 M=64 39.907 (~2.53x); vs
+5120 8x2-N 612.68 (~0.165x);
+vs napkin N-linear
+612.68*(1856/5120)~222
+(~0.454x); vs K-linear
+612.68*(2688/5120)~322
+(~0.313x); vs M-linear
+29.637*4~119 (~0.850x); vs
+M1-linear 15.518*256~3973
+(~0.025x); vs 4x8 N-linear
+194.9*(1856/5120)~70.7
+(~1.43x); vs event 103.385
+(~0.975x); vs STOP 177
+(~0.570x). Left launch-class
+vs M=1. CONFIG prior large-M
+loses vs W8A8 at 5120 HOLDS
+here (unlike M=64). Numeric
+closed. Clocks held at timed.
+Never bitcast. One-card enough
+(matched two-term RC=4 family).
+Rank pipe_host. No STOP. Not a
+prefill floor.
+
+Evidence: `results/k8/e2m1_twoterm_moe_up_m256_s512_card1.txt`,
+`results/k8/e2m1_twoterm_moe_up_m256_s512_card1.freq`.
+
+## ESIMD s8 packed qkv M=256 card0 (2026-09-04bw)
+
+backend sycl+l0, standalone AOT
+dpas_s8_sc_u14. NT=2 U=14 m=256
+n=4608 k=2688 spin=512. Same
+RC=4 8x2-N scale-to-f16 family
+as M=1 qkv 16.609 / M=64
+106.287. Packed Q 4096 + K 256
++ V 256. Rank pipe_host vs M=1
+qkv 16.609, M=64 qkv 106.287,
+s8 expert M=64 31.198,
+two-term M=64 29.637, W8A8
+qkv M=1 41.320. Napkin
+M-linear from M=64 106.287*4
+~425; MN-linear from expert
+M=64 31.198*(256/64)*(4608/1856)
+~310.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 11s.
+
+| card | event_us | wait_host_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 301.833 | 318.791 | 303.121 | 21.0109 | 1.000000 | 0 | 1 |
+
+timed_begin act=2600 cur=2800
+throttle=1. timed_end act=2583
+cur=2800 throttle=1. spin_done
+act=2600 cur=2800 throttle=1.
+freq 50 ms throttle=1 in 2 of
+113 samples. GPU-window act=0,0,
+0,400 then 102x 0 then
+2800,2633 then 4x 0. cur=2800
+x4, 400, then 102x 550, then
+6x 2800. 1 sample act=cur=2800
+(throttled). start D3hot act=0
+cur=2800 throttle=0. end D0
+act=0 cur=2800 throttle=0.
+check 4x32x896 cosine=1.000000
+max_abs=0 ok=1 at act=400 (not
+Lightning timed). vs M=1 qkv
+16.609 (~18.3x); vs M=64 qkv
+106.287 (~2.85x); vs s8 expert
+M=64 31.198 (~9.72x); vs
+two-term M=64 29.637 (~10.2x);
+vs W8A8 qkv M=1 41.320
+(~7.34x); vs napkin M-linear
+M=64 ~425 (~0.713x); vs
+M-linear M=1 ~4252 (~0.071x);
+vs MN-linear expert M=64 ~310
+(~0.978x); vs two-term
+MN-linear ~294 (~1.03x); vs
+event 301.833 (~1.00x); vs
+STOP 165 (~1.83x). Over 4x
+decode W8A8 M=1. Left
+launch-class vs M=1, closer
+to M-linear from M=64. Fat
+N=4608 MN-linear from expert
+M=64 tracks 0.978x. Do not
+claim a W8A8 beat (M=256
+W8A8 open). Numeric closed.
+throttle=1 timed act=2600->2583.
+Do not freeze as held 2800.
+One-card first; sibling later
+(throttle=1, event spread ~8%).
+Rank pipe_host.
+
+Evidence: `results/k8/esimd_s8_qkv_m256_s512_card0.txt`,
+`results/k8/esimd_s8_qkv_m256_s512_card0.freq`.
+
+## ESIMD grouped 6-expert s8 UP M=256 card0 (2026-09-04by)
+
+backend sycl+l0, standalone AOT
+moe_group_s8_m1. experts=6 m=256
+n=1856 k=2688 spin=512. RC=4
+NT=2 kstep=64 wg=8x2_alongN
+scale 0.02 out f16. Six
+launches share A and one
+in-order queue. Not U=14.
+Not 256 one-expert launches.
+Rank pipe_host of all 6.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 8s.
+
+| card | event_us | last_event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 642.774 | 107.695 | 654.497 | 23.4164 | 1.000000 | 0 | 1 |
+
+timed act=2683 cur=2800
+throttle=1 both ends.
+spin_done act=2683 cur=2800
+throttle=1. freq 50 ms
+throttle=1 in 3 of 73 samples.
+GPU-window act=0,0,0,0,400 then
+61x 0 then 2767,2717,2700,2767
+then 3x 0. cur=2800 x4, 400,
+then 60x 400, then 550, then
+7x 2800. 0 samples act=cur=2800.
+start D3hot act=0 cur=2800
+throttle=0. end D0 act=0
+cur=2800 throttle=0.
+median_sum 641.355 min 618.957
+max 672.814. vs grouped M=1
+165.223 (~3.96x); vs grouped
+M=64 231.179 (~2.83x); vs
+6*31.198*4=748.752 (~0.874x);
+vs 6*39.907*4=957.768 (~0.683x);
+vs 6*44.285=265.710 (~2.46x);
+vs 6*16.060=96.360 (~6.79x);
+vs M-linear 231.179*4=924.716
+(~0.708x); vs M1-linear
+165.223*256=42297 (~0.015x);
+vs 6*100.811=604.866 (~1.08x);
+vs 6*29.637*4=711.288 (~0.920x);
+vs 6*40.184*4=964.416 (~0.679x).
+mean event 107.1 us/expert vs
+U=14 31.198 / k64 M=64 38.4.
+pipe_host ~ event sum. Host
+cosine closed, not heavy.
+Left 231-class vs M=64 grouped,
+not M-linear. k64-loop not
+U=14. Numeric closed.
+throttle=1 timed act=2683. Do
+not freeze as held 2800.
+One-card first; sibling later
+(throttle=1, event spread ~8%).
+Rank pipe_host. W8A8 M=256 and
+one-expert s8 M=256 still open.
+
+Evidence: `results/k8/moe_group_s8_up_m256_s512_card0.txt`,
+`results/k8/moe_group_s8_up_m256_s512_card0.freq`.
+
+## oneDNN nvfp4_gemm_w4a16 routed expert UP-proj M=256 card1 (2026-09-04bz)
+
+Backend pytorch-xpu on sycl+l0. Image
+`b70-sglang-xpu-int8-runtime:20260826-mtp6`
+plus v028 `/mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so`.
+`nvfp4_gemm_w4a16` folded bf16 scale g16.
+B packed NT stride(0)=1. A bf16.
+ONE routed expert UP-proj n=1856 k=2688.
+warmup 10 iters 20. No extra M=256 heat.
+Rank us vs M=1 39.255, M=64 40.184,
+two-term M=256 100.811, W8A8 M=64 39.907.
+No serve. Card1 only. Napkin is CONFIG.
+ABSENT/EXC is a RESULT. Clocks may not
+hold. P2P off.
+
+HAS nvfp4_gemm_w4a16 True HAS f8scale True.
+out bf16 [256,1856]. B (1344,1856) stride
+(1,1344). gpu-run 15s.
+
+| card | us | HAS | f8scale | out |
+|---:|---:|---|---|---|
+| 1 | 57.140 | True | True | bf16 [256,1856] |
+
+Clocks (freq 50 ms): throttle=0 all 168 samples.
+GPU-window act=1650,1600,1900,1900,1900
+cur=1650,1600,1900,1900,1900.
+Zero samples act=cur=2800. start act=0
+cur=2800 throttle=0 D3hot. end act=0
+cur=1900 throttle=0 D0.
+
+vs M=1 39.255 (~1.46x). vs M=64 40.184
+(~1.42x). vs two-term M=256 100.811
+(~0.567x). vs W8A8 M=64 39.907
+(~1.43x). vs W8A8 M=1 44.285 (~1.29x).
+vs s8 M=64 31.198 (~1.83x). vs two-term
+M=64 29.637 (~1.93x). vs LUT 83.659
+(~0.68x). vs K6 M=256 118 (~0.484x).
+vs napkin N-linear 118*(1856/5120)~42.8
+(~1.34x). vs K-linear 118*(2688/5120)~62.0
+(~0.922x). vs M-linear 40.184*4~160.7
+(~0.355x). vs M1-linear 39.255*256~10049
+(~0.0057x). vs K6 3.18x M=64 ~127.8
+(~0.447x). vs STOP 177 (~0.323x).
+57-class launch, not M-linear. Beats
+two-term M=256; loses at M=1 and M=64.
+Loses to W8A8 M=64 / s8 M=64. W8A8
+M=256 still open. No E2M1 cosine this
+dump. f8scale not timed. Do not freeze
+(act not held 2800). One-card enough
+(w4a16 family already matched both
+cards at 5120). Rank us. No STOP
+(57.140 < 177).
+
+Evidence: `results/k8/nvfp4_moe_up_m256_card1.txt`,
+`results/k8/nvfp4_moe_up_m256_card1.freq`.
+
+## W8A8 mamba in_proj M=1 card1 (2026-09-04cb)
+
+Backend pytorch-xpu on sycl+l0. Image
+`b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+`int8_gemm_w8a8` GEMM-only. Heat M=64 spin=512.
+Lightning mamba in_proj n=10304 k=2688.
+Rank us vs s8 23.504 (04bl), FP8 51.036
+(04bm). No serve. Card1 only. Napkin
+is CONFIG. Official PTQ is FP8.
+
+cosine=1.000000 max_abs=0.031235 ok=1.
+gpu-run 13s.
+
+| card | us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 41.159 | 672.936 | 1.000000 | 0.031235 | 1 |
+
+Clocks (freq 50 ms): throttle=0 all 146 samples.
+GPU-window act=950,2000,2050,2800
+cur=933,1900,2050,2800.
+One sample act=cur=2800. start act=0
+cur=1900 throttle=0 D3hot. end act=0
+cur=2800 throttle=0 D0.
+
+vs s8 in_proj 23.504 (~1.75x; s8 wins).
+vs FP8 51.036 (~0.806x). vs packed qkv
+W8A8 41.320 (~1.00x). vs expert-up
+44.285 (~0.93x). vs shared 42.273
+(~0.97x). vs o-proj W8A8 44.081
+(~0.93x). vs nvfp4 UP 39.255 (~1.05x).
+vs square 44 (~0.94x). vs napkin
+N-linear 44.285*(10304/1856)~245.9
+(~0.167x). 41-class launch like qkv
+41.320, not N-linear ~246. Fat N=10304
+is 5.55x expert N but 0.93x us vs
+44.285. 673 GB/s on 27.7 MB B; do not
+claim a 608 roof beat (host us, clocks
+not held). Numeric closed. Do not
+freeze (act not held 2800). One-card
+enough (W8A8 family already matched
+both cards). Rank us. M=64 still open.
+
+Evidence: `results/k8/w8a8_mamba_in_m1_card1.txt`,
+`results/k8/w8a8_mamba_in_m1_card1.freq`.
+
+## ESIMD s8 mamba in_proj M=64 card0 (2026-09-04ca)
+
+backend sycl+l0, standalone AOT
+dpas_s8_sc_u14. NT=2 U=14 m=64
+n=10304 k=2688 spin=512. Same
+RC=4 8x2-N scale-to-f16 family
+as M=1 in_proj 23.504 / packed
+qkv M=64 106.287. N napkin
+z/x 4096+4096 + B/C 1024+1024
++ dt 64. n%32=0. Official PTQ
+is FP8; s8 is the beat-me
+control. Rank pipe_host vs M=1
+23.504, qkv M=64 106.287,
+expert M=64 31.198, two-term
+M=64 29.637, W8A8 in_proj M=1
+41.159. Napkin N-linear expert
+M=64 31.198*(10304/1856)~173;
+qkv M=64 106.287*(10304/4608)
+~238; M-linear 23.504*64~1504.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 8s.
+
+| card | event_us | wait_host_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 210.948 | 226.402 | 211.257 | 16.8062 | 1.000000 | 0 | 1 |
+
+timed act=2633 cur=2800 throttle=1
+both ends. spin_done act=2633
+cur=2800 throttle=1. freq 50 ms
+throttle=1 in 1 of 69 samples.
+GPU-window act=0,0,0,0,400 then
+59x 0 then 400,2700 then 3x 0.
+cur=2800 x4, then 60x 550, 400,
+then 4x 2800. 0 samples
+act=cur=2800. start D0 act=0
+cur=2800 throttle=0. end D0
+act=0 cur=2800 throttle=0.
+check 4x32x896 cosine=1.000000
+max_abs=0 ok=1 at act=400 (not
+Lightning timed). vs M=1 23.504
+(~8.99x); vs qkv M=64 106.287
+(~1.99x); vs expert M=64 31.198
+(~6.77x); vs two-term M=64
+29.637 (~7.13x); vs W8A8
+in_proj M=1 41.159 (~5.13x); vs
+W8A8 expert M=64 39.907
+(~5.29x); vs napkin N-linear
+expert ~173 (~1.22x); vs qkv
+N-linear ~238 (~0.89x); vs
+M-linear ~1504 (~0.140x); vs
+event 210.948 (~1.00x); vs FP8
+in M=1 51.036 (~4.14x). n=10304
+accepted (n%32=0). vs M=1
+23.504 (~8.99x), not M-linear
+64x. Fat N=10304 tracks qkv
+M=64 N-linear 238 (~0.89x) more
+than M=1 leftover 16-class.
+Loses to W8A8 decode 41.159;
+W8A8 M=64 still open. Do not
+claim a W8A8 beat. Official PTQ
+is FP8. Numeric closed.
+throttle=1 timed act=2633. Do
+not freeze as held 2800.
+One-card first; sibling later
+(throttle=1, event spread ~12%).
+Rank pipe_host.
+
+Evidence: `results/k8/esimd_s8_mamba_in_m64_s512_card0.txt`,
+`results/k8/esimd_s8_mamba_in_m64_s512_card0.freq`.

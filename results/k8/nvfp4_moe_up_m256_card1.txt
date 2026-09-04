@@ -1,0 +1,21 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7528206475830 energy2=pkg:4399014915283 temp2_mC=54000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7480304540527 energy2=pkg:4553982358398 temp2_mC=51000
+CONFIG backend=pytorch-xpu on sycl+l0 card=1 op=nvfp4_gemm_w4a16 lightning_moe_up m=256 n=1856 k=2688
+M=1 dump 39.255. Do not overlap other GPU. ABSENT is a RESULT.
+CONFIG backend=pytorch-xpu on sycl+l0 op=nvfp4_gemm_w4a16 arm lightning_moe_up_m256 m 256 n 1856 k 2688 torch 2.13.0+xpu ZE_AFFINITY_MASK 1
+load_library /opt/nvfp4/_xpu_C.abi3.so ok
+HAS nvfp4_gemm_w4a16 True HAS f8scale True
+shape 256 1856 2688 B (1344, 1856) stride (1, 1344)
+out (256, 1856) torch.bfloat16
+nvfp4_gemm_w4a16,256,1856,2688,57.140
+DONE
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=1900 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7528806110229 energy2=pkg:4399326079345 temp2_mC=49000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7480961431152 energy2=pkg:4554367046386 temp2_mC=53000

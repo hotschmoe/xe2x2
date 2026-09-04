@@ -54,7 +54,23 @@ and at Lightning 1856 (STOP).
       napkin N-linear ~89.
       Official PTQ is FP8; s8
       is the beat-me control.
-- [ ] in_proj GEMM M=64 s8. Same N.
+- [x] in_proj GEMM M=64 s8. Same N.
+      s8 U=14 211.257 us
+      pipe_host card0 (04ca).
+      throttle=1 timed
+      act=2633. Do not
+      freeze as 2800. vs M=1
+      23.504 (~8.99x), not
+      M-linear. vs qkv M=64
+      106.287 (~1.99x) vs
+      expert M=64 31.198
+      (~6.77x). Fat N=10304
+      is 1.22x of N-linear
+      173; 0.89x of qkv
+      N-linear 238. W8A8
+      M=64 still open. One-
+      card first; sibling
+      later (throttle=1).
 - [x] in_proj GEMM M=1 FP8-W8A16
       n=10304 k=2688. 51.036 us
       card1 (04bm). Loses to s8
@@ -62,7 +78,16 @@ and at Lightning 1856 (STOP).
       left 44-class (~1.15x of
       W8A8 44.285). 543 GB/s.
       Official PTQ is FP8.
-- [ ] in_proj GEMM M=1/M=64 W8A8.
+- [x] in_proj GEMM M=1 W8A8
+      n=10304 k=2688. 41.159 us
+      card1 (04cb). 41-class
+      like qkv 41.320, not
+      N-linear ~246. Beats
+      FP8 51.036 (~0.81x).
+      Loses to s8 23.504
+      (~1.75x). 673 GB/s.
+      Official PTQ is FP8.
+- [ ] in_proj GEMM M=64 W8A8.
 - [ ] in_proj GEMM M=64 FP8-W8A16.
 - [x] out_proj GEMM n=2688. Same dtypes.
       W8A8 M=1 n=2688 k=4096 is
@@ -128,7 +153,23 @@ Shared 2688 x 3712, every token. top-6 of 128.
       One-card first; sibling
       not yet. Not 64 one-expert
       launches.
-- [ ] Prefill M=256 grouped.
+- [x] Prefill M=256 grouped.
+      grouped-6 UP 654.497 us
+      pipe_host card0 (04by) vs
+      M=1 grouped 165.223 (~3.96x)
+      vs M=64 grouped 231.179
+      (~2.83x) vs 6*31.198*4=749
+      napkin (~0.874x) vs
+      6*W8A8 M=64 M-linear
+      6*39.907*4=958 (~0.683x).
+      k64 loop not U=14. mean
+      107.1 us/expert vs U=14
+      M=64 31.198. throttle=1
+      timed act=2683. Do not
+      freeze as 2800. One-card
+      first; sibling not yet.
+      Not 256 one-expert
+      launches.
 - [ ] Packing: fused grouped DPAS vs gather-scatter into a
       dense 6-row tile vs persistent expert B.
 - [ ] relu2 epilogue fused vs extra launch (K5).
@@ -156,7 +197,20 @@ Shared 2688 x 3712, every token. top-6 of 128.
       N-linear 77.5. W8A8 M=64
       still open. One-card
       first; sibling not yet.
-- [ ] Packed qkv M=256.
+- [x] Packed qkv M=256.
+      s8 U=14 303.121 us
+      pipe_host card0 (04bw).
+      throttle=1 timed
+      act=2600->2583. Do not
+      freeze as 2800. vs M=1
+      16.609 (~18.3x) vs M=64
+      106.287 (~2.85x), not
+      M-linear. Fat N MN-linear
+      from expert M=64 ~310
+      (~0.978x). W8A8 M=256
+      still open. One-card
+      first; sibling later
+      (throttle=1).
 - [x] o-proj M=1 n=2688 k=4096.
       s8 stock U=16 23.115 us
       pipe_host card0 at 2800
@@ -251,7 +305,15 @@ repack. Both-card on first numeric of a new spoof.
       matched W8A8 M=64 39.907
       (04bt). Clocks not held. No
       E2M1 cosine.
-- [ ] same at M=256.
+- [x] same at M=256.
+      57.140 us card1 (04bz), 57-class
+      like M=1 39.255 (~1.46x) / M=64
+      40.184 (~1.42x), not M-linear.
+      Beats two-term M=256 100.811
+      (~0.567x); loses to W8A8 M=64
+      39.907 (~1.43x). W8A8 M=256
+      still open. Clocks not held.
+      No E2M1 cosine.
 - [ ] Load-time s8 LUT of all 128+1 experts. Fits 30.3 GiB?
       Bytes vs resident NVFP4. If it does not fit, FINDINGS.
 
@@ -299,7 +361,17 @@ repack. Both-card on first numeric of a new spoof.
       NOT lose vs W8A8 at this shape
       (unlike 5120 217.92). Never
       bitcast.
-- [ ] Two-term at M=256 expert (prior: loses large-M).
+- [x] Two-term at M=256 expert (prior: loses large-M).
+      U=14 100.811 us pipe_host card1 at
+      2800 (04bx). Loses to M=64 two-term
+      29.637 (~3.40x) and s8 M=64 31.198
+      (~3.23x) and W8A8 M=1 44.285
+      (~2.28x) / M=64 39.907 (~2.53x).
+      Left launch-class vs M=1 15.518
+      (~6.50x). 8x2-N DOES lose vs
+      W8A8 at M=256 (5120 prior holds
+      here; unlike M=64). Never
+      bitcast.
 - [x] Dyadic s2/s4 planes {0.5,1,2,4} plus residual {1.5,3,6}.
       hail-mary s2xs2 one-plane
       padM=8 event 41.615 us

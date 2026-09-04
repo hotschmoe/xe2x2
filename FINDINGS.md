@@ -8716,3 +8716,338 @@ VERDICT -> hail-mary 16-code
 Evidence: `results/k8/prod_lut_gemv_down_m1_s0_card0.txt`,
   `results/k8/prod_lut_gemv_down_m1_s0_card0.freq`,
   `results/k8/SUMMARY.md`.
+
+## Lightning routed expert UP-proj E2M1 two-term s4 M=256 is 101 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `compose_e2m1_sc_u14`
+  AOT `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N two-term family as
+  M=1 expert-up 15.518 / M=64
+  29.637, U=14 inner_k=896.
+  A=s4. B=E2M1 split
+  `w_lo+8*w_hi`. Never
+  bitcast. M=256 n=1856 k=2688.
+  NT=2. Card1. spin=512. Prior:
+  M=64 two-term 29.637 beats
+  s8 M=64 31.198, W8A8 M=1
+  44.285 / M=64 39.907, 5120
+  8x2-N M=256 612.68 loses vs
+  W8A8 75. P2P off.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 100.811 event
+  103.385. TOPS 24.7069. timed
+  act=cur=2800 throttle=0. vs
+  M=1 two-term 15.518 (~6.50x)
+  vs M=64 two-term 29.637
+  (~3.40x) vs s8 M=64 31.198
+  (~3.23x) vs W8A8 M=1 44.285
+  (~2.28x) vs W8A8 M=64 39.907
+  (~2.53x) vs 5120 8x2-N
+  612.68 (~0.165x) vs N-linear
+  ~222 (~0.454x) vs M-linear
+  ~119 (~0.850x) vs 4x8
+  N-linear ~70.7 (~1.43x).
+
+VERDICT -> Routed expert UP-proj
+  E2M1 two-term s4 M=256 is
+  100.811 us pipe_host card1 at
+  2800. Loses to M=64 two-term
+  29.637 and s8 M=64 31.198
+  and W8A8 44.285 / 39.907.
+  Left launch-class 16, tracks
+  M-linear from M=64. 5120
+  prior holds: 8x2-N compose
+  loses vs W8A8 at M=256
+  (unlike M=64). Numeric
+  closed. Clocks held at timed.
+  Never bitcast. One-card
+  enough (matched two-term
+  RC=4 family). Rank
+  pipe_host. No STOP
+  (100.811 < 177). Not a
+  prefill floor.
+
+Evidence: `results/k8/e2m1_twoterm_moe_up_m256_s512_card1.txt`,
+  `results/k8/e2m1_twoterm_moe_up_m256_s512_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning packed qkv s8 M=256 is 303 us (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_u14` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 U=14 family
+  as M=1 qkv 16.609 / M=64
+  106.287. M=256 n=4608 k=2688.
+  NT=2. Card0. spin=512. Packed
+  Q 4096 + K 256 + V 256. Prior:
+  M=1 qkv s8 16.609, M=64 qkv
+  s8 106.287, s8 expert M=64
+  31.198, two-term M=64 29.637,
+  W8A8 qkv M=1 41.320, napkin
+  M-linear M=64 106.287*4~425,
+  MN-linear expert M=64
+  31.198*(256/64)*(4608/1856)
+  ~310. P2P off.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 303.121 event
+  301.833. TOPS 21.0109. timed
+  act=2600->2583 cur=2800
+  throttle=1. vs M=1 qkv 16.609
+  (~18.3x) vs M=64 qkv 106.287
+  (~2.85x) vs s8 expert M=64
+  31.198 (~9.72x) vs two-term
+  M=64 29.637 (~10.2x) vs W8A8
+  qkv M=1 41.320 (~7.34x) vs
+  M-linear M=64 ~425 (~0.713x)
+  vs MN-linear expert ~310
+  (~0.978x).
+
+VERDICT -> Packed qkv s8 M=256
+  is 303.121 us pipe_host
+  card0. vs M=1 16.609 (~18.3x)
+  vs M=64 106.287 (~2.85x), not
+  M-linear 256x / 4x. Closer to
+  M-linear from M=64 (0.713x of
+  425). Fat N=4608 MN-linear
+  from expert M=64 ~310 tracks
+  0.978x, not launch class 16.
+  Loses to W8A8 decode 41.320;
+  W8A8 M=256 still open. Numeric
+  closed. throttle=1 timed
+  act=2600->2583. Do not freeze
+  as held 2800. One-card first;
+  sibling later (throttle=1).
+  Rank pipe_host.
+
+Evidence: `results/k8/esimd_s8_qkv_m256_s512_card0.txt`,
+  `results/k8/esimd_s8_qkv_m256_s512_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning grouped 6-expert s8 prefill M=256 is 654 us (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `moe_group_s8_m1` AOT
+  `intel_gpu_bmg_g31`. Six routed
+  experts, each s8 M=256 n=1856
+  k=2688, one in-order queue
+  sharing A. RC=4 NT=2 kstep=64
+  wg=8x2_alongN. Card0.
+  spin=512 (not 4000). Not U=14.
+  Not 256 one-expert launches.
+  Priors: grouped M=1 165.223
+  (04ag), grouped M=64 231.179
+  (04bs), one-expert M=64 s8
+  31.198 (04au), napkin
+  6*31.198*4=749, W8A8 M=64
+  39.907 (04bt). P2P off.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 654.497 event
+  642.774 last_event 107.695.
+  TOPS 23.4164. timed act=2683
+  cur=2800 throttle=1. vs
+  grouped M=1 165.223 (~3.96x)
+  vs grouped M=64 231.179
+  (~2.83x) vs 6*31.198*4=748.752
+  (~0.874x) vs 6*39.907*4=957.768
+  (~0.683x).
+
+VERDICT -> Grouped 6-expert s8
+  UP M=256 is 654-class us
+  pipe_host card0. Left 231-
+  class vs M=64 grouped 231.179
+  (~2.83x for 4x M), not
+  M-linear (~0.708x of 925). vs
+  M=1 grouped 165.223 (~3.96x).
+  Beats 6x U=14 M=64 M-linear
+  749 napkin (~0.874x); one-
+  expert s8 M=256 still open,
+  do not claim k64 beats U=14.
+  Beats 6x W8A8 M=64 M-linear
+  958 (~0.683x); W8A8 M=256
+  still open. k64-loop not
+  U=14 (mean 107.1 us/expert).
+  In-order queue packed (pipe
+  ~ event sum). Numeric closed.
+  throttle=1 timed act=2683.
+  Do not freeze as held 2800.
+  Host oracle not heavy (8s).
+  One-card first; sibling later
+  (throttle=1). Rank pipe_host.
+
+Evidence: `results/k8/moe_group_s8_up_m256_s512_card0.txt`,
+  `results/k8/moe_group_s8_up_m256_s512_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning routed expert UP-proj nvfp4_gemm_w4a16 is 57 us at M=256 (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`
+  plus v028
+  `/mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so`.
+  `nvfp4_gemm_w4a16` folded bf16
+  scale g16. B packed NT
+  stride(0)=1. A bf16. M=256
+  n=1856 k=2688. warmup 10
+  iters 20. No extra M=256
+  heat. Card1. Prior: M=1
+  39.255 (04as), M=64 40.184
+  (04bq), two-term M=256
+  100.811 (04bx), W8A8 M=64
+  39.907 (04bt), s8 M=64
+  31.198, two-term M=64
+  29.637, W8A8 M=1 44.285,
+  LUT 83.659, K6 square
+  M=256 118. ONE expert. No
+  serve. P2P off.
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  and f8scale. out bf16
+  [256,1856]. B (1344,1856)
+  stride (1,1344). 57.140 us.
+  GPU-window act=1650,1600,
+  1900,1900,1900 cur=1650,
+  1600,1900,1900,1900
+  throttle=0. Never 2800.
+  No E2M1 cosine this dump.
+  f8scale not timed.
+
+VERDICT -> Routed expert UP-proj
+  nvfp4_gemm_w4a16 M=256 is
+  57.140 us card1, 57-class
+  like M=1 39.255 (~1.46x) /
+  M=64 40.184 (~1.42x), not
+  M-linear (~160 from M=64).
+  Beats two-term M=256
+  100.811 (~0.567x); loses
+  at M=1 and M=64. Loses to
+  W8A8 M=64 39.907 (~1.43x)
+  and s8 M=64 31.198
+  (~1.83x). Beats LUT 83.659
+  (~0.68x). K6 square M=256
+  was ~3.18x M=64; Lightning
+  1856 stays 57-class. W8A8
+  M=256 still open. A is
+  bf16. Packed E2M1 in VRAM,
+  not INT4 XMX. Do not freeze
+  (act not held 2800). One-
+  card enough (w4a16 family
+  already matched both cards
+  at 5120). Rank us. No STOP
+  (57.140 < 177).
+
+Evidence: `results/k8/nvfp4_moe_up_m256_card1.txt`,
+  `results/k8/nvfp4_moe_up_m256_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning mamba in_proj W8A8 is 41 us decode (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  `int8_gemm_w8a8` GEMM-only. M=1
+  n=10304 k=2688. Heat M=64
+  spin=512. Card1. Prior: s8
+  in_proj 23.504 (04bl), FP8
+  51.036 (04bm), packed qkv
+  W8A8 41.320, expert-up
+  44.285, o-proj 44.081,
+  nvfp4 39-class. Official
+  PTQ is FP8. No serve.
+
+RESULT -> cosine=1.000000
+  max_abs=0.031235 ok=1.
+  41.159 us. 672.936 GB/s.
+  GPU-window act=950,2000,
+  2050,2800 cur=933,1900,
+  2050,2800 throttle=0.
+  One sample act=cur=2800.
+
+VERDICT -> mamba in_proj W8A8
+  is 41.159 us card1 (04cb),
+  41-class launch like qkv
+  41.320, not N-linear ~246.
+  Fat N=10304 is 5.55x expert
+  N but 0.93x us vs 44.285.
+  Beats FP8 51.036 (~0.806x).
+  Loses to s8 23.504 (~1.75x).
+  Numeric closed. Do not
+  freeze (act not held 2800).
+  One-card enough (W8A8
+  family already matched).
+  Rank us. M=64 still open.
+
+Evidence: `results/k8/w8a8_mamba_in_m1_card1.txt`,
+  `results/k8/w8a8_mamba_in_m1_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning mamba in_proj s8 M=64 is 211 us (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_u14` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 U=14 family
+  as M=1 in_proj 23.504 / packed
+  qkv M=64 106.287. M=64
+  n=10304 k=2688. NT=2. Card0.
+  spin=512. N napkin z/x
+  4096+4096 + B/C 1024+1024 +
+  dt 64. n%32=0. Official PTQ
+  is FP8; s8 is the beat-me
+  control. Prior: M=1 s8
+  23.504 (04bl), packed qkv
+  M=64 106.287, expert M=64
+  31.198, two-term M=64
+  29.637, W8A8 in_proj M=1
+  41.159 (04cb), W8A8 expert
+  M=64 39.907, napkin N-linear
+  expert M=64
+  31.198*(10304/1856)~173,
+  qkv M=64
+  106.287*(10304/4608)~238,
+  M-linear 23.504*64~1504.
+  P2P off.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 211.257
+  event 210.948. TOPS 16.8062.
+  timed act=2633 cur=2800
+  throttle=1. vs M=1 23.504
+  (~8.99x) vs qkv M=64
+  106.287 (~1.99x) vs expert
+  M=64 31.198 (~6.77x) vs
+  two-term M=64 29.637
+  (~7.13x) vs W8A8 in_proj
+  M=1 41.159 (~5.13x) vs
+  N-linear expert ~173
+  (~1.22x) vs qkv N-linear
+  ~238 (~0.89x).
+
+VERDICT -> Mamba in_proj s8
+  M=64 is 211.257 us pipe_host
+  card0. vs M=1 23.504
+  (~8.99x), not M-linear 64x.
+  Fat N=10304 tracks qkv M=64
+  N-linear 238 (~0.89x) more
+  than M=1 leftover 16-class
+  (M=1 was 1.46x expert for
+  5.55x N; M=64 is 6.77x
+  expert, 1.22x of N-linear
+  173). Loses to W8A8 decode
+  41.159; W8A8 M=64 still
+  open. Official PTQ is FP8.
+  Numeric closed. throttle=1
+  timed act=2633. Do not
+  freeze as held 2800. One-
+  card first; sibling later
+  (throttle=1). Rank
+  pipe_host.
+
+Evidence: `results/k8/esimd_s8_mamba_in_m64_s512_card0.txt`,
+  `results/k8/esimd_s8_mamba_in_m64_s512_card0.freq`,
+  `results/k8/SUMMARY.md`.
