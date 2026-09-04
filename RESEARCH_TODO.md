@@ -732,20 +732,20 @@ A=s2 packed qkv M=1 is 12 both.
 A=s2 o-proj is 14 both.
 Not W8A8-contract beats.
 Seq 298 stays the T=256 mixer
-leftover. W8A8 leftover GEMM
-is o-proj 47 (NT=1 55 both,
-still a loss) and packed
-qkv M=256 164. Packed M=64
-split-K is 115-class both
-(beats W8A8 140) at act=2783
-throttle=1; do not freeze as
-2800. Decode s8 packed 74
-stands. P2 decode XCCL AR
-99-137 us; STOP 2.5 MiB
-all_gather hang. Host-staged
-AR decode 439 us, 256h 9494
-us ok=1 no hang. P3 T=1 77 us.
-P4 blocked.
+leftover. o-proj leftover
+CLOSED: NT=1 split-K=2 is
+44-class both at 2800, beats
+W8A8 47. Packed qkv M=256
+W8A8 164 still open (SK=5
+393 lost, SK=2 295 lost).
+Packed M=64 split-K 115
+stands vs 140. Decode packed
+s8 74 stands. P2 decode XCCL
+AR 99-137; all_gather 2.5 MiB
+HANG timeout=45s bounded,
+teardown HEALTHY. Host-staged
+AR 439/9494 no hang. P3 T=1
+77 us. P4 blocked.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.

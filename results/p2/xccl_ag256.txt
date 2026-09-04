@@ -1,0 +1,12 @@
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 timeout=45s
+P2 leftover: all_gather 2.5MiB. Hang is a RESULT if timeout.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 op=all_gather+sendrecv name=prefill_256h bytes 2621440
+2026:09:04-02:45:17:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-02:45:17:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-02:45:17:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-02:45:17:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-02:45:17:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-02:45:17:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+OK op=all_gather rank=1 ok=1
+TIMEOUT_OR_EXIT rc=124
+RESULT op=all_gather name=prefill_256h HANG timeout=45s p2p=0

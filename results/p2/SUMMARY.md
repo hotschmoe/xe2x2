@@ -75,3 +75,22 @@ card1 HEALTHY.
 
 Not a full P2 exit. P4 stays blocked on
 XCCL 2.5 MiB all_gather hang. Do not enable P2P.
+
+# P2 XCCL AG256 timeout-bounded 2026-09-04t
+
+Backend pytorch-xpu on sycl+l0. fabric xccl. p2p=0.
+timeout=45s. gpu-run both cards. No serve.
+
+Pre-health: card0 HEALTHY, card1 HEALTHY.
+
+First identity all_gather: rank=1 ok=1.
+Rank 0 never printed OK. No us. sendrecv
+not reached. TIMEOUT_OR_EXIT rc=124.
+RESULT op=all_gather name=prefill_256h
+HANG timeout=45s p2p=0. gpu-run 49s.
+
+Post-health: card0 HEALTHY, card1 HEALTHY.
+Not WEDGED.
+
+STOP XCCL all_gather >= 2.5 MiB P2P-off.
+P4 stays blocked. Do not enable P2P.

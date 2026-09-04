@@ -1788,17 +1788,17 @@ act=cur=2800 throttle=0.
 K-linear vs square 11.5. Not
 a W8A8-contract beat.
 
-K7 next: W8A8 leftover is
-o-proj 47 (NT=1 55 both, still
-a loss) and prefill packed
-140/164. Decode s8 packed 74
-stands. Seq 298 is the T=256
-mixer leftover. Integer s2/s4
-decode maps for packed qkv
-and o-proj are closed. STOP
-B-pipeline decode, wg 8x4
-prefill, persist 4-acc, NT=1
-wg 4x2.
+K7 next: o-proj W8A8 47 is
+beaten by NT=1 SK=2 44 both.
+Prefill packed 140/164 remains.
+Decode s8 packed 74 stands.
+Seq 298 is the T=256 mixer
+leftover. Integer s2/s4 decode
+maps for packed qkv and o-proj
+are closed. STOP B-pipeline
+decode, wg 8x4 prefill,
+persist 4-acc, NT=1 wg 4x2,
+NT=1 prefetch.
 
 ## ESIMD o-proj s8 NT=1 M=1 card0 (2026-09-04a)
 
@@ -1991,3 +1991,71 @@ Do not freeze (not 2800).
 Not a W8A8-contract beat.
 STOP split-K at M=256. Do not
 sibling. Rank pipe_host.
+
+## ESIMD o-proj s8 NT=1 lsc_prefetch_2d M=1 card0 (2026-09-04p)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1ff.
+prefetch=lsc_prefetch_2d
+m=1 n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 54.797 event 54.211.
+timed act=cur=2800 throttle=0.
+vs NT=1 55 55-class, not a
+steal; vs W8A8 47 a loss.
+One-card. STOP prefetch on
+NT=1 o-proj. Do not sibling.
+Not a W8A8-contract beat.
+Rank pipe_host.
+
+## ESIMD s8 4-acc split-K=5 unroll=8 packed qkv M=256 leftover steal card1 (2026-09-04q)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4sk5. NT=2 m=256
+n=10240 k=5120 splitK=5 wg=4x8
+4acc k128 unroll=8 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 392.811 (gemm+reduce).
+event 129.562 reduce-only.
+timed act=2650 cur=2800
+throttle=1. vs W8A8 164 a
+loss (~2.40x); vs 4-acc 4x8
+274 a loss (~1.43x); vs SK=2
+295 a loss (~1.33x). One-card.
+Do not freeze (not 2800).
+Not a W8A8-contract beat.
+STOP SK=5 at M=256. Do not
+sibling. Rank pipe_host.
+
+## ESIMD o-proj s8 NT=1 split-K=2 M=1 card0 (2026-09-04r)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1sk. NT=1
+splitK=2 m=1 n=5120 k=6144
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 44.348
+(gemm+reduce). event 1.474
+reduce-only. timed
+act=cur=2800 throttle=0.
+vs NT=1 55 a win (~0.81x);
+vs W8A8 47 a win (~0.94x).
+One-card. W8A8-contract beat
+of 47 on this card. Sibling
+before FINDINGS. Rank
+pipe_host.
+
+## ESIMD o-proj s8 NT=1 split-K=2 M=1 sibling card1 (2026-09-04s)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1sk. NT=1
+splitK=2 m=1 n=5120 k=6144
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 44.114 vs
+card0 44.348. Spread ~0.53%.
+event 1.474 reduce-only.
+timed act=cur=2800 throttle=0.
+vs NT=1 55 a win (~0.80x);
+vs W8A8 47 a win (~0.94x).
+44-class both at 2800.
+W8A8-contract beat of 47
+both cards. Rank pipe_host.

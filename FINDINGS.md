@@ -4443,6 +4443,38 @@ VERDICT -> NT=1 o-proj is
 Evidence: `results/k7/esimd_s8_oproj_nt1_m1_s4000_card0.txt`,
   `results/k7/esimd_s8_oproj_nt1_m1_s4000_card1.txt`.
 
+## ESIMD o-proj s8 NT=1 split-K=2 M=1 is 44-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_nt1sk`.
+  NT=1 splitK=2 M=1 n=5120
+  k=6144. U=16 wg=8x2. Both
+  cards. spin=4000. Prior:
+  NT=1 55, W8A8 47, sc NT=2
+  62, square s8 34, napkin
+  ~41.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 44.348 /
+  44.114. Spread ~0.53%.
+  event 1.474 reduce-only.
+  timed act=cur=2800
+  throttle=0.
+
+VERDICT -> NT=1 split-K=2
+  o-proj is 44-class us
+  pipe_host both cards at
+  2800. Beats NT=1 55 and
+  oneDNN W8A8 47. W8A8-
+  contract beat of 47 both
+  cards. Occupancy steal
+  40 WGs along K vs NT=1
+  20. Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s8_oproj_nt1sk_m1_s4000_card0.txt`,
+  `results/k7/esimd_s8_oproj_nt1sk_m1_s4000_card1.txt`.
+
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
 CONFIG -> backend `sycl+l0`,
@@ -6354,11 +6386,13 @@ RESULT -> Decode 5120 bf16 all_reduce 99-137 us,
 
 VERDICT -> Decode-sized XCCL P2P-off is a us floor,
   not a full P2 exit. STOP all_gather >=2.5 MiB
-  P2P-off until a timeout arm. Teardown recovered.
-  Do not enable P2P. P4 stays blocked.
+  P2P-off. Timeout arm 04t hung at 45s.
+  Teardown recovered. Do not enable P2P.
+  P4 stays blocked.
 
 Evidence: `results/p2/xccl_p2p0_hang137.txt`,
   `results/p2/xccl_p2p0.txt`,
+  `results/p2/xccl_ag256.txt`,
   `results/p2/SUMMARY.md`.
 
 ## PP=2 host-staged handoff is correct; bubble dominates decode
@@ -6402,11 +6436,33 @@ VERDICT -> Identity closed. Decode host-staged AR
 Evidence: `results/p2/host_ar.txt`,
   `results/p2/SUMMARY.md`.
 
+## P2 XCCL 2.5 MiB all_gather hangs within 45s P2P-off
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  xccl, p2p=0 timeout=45s. gpu-run both cards.
+  torch 2.13.0+xpu. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  Payload prefill_256h 256*5120 bf16 = 2.5 MiB.
+  Pre/post xpu-health.
+
+RESULT -> Rank 1 first all_gather ok=1. Rank 0
+  never printed OK. No us. sendrecv not reached.
+  TIMEOUT_OR_EXIT rc=124. RESULT HANG timeout=45s
+  p2p=0. gpu-run 49s. Pre and post per-card
+  HEALTHY. Not WEDGED.
+
+VERDICT -> Bounded hang is a RESULT. Confirms
+  04i unbounded hang at the same size. P4
+  stays blocked. Do not enable P2P.
+
+Evidence: `results/p2/xccl_ag256.txt`,
+  `results/p2/SUMMARY.md`.
+
 ## Mixed 2x2
 
 Blocked until P2 has a passing bulk XCCL collective
 (no hang) plus teardown health, on this host
 with the current UMD. P3 host-staged identity
 and P2 host-staged AR through 2.5 MiB are not
-enough. XCCL 2.5 MiB all_gather still hung.
-Do not enable P2P.
+enough. XCCL 2.5 MiB all_gather hung within 45s
+P2P-off (2026-09-04t). Do not enable P2P.
