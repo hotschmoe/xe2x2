@@ -54,11 +54,17 @@ Shared 2688 x 3712, every token. top-6 of 128.
       s8 U=14 one-expert 16.060 us beats W8A8 44.285 (launch
       class, not N-linear). Grouped-6 165.223 us beats 6x
       W8A8 ~266, ~1.72x vs 6x16 napkin (k64 loop not U=14).
-      nvfp4_gemm_w4a16 and GPTQ s4 still open.
-- [ ] Shared expert M=1, 2688 x 3712, same dtypes.
+      nvfp4_gemm_w4a16 39.255 us card1
+      (04as), 37-class launch. GPTQ s4
+      still open.
+- [x] Shared expert M=1, 2688 x 3712, same dtypes.
       W8A8 42.273 us card1 (04am), 44-class
       launch like routed-up 44.285 not N-linear.
-      s8 / nvfp4 / GPTQ still open.
+      s8 U=14 16.541 us pipe_host card0 at
+      2800 (04ar). Launch class vs expert-up
+      16.060 / packed qkv 16.609, not napkin
+      32. Beats W8A8 42.273. nvfp4 / GPTQ
+      still open.
 - [ ] Prefill M=64 grouped (not 128 launches).
 - [ ] Prefill M=256 grouped.
 - [ ] Packing: fused grouped DPAS vs gather-scatter into a
@@ -105,7 +111,13 @@ repack. Both-card on first numeric of a new spoof.
 
 ### 5a. Floors (dump, then beat)
 
-- [ ] oneDNN `nvfp4_gemm_w4a16` M=1 2688 x 1856 (decode expert).
+- [x] oneDNN `nvfp4_gemm_w4a16` M=1 2688 x 1856 (decode expert).
+      39.255 us card1 (04as), 37-class
+      launch like square 5120 37, not
+      N-linear ~13. Beats W8A8 44.285,
+      loses to s8 16.060 / two-term
+      15.518, beats LUT 83.659. Clocks
+      not held. No E2M1 cosine.
 - [ ] same, 1856 x 2688 (down).
 - [ ] same, 2688 x 3712 (shared).
 - [ ] same at M=64 and M=256.

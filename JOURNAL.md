@@ -14759,3 +14759,159 @@ Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
 
+### 2026-09-04ar - K8 ESIMD s8 shared expert M=1 card0
+
+CONTEXT -> K8 Lightning shared
+  expert M=1 n=3712 k=2688
+  using existing
+  dpas_s8_sc_u14 (U=14
+  divides 2688). ONE shared
+  expert, every token. Priors:
+  W8A8 shared 42.273 (04am).
+  expert-up s8 16.060 (04ad).
+  packed qkv s8 16.609 (04al).
+  Napkin N-linear
+  16.060*(3712/1856)=32.120.
+  Rank pipe_host. One-card
+  on s8 U=14 family.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14. gpu-run
+  --card 0. NT=2 U=14 m=1
+  n=3712 k=2688. spin=4000.
+  Fill s8 [-64,64] scales
+  0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_esimd_s8_shared_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  16.213 pipe_host 16.541
+  wait_host 30.300. median
+  16.146 min 15.833 max
+  16.979. TOPS 1.2308.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,400,0,
+  2800 then 3x 0. start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  W8A8 42.273 (~0.39x, a
+  beat) vs expert-up 16.060
+  (~1.03x) vs packed qkv
+  16.609 (~1.00x) vs napkin
+  32.120 (~0.52x). gpu-run
+  1s.
+
+VERDICT -> ESIMD s8 shared
+  expert M=1 is 16.541 us
+  pipe_host card0 at 2800,
+  launch class vs expert-up
+  16.060 and packed qkv
+  16.609, not N-linear 32.
+  2x N vs expert-up costs
+  +0.481 us. Beats W8A8
+  42.273 (~2.56x). Numeric
+  closed. Clocks held. One-
+  card enough (matched s8
+  U=14 RC=4 family, cosine
+  closed, clocks held).
+  nvfp4 / GPTQ still open.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04as - K8 oneDNN nvfp4_gemm_w4a16 Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 incumbent dump:
+  oneDNN nvfp4_gemm_w4a16 at
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Prior: nvfp4_w4a16 ~37 us
+  at 5120 after M=64 heat,
+  clocks not held (K6 card1
+  37.169). Held-clock 34.7
+  at 2800. W8A8 sibling
+  44.285 (04ae). s8 U=14
+  16.060 (04ad). two-term
+  s4 15.518 (04ao). nibble
+  LUT U=14 83.659 (04an).
+  ONE expert GEMM-only. Not
+  6-expert grouped. Not a
+  serve. ABSENT/EXC is a
+  RESULT.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6. Load
+  v028 /mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so
+  via B70_XPU_C_SO. Folded
+  bf16 scale g16. B packed NT
+  stride(0)=1. A bf16. M=1
+  n=1856 k=2688. warmup 10
+  iters 20. No M=64 heat
+  (unlike K6 5120 dump).
+  Rank us. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_nvfp4_moe_up_m1.sh 1
+  ```
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  True HAS f8scale True.
+  load_library v028 ok. out
+  bf16 [1,1856]. B (1344,1856)
+  stride (1,1344).
+  39.255 us. vs unheld 5120
+  37.169 (~1.06x) vs held
+  34.7 (~1.13x) vs W8A8
+  44.285 (~0.89x) vs s8
+  16.060 (~2.44x) vs two-term
+  15.518 (~2.53x) vs LUT
+  83.659 (~0.47x) vs napkin
+  37.169*(1856/5120)~13.47
+  (~2.91x). No E2M1 cosine
+  this dump. f8scale not
+  timed. GPU-window
+  act=400,1600,1900,1900
+  cur=400,1583,1883,1883
+  throttle=0. Zero samples
+  act=cur=2800. freq 50 ms
+  throttle=0 all 195 samples.
+  start act=0 cur=2800
+  throttle=0 D3hot. end
+  act=0 cur=1883 throttle=0
+  D0. gpu-run 17s.
+
+VERDICT -> oneDNN nvfp4_gemm_w4a16
+  Lightning routed expert
+  UP-proj M=1 is 39.255 us
+  card1, 37-class launch like
+  square 5120, not N-linear.
+  Beats W8A8 44.285, loses
+  to s8 16.060 and two-term
+  15.518, beats LUT 83.659.
+  A is bf16, not s8. Packed
+  E2M1 in VRAM. throttle=0.
+  Do not freeze (act not
+  held 2800; no M=64 heat).
+  One-card enough (w4a16
+  family already matched
+  both cards at 5120). Rank
+  us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+

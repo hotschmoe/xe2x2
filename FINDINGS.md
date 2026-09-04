@@ -6350,6 +6350,11 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   cards: 394 us folded, throttle=1. M=256
   K=17408 both cards: 377 us folded,
   throttle=1.
+  Lightning routed-up M=1 n=1856
+  k=2688 card1 (v028, no M=64
+  heat, clocks not held): 39.255
+  us folded, 37-class launch not
+  N-linear (04as).
   Stock mtp6 image lacks the
   op. Bitcast s4 is an explicit numeric negative. Sparse-hi dies
   on this ckpt (~25% overflow). Mixed s8xs4 DPAS lights and is
@@ -7137,4 +7142,88 @@ VERDICT -> Lightning o-proj s8
 
 Evidence: `results/k8/esimd_s8_oproj_m1_s4000_card0.txt`,
   `results/k8/esimd_s8_oproj_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning shared expert s8 is 16 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_u14` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 U=14 family
+  as expert-up 16.060. M=1
+  n=3712 k=2688. NT=2. Card0.
+  spin=4000. ONE shared expert,
+  every token. Prior: W8A8
+  shared 42.273, expert-up s8
+  16.060, packed qkv s8 16.609,
+  napkin N-linear
+  16.060*(3712/1856)=32.120.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 16.541 event
+  16.213. timed act=cur=2800
+  throttle=0. vs W8A8 42.273
+  (~0.39x) vs expert-up 16.060
+  (~1.03x) vs packed qkv 16.609
+  (~1.00x) vs napkin 32.120
+  (~0.52x).
+
+VERDICT -> Shared expert s8 M=1
+  is 16-class us pipe_host
+  card0 at 2800, launch class
+  like expert-up 16 and packed
+  qkv 16, not N-linear 32. 2x
+  N costs +0.481 us. Beats
+  W8A8 42.273. Numeric closed.
+  One-card enough (matched s8
+  U=14 RC=4 family, clocks
+  held). Rank pipe_host.
+
+Evidence: `results/k8/esimd_s8_shared_m1_s4000_card0.txt`,
+  `results/k8/esimd_s8_shared_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning routed expert UP-proj nvfp4_gemm_w4a16 is 39 us decode (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`
+  plus v028
+  `/mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so`.
+  `nvfp4_gemm_w4a16` folded bf16
+  scale g16. B packed NT
+  stride(0)=1. A bf16. M=1
+  n=1856 k=2688. warmup 10
+  iters 20. No M=64 heat.
+  Card1. Prior: unheld 5120
+  37.169, held 34.7, W8A8
+  44.285, s8 16.060, two-term
+  15.518, LUT 83.659. ONE
+  expert. No serve.
+
+RESULT -> HAS nvfp4_gemm_w4a16
+  and f8scale. out bf16
+  [1,1856]. 39.255 us. GPU-
+  window act=400,1600,1900
+  cur=400,1583,1883
+  throttle=0. Never 2800.
+  No E2M1 cosine this dump.
+  f8scale not timed.
+
+VERDICT -> Routed expert UP-proj
+  nvfp4_gemm_w4a16 is 39.255
+  us card1, same 37-class
+  launch as square 5120, not
+  N-linear. Beats W8A8 44,
+  loses to s8 16 and two-term
+  15.5, beats LUT 84. A is
+  bf16. Packed E2M1 in VRAM,
+  not INT4 XMX. Do not freeze
+  (act not held 2800). One-
+  card enough (w4a16 family
+  already matched both cards
+  at 5120). Rank us.
+
+Evidence: `results/k8/nvfp4_moe_up_m1_card1.txt`,
+  `results/k8/nvfp4_moe_up_m1_card1.freq`,
   `results/k8/SUMMARY.md`.

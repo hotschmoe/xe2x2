@@ -492,3 +492,82 @@ o-proj still open.
 
 Evidence: `results/k8/esimd_s8_oproj_m1_s4000_card0.txt`,
 `results/k8/esimd_s8_oproj_m1_s4000_card0.freq`.
+
+## ESIMD s8 shared expert M=1 card0 (2026-09-04ar)
+
+backend sycl+l0, standalone AOT
+dpas_s8_sc_u14. NT=2 U=14 m=1
+n=3712 k=2688 spin=4000. Same
+RC=4 8x2-N scale-to-f16 family
+as expert-up 16.060. ONE shared
+expert, every token. Rank
+pipe_host. Napkin N-linear
+16.060*(3712/1856)=32.120.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 1s.
+
+| card | event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 16.213 | 16.541 | 1.2308 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 9 samples.
+GPU-window act=0,0,0,400,0,2800
+then 3x 0. start D3hot
+act=0 cur=2800 throttle=0. end
+D0 act=0 cur=2800 throttle=0.
+vs W8A8 42.273 (~0.39x, a beat);
+vs expert-up 16.060 (~1.03x);
+vs packed qkv 16.609 (~1.00x);
+vs napkin 32.120 (~0.52x).
+Launch class, not N-linear.
+Numeric closed. Clocks held.
+One-card enough (matched s8
+U=14 RC=4 family). nvfp4 /
+GPTQ still open.
+
+Evidence: `results/k8/esimd_s8_shared_m1_s4000_card0.txt`,
+`results/k8/esimd_s8_shared_m1_s4000_card0.freq`.
+
+## oneDNN nvfp4_gemm_w4a16 routed expert UP-proj M=1 card1 (2026-09-04as)
+
+Backend pytorch-xpu on sycl+l0. Image
+`b70-sglang-xpu-int8-runtime:20260826-mtp6`
+plus v028 `/mnt/vm_8tb/b70/nvfp4_kernel_v028/_xpu_C.abi3.so`.
+`nvfp4_gemm_w4a16` folded bf16 scale g16.
+B packed NT stride(0)=1. A bf16.
+ONE routed expert UP-proj n=1856 k=2688.
+warmup 10 iters 20. No M=64 heat.
+Rank us. No serve. Card1 only.
+Napkin is CONFIG. ABSENT/EXC is a RESULT.
+
+HAS nvfp4_gemm_w4a16 True HAS f8scale True.
+out bf16 [1,1856]. gpu-run 17s.
+
+| card | us | HAS | f8scale | out |
+|---:|---:|---|---|---|
+| 1 | 39.255 | True | True | bf16 [1,1856] |
+
+Clocks (freq 50 ms): throttle=0 all 195 samples.
+GPU-window act=400,1600,1900,1900
+cur=400,1583,1883,1883.
+Zero samples act=cur=2800. start act=0
+cur=2800 throttle=0 D3hot. end act=0
+cur=1883 throttle=0 D0.
+
+vs unheld 5120 37.169 (~1.06x). vs held
+34.7 (~1.13x). vs W8A8 44.285 (~0.89x).
+vs s8 16.060 (~2.44x). vs two-term
+15.518 (~2.53x). vs LUT 83.659 (~0.47x).
+vs napkin 37.169*(1856/5120)~13.47
+(~2.91x). Launch class, not N-linear.
+No E2M1 cosine this dump. f8scale not
+timed. Do not freeze (act not held 2800;
+no M=64 heat). One-card enough (w4a16
+family already matched both cards at 5120).
+
+Evidence: `results/k8/nvfp4_moe_up_m1_card1.txt`,
+`results/k8/nvfp4_moe_up_m1_card1.freq`.
