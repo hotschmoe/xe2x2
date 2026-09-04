@@ -6889,3 +6889,74 @@ Evidence: `results/k8/nibble_lut_moe_up_m1_s4000_card0.txt`,
   `results/k8/nibble_lut_moe_up_m1_s4000_card0.freq`,
   `results/k8/nibble_lut_moe_up_m1_s4000_card0.u16_refuse.txt`,
   `results/k8/SUMMARY.md`.
+
+## Lightning shared expert W8A8 is 42 us decode (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  `int8_gemm_w8a8` GEMM-only. M=1
+  n=3712 k=2688. Heat M=64
+  spin=512. Card1. Prior:
+  routed-up 44.285, square
+  M=1 5120 44 us. ONE shared
+  expert. No serve.
+
+RESULT -> cosine=1.000000
+  max_abs=0.030846 ok=1.
+  42.273 us. 236.032 GB/s.
+  GPU-window act=2800,900,900,
+  2800,2800 cur=2800,867,867,
+  2800,2800 throttle=0. Three
+  samples act=cur=2800.
+
+VERDICT -> Shared expert W8A8
+  is 42.273 us card1, same
+  44-class launch as routed-up
+  44.285 and square 5120, not
+  N-linear (2x N, ~same us).
+  Numeric closed. One-card
+  enough (W8A8 family already
+  matched). Do not freeze
+  (act not held 2800). Rank
+  us.
+
+Evidence: `results/k8/w8a8_moe_shared_m1_card1.txt`,
+  `results/k8/w8a8_moe_shared_m1_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning packed qkv s8 M=1 is 16 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_u14` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 U=14 family
+  as expert-up 16.060. M=1
+  n=4608 k=2688. NT=2. Card0.
+  spin=4000. Packed Q 4096 +
+  K 256 + V 256. Prior:
+  expert-up s8 16.060, Qwen
+  packed qkv 74 at n=10240,
+  napkin N-linear
+  16.060*(4608/1856)~40.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 16.609 event
+  16.240. timed act=cur=2800
+  throttle=0. vs expert-up
+  16.060 (~1.03x) vs napkin 40
+  (~0.42x) vs Qwen 74 (~0.22x).
+
+VERDICT -> Packed qkv s8 M=1 is
+  16-class us pipe_host card0 at
+  2800, launch class like
+  expert-up 16, not N-linear 40.
+  2.48x N costs +0.55 us.
+  Numeric closed. One-card
+  enough (matched s8 U=14 RC=4
+  family, clocks held). Rank
+  pipe_host.
+
+Evidence: `results/k8/esimd_s8_qkv_m1_s4000_card0.txt`,
+  `results/k8/esimd_s8_qkv_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.

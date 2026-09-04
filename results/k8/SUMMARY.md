@@ -271,3 +271,68 @@ stays 5120, not this shape.
 Evidence: `results/k8/nibble_lut_moe_up_m1_s4000_card0.txt`,
 `results/k8/nibble_lut_moe_up_m1_s4000_card0.freq`,
 `results/k8/nibble_lut_moe_up_m1_s4000_card0.u16_refuse.txt`.
+
+## W8A8 shared expert M=1 card1 (2026-09-04am)
+
+cosine=1.000000 max_abs=0.030846 ok=1.
+gpu-run 16s.
+
+| card | us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 42.273 | 236.032 | 1.000000 | 0.030846 | 1 |
+
+Clocks (freq 50 ms): throttle=0 all 177 samples.
+GPU-window act=2800,900,900,2800,2800
+cur=2800,867,867,2800,2800.
+Three samples act=cur=2800. start act=0
+cur=2800 throttle=0 D0. end act=0
+cur=2800 throttle=0 D0.
+
+vs routed-up W8A8 44.285 (~0.95x)
+and square M=1 5120 44 us. Launch
+class, not N-linear (napkin
+44.285*(3712/1856)~88.6 CONFIG).
+Do not freeze (act not held 2800).
+One-card enough (W8A8 family
+already matched both cards).
+
+Evidence: `results/k8/w8a8_moe_shared_m1_card1.txt`,
+`results/k8/w8a8_moe_shared_m1_card1.freq`.
+
+## ESIMD s8 packed qkv M=1 card0 (2026-09-04al)
+
+backend sycl+l0, standalone AOT
+dpas_s8_sc_u14. NT=2 U=14 m=1
+n=4608 k=2688 spin=4000. Same
+RC=4 8x2-N scale-to-f16 family
+as expert-up 16.060. Packed
+Q 4096 + K 256 + V 256. Rank
+pipe_host. Napkin N-linear
+16.060*(4608/1856)~40.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 2s.
+
+| card | event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 16.240 | 16.609 | 1.5254 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 10 samples.
+GPU-window act=0,0,0,0,400,550,
+2800 then 3x 0. start D3hot
+act=0 cur=550 throttle=0. end
+D0 act=0 cur=2800 throttle=0.
+vs expert-up 16.060 (~1.03x);
+vs napkin 40 (~0.42x); vs Qwen
+packed qkv 74 (~0.22x). Launch
+class, not N-linear. Numeric
+closed. Clocks held. One-card
+enough (matched s8 U=14 RC=4
+family). W8A8 packed qkv still
+open.
+
+Evidence: `results/k8/esimd_s8_qkv_m1_s4000_card0.txt`,
+`results/k8/esimd_s8_qkv_m1_s4000_card0.freq`.
