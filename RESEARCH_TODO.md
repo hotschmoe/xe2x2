@@ -759,20 +759,20 @@ P2 bulk hang is a new leftover.
 1. new s8 packed-qkv M=256
    kernel vs W8A8 164 (4x8,
    4-acc 274, wg 8x4 279,
-   persist 344, split-K 295
-   all lost). M=64 split-K
-   115 stands vs 140.
-2. new s8 o-proj kernel vs
-   W8A8 47 (sc 62, NT=4 103,
-   NT=1 55, wg 4x2 74, B-pipe
-   67, NT=1 B-pipe 60 all
-   lost; NT=1 55 is the hand
-   floor).
-3. P2 XCCL all_gather >=2.5 MiB
-   P2P-off with a timeout.
-   Host-staged AR works (439 /
-   9494) but loses to XCCL
-   decode 99-137.
+   persist 344, SK=2 295,
+   SK=5 unroll=8 393 all
+   lost). M=64 split-K 115
+   stands vs 140.
+2. P2 XCCL all_gather 2.5 MiB
+   still hangs at 45s. Need a
+   different arm (not more
+   wait). Host-staged AR works
+   but 439 vs XCCL 99-137.
+Park o-proj: NT=1 SK=2 44
+beats W8A8 47. STOP sc 62,
+NT=4 103, NT=1 55, wg 4x2 74,
+B-pipe 67, NT=1 B-pipe 60,
+NT=1 prefetch 54.8 wash.
 Park: split q/v vs packed 74
 (q+k+v ~109), NT=4 s8, conv-L2
 per-t SLM (358 vs 327),
