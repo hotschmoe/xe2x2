@@ -196,8 +196,78 @@ then 4x 2800 then 3x 0. vs 04af
 190.028 (~0.42x; 190 was ramp).
 Numeric closed. Clocks held.
 One-card held-clock. Sibling
-pending. New math: not a
-both-card floor.
+04aj 79.923 us, spread 0.176%.
 
 Evidence: `results/k8/mamba_ssu_t1_s4000_card0.txt`,
 `results/k8/mamba_ssu_t1_s4000_card0.freq`.
+
+## ESIMD Mamba-2 SSD SSU T=1 held-clock card1 sibling (2026-09-04aj)
+
+backend sycl+l0, standalone AOT
+mamba_ssu_t1. T=1 heads=64
+d_head=64 d_state=128 groups=8
+VL=16 wi=one_per_head spin=4000.
+Not GDN. Rank pipe_host.
+GDN delta 7.1 is the wrong math.
+Prior 04ah card0 80.064 us.
+Sibling SSU B8/W4 is community,
+not FINDINGS.
+
+cosine=1.000000 max_abs=4.7684e-07
+ok=1. gpu-run 2s.
+
+| card | event_us | pipe_host_us | wait_host_us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 79.531 | 80.064 | 93.563 | 52.65 | 1.000000 | 4.7684e-07 | 1 |
+| 1 | 79.536 | 79.923 | 93.906 | 52.74 | 1.000000 | 4.7684e-07 | 1 |
+
+spin_done act=cur=2800
+throttle=0. timed act=cur=2800
+throttle=0 both ends. start
+D3hot act=0 cur=2800 throttle=0.
+end D0 act=0 cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 11 samples.
+GPU-window act=0,0,0,400 then
+4x 2800 then 2x 0. vs 04ah
+80.064 spread 0.176% (<5%).
+Numeric closed. Clocks held
+2800. Both-card FINDINGS floor
+80 us pipe_host at 2800.
+
+Evidence: `results/k8/mamba_ssu_t1_s4000_card1.txt`,
+`results/k8/mamba_ssu_t1_s4000_card1.freq`.
+
+## NVFP4 nibble LUT routed expert UP-proj M=1 card0 REFUSED (2026-09-04ak)
+
+backend sycl+l0, standalone AOT
+nibble_lut_sc. NT=2 U=16 m=1
+n=1856 k=2688 spin=4000.
+Packed E2M1 B, simd nibble
+LUT, VNNI4, RC=4 8x2-N
+scale-to-f16. Never bitcast
+s4. Stock U=16 inner_k=1024.
+No nibble_lut u14. Rank
+pipe_host. One-card shape
+steal on LUT family.
+
+| card | pipe_host_us | note |
+|---:|---|---|
+| 0 | REFUSED | U=16 inner_k=1024, 2688%1024=640 |
+
+stderr: nibble_lut_sc: shape
+m=1 n=1856 k=2688 nt=2
+unroll=16. n=1856%32=0 (N
+ok). Check-only 4x32x1024
+cosine=1.000000 max_abs=0
+ok=1 event 209.688 pipe_host
+204.179 at act=400/550 (not
+held; not Lightning timed).
+start D3hot act=0 cur=2800
+throttle=0. gpu-run 2s exit
+2. STOP rewrite. 158 us
+stays 5120, not this shape.
+
+Evidence: `results/k8/nibble_lut_moe_up_m1_s4000_card0.txt`,
+`results/k8/nibble_lut_moe_up_m1_s4000_card0.freq`,
+`results/k8/nibble_lut_moe_up_m1_s4000_card0.u16_refuse.txt`.

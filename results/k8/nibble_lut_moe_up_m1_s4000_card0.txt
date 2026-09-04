@@ -1,0 +1,14 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7134379846313 energy2=pkg:4050370512451 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7076505960876 energy2=pkg:4180075247375 temp2_mC=55000
+CONFIG backend=sycl+l0 card=0 arm=nibble_lut_sc nt=2 spin=4000 m=1 n=1856 k=2688 lightning_moe_up never_bitcast_s4
+K6 nibble LUT at 5120 is 158 us. Re-test Lightning expert shape.
+=== lut_sc moe-up m=1 n=1856 k=2688 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 arm=e2m1_nibble_lut_sc never_bitcast_s4 packedB=K/2 dtype=s8xE2M1->f16_scaled RC=4 NT=2 unroll=16 dpas=64 wg=8x2_alongN padM=RC a_scale=b_scale=0.0200 out=f16 warmup=50 iters=40 card=0 spin=4000 heat=none
+timed_begin act=400 cur=400 power=D0 throttle=0
+timed_end act=550 cur=550 power=D0 throttle=0
+phase,nt,unroll,m,n,k,event_us,wait_host_us,pipe_host_us,TOPS,GBs_packedB,cosine,max_abs,ok,median_us,min_us,max_us
+check,2,16,4,32,1024,209.688,245.528,204.179,0.0013,0.078,1.000000,0,1,209.688,209.688,209.688

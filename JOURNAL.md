@@ -14192,3 +14192,131 @@ VERDICT -> ESIMD Mamba-2 SSD
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04aj - K8 ESIMD Mamba-2 SSD SSU T=1 held-clock card1 sibling
+
+CONTEXT -> K8 NEW math sibling
+  of 04ah card0 held-clock
+  80.064 us pipe_host. First
+  both-card check for Mamba-2
+  SSD SSU decode T=1. Not GDN.
+  Rank pipe_host. Promote
+  FINDINGS floor if spread vs
+  80.064 is <5% and clocks
+  held 2800.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT mamba_ssu_t1
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. T=1 heads=64
+  d_head=64 d_state=128
+  groups=8 VL=16
+  wi=one_per_head. spin=4000.
+  Rank pipe_host vs 04ah
+  80.064. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_mamba_ssu_t1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=4.7684e-07 ok=1.
+  event 79.536 pipe_host
+  79.923 wait_host 93.906.
+  52.74 GB/s. median 79.375
+  min 78.541 max 80.937.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. start D3hot
+  act=0 cur=2800 throttle=0.
+  end D0 act=0 cur=2800
+  throttle=0. freq 50 ms
+  throttle=0 all 11 samples.
+  GPU-window act=0,0,0,400
+  then 4x 2800 then 2x 0.
+  vs 04ah card0 80.064 spread
+  0.176% (<5%). gpu-run 2s.
+
+VERDICT -> ESIMD Mamba-2 SSD
+  SSU T=1 is 79.923 us
+  pipe_host card1 at 2800,
+  numeric closed. Clocks held
+  (spin=4000, timed
+  act=cur=2800). Spread vs
+  04ah 80.064 is 0.176% at
+  2800. Both-card FINDINGS
+  floor: 80 us pipe_host at
+  2800. GDN 7.1 is the wrong
+  math. Sibling SSU B8/W4
+  stays community. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ak - K8 NVFP4 nibble LUT Lightning routed expert UP-proj M=1 card0 REFUSED
+
+CONTEXT -> K8 shape steal on
+  held K6 merge LUT family at
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Priors: nibble LUT 5120 is
+  158 us. s8 expert-up 16.060
+  (04ad U=14). W8A8 44.285
+  (04ae). Stock nibble_lut_sc
+  NT=2 U=16 inner_k=1024.
+  Packed E2M1. Never bitcast
+  s4. One-card LUT family.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT nibble_lut_sc
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=16 m=1
+  n=1856 k=2688. spin=4000.
+  Packed E2M1 B 2/byte along
+  K, simd nibble LUT, VNNI4,
+  RC=4 8x2-N s8 scale-to-f16.
+  No nibble_lut u14 binary.
+  No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_nibble_lut_moe_up_m1.sh 0 4000
+  ```
+
+RESULT -> REFUSED. stderr
+  nibble_lut_sc: shape m=1
+  n=1856 k=2688 nt=2 unroll=16.
+  inner_k=16*64=1024,
+  2688%1024=640. n=1856%32=0
+  (N ok). Check-only 4x32x1024
+  cosine=1.000000 max_abs=0
+  ok=1 event 209.688 pipe_host
+  204.179 at act=400/550 (not
+  held; not the Lightning
+  shape). timed Lightning
+  pipe_host REFUSED. No
+  nibble_lut_sc_u14 (NT=2
+  launch is template U=16).
+  start D3hot act=0 cur=2800
+  throttle=0. gpu-run 2s
+  exit 2.
+
+VERDICT -> Stock nibble_lut_sc
+  U=16 cannot run Lightning
+  hidden 2688. pipe_host
+  REFUSED. STOP. Do not
+  rewrite (no one-line u14
+  exists for nibble_lut).
+  158 us stays the 5120
+  FINDING, not this shape.
+  One-card enough (LUT family
+  already both-card at 5120;
+  this is a mapping refuse).
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+

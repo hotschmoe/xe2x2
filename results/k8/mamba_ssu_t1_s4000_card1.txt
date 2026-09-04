@@ -1,0 +1,21 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7131807267089 energy2=pkg:4049049430725 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7073891754028 energy2=pkg:4178695203369 temp2_mC=53000
+CONFIG backend=sycl+l0 card=1 arm=mamba_ssu_t1 spin=4000 T=1 heads=64 d_head=64 d_state=128 groups=8
+CONFIG prior sibling SSU B8/W4 exists; GDN delta 7.1 is the wrong math. Rank pipe_host vs eager napkin.
+=== esimd Mamba-2 SSD SSU T=1 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=mamba2_ssd_t1 dtype=h=f32_xdtbc_y=f16 heads=64 d_head=64 d_state=128 groups=8 VL=16 wi=one_per_head warmup=50 iters=40 card=1 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,heads,d_head,d_state,groups,event_us,wait_host_us,pipe_host_us,GBs,cosine,max_abs,ok,median_us,min_us,max_us
+timed,64,64,128,8,79.536,93.906,79.923,52.74,1.000000,4.7684e-07,1,79.375,78.541,80.937
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7131841151306 energy2=pkg:4049068712829 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7073943695068 energy2=pkg:4178731306274 temp2_mC=55000

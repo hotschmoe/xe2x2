@@ -6730,14 +6730,15 @@ Evidence: `results/k8/esimd_s8_moe_up_m1_s4000_card0.txt`,
   `results/k8/esimd_s8_moe_up_m1_s4000_card0.freq`,
   `results/k8/SUMMARY.md`.
 
-## Lightning Mamba-2 SSU T=1 is 80 us at 2800 (K8, one-card)
+## Lightning Mamba-2 SSU T=1 is 80 us at 2800 both cards (K8)
 
 CONFIG -> backend `sycl+l0`,
   standalone `mamba_ssu_t1` AOT
   `intel_gpu_bmg_g31`. T=1
   heads=64 d_head=64 d_state=128
   groups=8 VL=16 wi=one_per_head.
-  Card0. spin=4000. Not GDN.
+  Card0 04ah then card1 04aj.
+  spin=4000. Not GDN.
   Prior: 04af first light
   190.028 us spin=0 (clocks
   not held). GDN fused decode
@@ -6746,27 +6747,31 @@ CONFIG -> backend `sycl+l0`,
   community, not FINDINGS.
 
 RESULT -> cosine=1.000000
-  max_abs=4.7684e-07 ok=1.
-  pipe_host 80.064 event
-  79.531. 52.65 GB/s.
+  max_abs=4.7684e-07 ok=1 both
+  cards. pipe_host 80.064 /
+  79.923 event 79.531 / 79.536.
+  52.65 / 52.74 GB/s. spread
+  0.176% vs 80.064 (<5%).
   spin_done act=cur=2800
   throttle=0. timed
   act=cur=2800 throttle=0
-  both ends. vs 04af 190.028
-  (~0.42x; 190 was ramp).
+  both ends both cards. vs
+  04af 190.028 (~0.42x; 190
+  was ramp).
 
-VERDICT -> One-card held-clock:
-  Mamba-2 SSD SSU T=1 is 80 us
-  pipe_host card0 at 2800,
+VERDICT -> Both-card held-clock
+  floor: Mamba-2 SSD SSU T=1
+  is 80 us pipe_host at 2800
+  (card0 80.064, card1 79.923),
   numeric closed. Clocks held
   (spin=4000). Do not freeze
-  190. Sibling pending. Not a
-  both-card floor. GDN 7.1 is
-  the wrong math. Rank
-  pipe_host.
+  190. GDN 7.1 is the wrong
+  math. Rank pipe_host.
 
 Evidence: `results/k8/mamba_ssu_t1_s4000_card0.txt`,
   `results/k8/mamba_ssu_t1_s4000_card0.freq`,
+  `results/k8/mamba_ssu_t1_s4000_card1.txt`,
+  `results/k8/mamba_ssu_t1_s4000_card1.freq`,
   `results/k8/mamba_ssu_t1_s0_card0.txt`,
   `results/k8/mamba_ssu_t1_s0_card0.freq`,
   `results/k8/SUMMARY.md`.
@@ -6841,4 +6846,46 @@ VERDICT -> Lightning Mamba
 
 Evidence: `results/k8/mamba_conv_c4096_s4000_card1.txt`,
   `results/k8/mamba_conv_c4096_s4000_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Stock nibble_lut_sc U=16 refuses Lightning k=2688 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `nibble_lut_sc`
+  AOT `intel_gpu_bmg_g31`.
+  NT=2 U=16 inner_k=1024.
+  Lightning routed-up M=1
+  n=1856 k=2688. Packed E2M1
+  B. Never bitcast s4. Card0.
+  spin=4000. One-card shape
+  steal on the K6 LUT family
+  (5120 already both-card).
+  Prior: merge LUT 158 us at
+  5120.
+
+RESULT -> REFUSED. stderr
+  `nibble_lut_sc: shape m=1
+  n=1856 k=2688 nt=2
+  unroll=16`. 2688%1024=640.
+  n=1856%32=0. No nibble_lut
+  u14 (NT=2 launch is
+  template U=16). Check-only
+  4x32x1024 cosine=1.000000
+  max_abs=0 ok=1 (not the
+  Lightning timed shape).
+  gpu-run 2s exit 2.
+
+VERDICT -> Stock merge LUT
+  cannot run hidden 2688.
+  pipe_host REFUSED. STOP
+  rewrite until a u14 (or
+  k-loop) exists for
+  nibble_lut. 158 us remains
+  the 5120 number. Do not
+  quote a Lightning LUT us.
+  Rank pipe_host.
+
+Evidence: `results/k8/nibble_lut_moe_up_m1_s4000_card0.txt`,
+  `results/k8/nibble_lut_moe_up_m1_s4000_card0.freq`,
+  `results/k8/nibble_lut_moe_up_m1_s4000_card0.u16_refuse.txt`,
   `results/k8/SUMMARY.md`.
