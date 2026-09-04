@@ -11452,3 +11452,817 @@ VERDICT -> ESIMD o-proj s8
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-03jk - K7 ESIMD s8 q-proj M=1 card0
+
+CONTEXT -> oneDNN q-proj W8A8
+  M=1 is 45-58 us. Square s8
+  scale-to-f16 is 34 us at
+  N=K=5120. Packed qkv s8 M=1
+  is 74 us at n=10240. Same
+  dpas_s8_sc tile at n=2048
+  k=5120. Napkin N-linear
+  34*(2048/5120)~14 us.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=2048 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s8_q_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 27.234
+  pipe_host 27.714. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 45-58
+  (~0.61x of 45, a beat) vs
+  packed qkv s8 74 (~0.375x)
+  vs square s8 34 (~0.82x) vs
+  napkin 14 (~2.0x).
+
+VERDICT -> ESIMD q-proj s8
+  M=1 is 27.714 us pipe_host
+  card0 at 2800, a beat vs
+  oneDNN q-proj W8A8 45-58.
+  Worse than N-linear 14.
+  Numeric closed. One-card.
+  Sibling before promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jl - K7 ESIMD s8 v-proj M=1 card1
+
+CONTEXT -> oneDNN v-proj W8A8
+  M=1 is 46 us. Square s8
+  scale-to-f16 is 34 us at
+  N=K=5120. Same dpas_s8_sc
+  tile at n=6144 k=5120.
+  Napkin N-linear 34*(6144/5120)
+  ~41 us. Packed qkv s8 74.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=6144 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s8_v_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 52.609
+  pipe_host 53.226. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 46
+  (~1.16x, a loss) vs packed
+  qkv s8 74 (~0.72x) vs square
+  s8 34 (~1.57x, N=1.2x napkin
+  41).
+
+VERDICT -> ESIMD v-proj s8
+  M=1 is 53.226 us pipe_host
+  card1 at 2800, a loss vs
+  oneDNN v-proj W8A8 46.
+  Worse than N-linear 41.
+  Numeric closed. One-card.
+  Stop this tile vs 46. Do
+  not promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jm - K7 ESIMD s8 o-proj NT=4 M=1 card0
+
+CONTEXT -> oneDNN o-proj W8A8
+  M=1 is 46-47 us. NT=2 same
+  dpas_s8_sc tile is 62.285 us
+  (loss). Square s8 34 at
+  N=K=5120. Napkin K-linear
+  34*(6144/5120) ~41 us. NT=4
+  unroll=8 innerK=512.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 0. NT=4 U=8
+  m=1 n=5120 k=6144. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s8_oproj_nt4_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 102.187
+  pipe_host 103.086. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 47
+  (~2.19x, a loss) vs NT=2 62
+  (~1.66x) vs square s8 34
+  (~3.03x, K=1.2x napkin 41).
+
+VERDICT -> ESIMD o-proj s8
+  NT=4 M=1 is 103.086 us
+  pipe_host card0 at 2800, a
+  loss vs oneDNN o-proj W8A8
+  47 and vs NT=2 62. Worse
+  than K-linear 41. Numeric
+  closed. One-card. Stop this
+  steal vs 47. Do not sibling.
+  Do not promote. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jn - K7 ESIMD s8 q-proj M=1 sibling card1
+
+CONTEXT -> card0 q-proj s8
+  M=1 was 27.714 us pipe_host
+  at 2800 (2026-09-03jk).
+  oneDNN q W8A8 45-58. Same
+  tile as k-proj (n=2048).
+  packed qkv s8 74. Sibling
+  hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=2048 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s8_q_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 27.258
+  pipe_host 27.666. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs card0 27.714.
+  Spread ~0.2%. vs W8A8 45-58
+  (~0.61x of 45, a beat).
+  Split vs packed leftover:
+  q 27.7, k same shape as q
+  so 27.7, v 53.2 (jl), sum
+  ~108.6 vs packed qkv s8 74.
+
+VERDICT -> Sibling matches.
+  q/k s8 n=2048 is 28-class
+  us pipe_host both cards at
+  2800. Beats oneDNN q. Packed
+  74 still beats sequential
+  q+k+v ~109. Numeric closed.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jo - K7 ESIMD s8 packed qkv NT=4 M=1 card0
+
+CONTEXT -> NT=2 packed qkv s8
+  M=1 n=10240 k=5120 is 74 us
+  at 2800 (beats W8A8 96).
+  NT=4 o-proj was 103 (loss);
+  this N is 2x wider. Same
+  dpas_s8_sc tile NT=4 U=8.
+  n=10240 % 64 == 0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 0. NT=4 U=8
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s8_qkv_nt4_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 105.193
+  pipe_host 105.746. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs NT=2 74
+  (~1.43x, a loss) vs W8A8 96
+  (~1.10x, a loss). NT=4
+  o-proj was 103.
+
+VERDICT -> ESIMD packed qkv s8
+  NT=4 M=1 is 105.746 us
+  pipe_host card0 at 2800, a
+  loss vs NT=2 74 and vs W8A8
+  96. Numeric closed. One-card.
+  Stop this steal vs 74. Do
+  not sibling. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jp - K7 ESIMD s4 packed qkv M=1 card1
+
+CONTEXT -> A=s4 square scale-to-f16
+  is 16.5 us. A=s4 packed qkv
+  napkin N-linear 16.5*2~33 us.
+  A=s4 ranks vs packed s8 74
+  and W8A8 96 as wall time
+  only, not those contracts.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s4 [-8,7] pack=2 scales
+  0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s4_qkv_m1.sh 1 4000
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  16.250 pipe_host 16.637.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 33 (~0.50x,
+  occupancy not N-linear).
+  A=s4 vs packed s8 74 (~0.23x
+  wall). A=s4 vs W8A8 96
+  (~0.17x wall, not a W8A8
+  beat). A=s4 vs square 16.5
+  (wash).
+
+VERDICT -> A=s4 packed qkv M=1
+  is 16.637 us pipe_host card1
+  at 2800. A=s4 wash vs square
+  16.5, not napkin 33. A=s4
+  wall beats packed s8 74.
+  A=s4 is not a W8A8-contract
+  beat of 96. A=s4 numeric
+  closed. A=s4 one-card.
+  Sibling before FINDINGS.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jq - K7 ESIMD s4 packed qkv M=1 sibling card0
+
+CONTEXT -> A=s4 packed qkv M=1
+  card1 was 16.637 us pipe_host
+  at act=cur=2800 (2026-09-03jp).
+  A=s4 cosine=1 max_abs=0. A=s4
+  wash vs square 16.5, occupancy
+  not N-linear. Sibling hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s4 [-8,7] pack=2 scales
+  0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s4_qkv_m1.sh 0 4000
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  16.229 pipe_host 16.607.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs card1 16.637. Spread
+  ~0.2%. A=s4 vs napkin 33
+  (~0.50x, occupancy not
+  N-linear). A=s4 vs packed s8
+  74 (~0.22x wall). A=s4 vs
+  W8A8 96 (~0.17x wall, not a
+  W8A8 beat). A=s4 vs square
+  16.5 (wash).
+
+VERDICT -> Sibling matches.
+  A=s4 packed qkv M=1 is
+  17-class us pipe_host both
+  cards at 2800. A=s4 wash vs
+  square 16.5. Occupancy not
+  N-linear. A=s4 is not a
+  W8A8-contract beat. vs packed
+  s8 74 is wall-time only.
+  A=s4 numeric closed. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jr - K7 ESIMD s4 packed qkv M=64 card1
+
+CONTEXT -> A=s4 square 4x8 A-db
+  M=64 is 33.6 us. A=s4 packed
+  qkv napkin N-linear 33.6*2~67
+  us. W8A8 packed M=64 is 140.
+  s8 4x8 packed was 214 (loss).
+  A=s4 ranks vs 67/140/214 as
+  wall time only, not those
+  contracts.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_db48.
+  gpu-run --card 1. NT=2 U=16
+  wg=4x8 A-db m=64 n=10240
+  k=5120. spin=512. pack=2
+  scales 0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s4_qkv_m64.sh 1 512
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  63.130 pipe_host 63.452.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 67 (~0.95x,
+  near N-linear). A=s4 vs
+  W8A8 140 (~0.45x wall, not
+  a W8A8 beat). A=s4 vs s8
+  214 (~0.30x wall). A=s4 vs
+  square 33.6 (~1.89x).
+
+VERDICT -> A=s4 packed qkv M=64
+  is 63.452 us pipe_host card1
+  at 2800. A=s4 near napkin 67
+  not occupancy-bound. A=s4
+  wall beats W8A8 140 and s8
+  214. A=s4 is not a
+  W8A8-contract beat of 140.
+  A=s4 numeric closed. A=s4
+  one-card. New s4 packed-qkv
+  M=64 floor. Sibling before
+  FINDINGS. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03js - K7 ESIMD s4 packed qkv M=64 sibling card0
+
+CONTEXT -> A=s4 packed qkv M=64
+  card1 was 63.452 us pipe_host
+  at act=cur=2800 (2026-09-03jr).
+  A=s4 cosine=1 max_abs=0. A=s4
+  near napkin 67, near N-linear
+  vs square 33.6. Sibling hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_db48.
+  gpu-run --card 0. NT=2 U=16
+  wg=4x8 A-db m=64 n=10240
+  k=5120. spin=512. pack=2
+  scales 0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s4_qkv_m64.sh 0 512
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  62.750 pipe_host 63.290.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs card1 63.452. Spread
+  ~0.3%. A=s4 vs napkin 67
+  (~0.94x, near N-linear).
+  A=s4 vs W8A8 140 (~0.45x
+  wall, not a W8A8 beat).
+  A=s4 vs s8 214 (~0.30x
+  wall). A=s4 vs square 33.6
+  (~1.88x).
+
+VERDICT -> Sibling matches.
+  A=s4 packed qkv M=64 is
+  63-class us pipe_host both
+  cards at 2800. A=s4 near
+  N-linear vs square 33.6.
+  A=s4 is not a W8A8-contract
+  beat. vs W8A8 140 is
+  wall-time only. A=s4 numeric
+  closed. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jt - K7 ESIMD s4 packed qkv M=256 card1
+
+CONTEXT -> A=s4 square 4-acc
+  4x8 M=256 is 48.6 us. A=s4
+  packed qkv napkin N-linear
+  48.6*2~97 us. W8A8 packed
+  M=256 is 164. s8 4-acc packed
+  was 274 (loss). A=s4 ranks
+  vs 97/164/274 as wall time
+  only, not those contracts.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_w48m4.
+  gpu-run --card 1. NT=2 U=8
+  wg=4x8 4-acc m=256 n=10240
+  k=5120. spin=512. pack=2
+  scales 0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s4_qkv_m256.sh 1 512
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  95.198 pipe_host 95.262.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 97 (~0.98x,
+  near N-linear). A=s4 vs
+  W8A8 164 (~0.58x wall, not
+  a W8A8 beat). A=s4 vs s8
+  274 (~0.35x wall). A=s4 vs
+  square 48.6 (~1.96x).
+
+VERDICT -> A=s4 packed qkv M=256
+  is 95.262 us pipe_host card1
+  at 2800. A=s4 near napkin 97
+  not occupancy-bound. A=s4
+  wall beats W8A8 164 and s8
+  274. A=s4 is not a
+  W8A8-contract beat of 164.
+  A=s4 numeric closed. A=s4
+  one-card. New s4 packed-qkv
+  M=256 floor. Sibling before
+  FINDINGS. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jv - K7 ESIMD s4 o-proj M=1 card1
+
+CONTEXT -> A=s4 square scale-to-f16
+  is 16.5 us. A=s4 o-proj napkin
+  K-linear 16.5*(6144/5120)~20 us.
+  s8 o-proj is 62 vs W8A8 47 (s8
+  lost). A=s4 ranks vs 20/62/47
+  as wall time only, not those
+  contracts.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=5120 k=6144. spin=4000.
+  Fill s4 [-8,7] pack=2 scales
+  0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s4_oproj_m1.sh 1 4000
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  19.039 pipe_host 19.394.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 20 (~0.97x,
+  near K-linear). A=s4 vs s8
+  62 (~0.31x wall). A=s4 vs
+  W8A8 47 (~0.41x wall, not a
+  W8A8 beat). A=s4 vs square
+  16.5 (~1.18x, K=1.2x).
+
+VERDICT -> A=s4 o-proj M=1 is
+  19.394 us pipe_host card1 at
+  2800. A=s4 near napkin 20
+  not occupancy-bound. A=s4
+  wall beats s8 62 and W8A8 47.
+  A=s4 is not a W8A8-contract
+  beat of 47. A=s4 numeric
+  closed. A=s4 one-card. New
+  s4 o-proj floor. Sibling
+  before FINDINGS. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03ju - K7 ESIMD s4 packed qkv M=256 sibling card0
+
+CONTEXT -> A=s4 packed qkv M=256
+  card1 was 95.262 us pipe_host
+  at act=cur=2800 (2026-09-03jt).
+  A=s4 cosine=1 max_abs=0. A=s4
+  near napkin 97, near N-linear
+  vs square 48.6. Sibling hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_w48m4.
+  gpu-run --card 0. NT=2 U=8
+  wg=4x8 4-acc m=256 n=10240
+  k=5120. spin=512. pack=2
+  scales 0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s4_qkv_m256.sh 0 512
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  93.984 pipe_host 93.706.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs card1 95.262. Spread
+  ~1.7%. A=s4 vs napkin 97
+  (~0.97x, near N-linear).
+  A=s4 vs W8A8 164 (~0.57x
+  wall, not a W8A8 beat).
+  A=s4 vs s8 274 (~0.34x
+  wall). A=s4 vs square 48.6
+  (~1.93x).
+
+VERDICT -> Sibling matches.
+  A=s4 packed qkv M=256 is
+  95-class us pipe_host both
+  cards at 2800. A=s4 near
+  N-linear vs square 48.6.
+  A=s4 is not a W8A8-contract
+  beat. vs W8A8 164 is
+  wall-time only. A=s4 numeric
+  closed. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jw - K7 ESIMD s4 o-proj M=1 sibling card0
+
+CONTEXT -> A=s4 o-proj M=1
+  card1 was 19.394 us pipe_host
+  at act=cur=2800 (2026-09-03jv).
+  A=s4 cosine=1 max_abs=0. A=s4
+  near napkin 20, near K-linear
+  vs square 16.5. Sibling hold.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s4_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=5120 k=6144. spin=4000.
+  Fill s4 [-8,7] pack=2 scales
+  0.02 out f16. A=s4.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s4_oproj_m1.sh 0 4000
+  ```
+
+RESULT -> A=s4 cosine=1.000000
+  max_abs=0 ok=1. A=s4 event
+  19.005 pipe_host 19.381.
+  A=s4 timed act=cur=2800
+  throttle=0. A=s4 spin_done
+  act=cur=2800 throttle=0.
+  A=s4 vs card1 19.394. Spread
+  ~0.07%. A=s4 vs napkin 20
+  (~0.97x, near K-linear).
+  A=s4 vs s8 62 (~0.31x wall).
+  A=s4 vs W8A8 47 (~0.41x
+  wall, not a W8A8 beat).
+  A=s4 vs square 16.5 (~1.17x,
+  K=1.2x).
+
+VERDICT -> Sibling matches.
+  A=s4 o-proj M=1 is 19-class
+  us pipe_host both cards at
+  2800. A=s4 near K-linear vs
+  square 16.5. A=s4 is not a
+  W8A8-contract beat. vs W8A8
+  47 is wall-time only. A=s4
+  numeric closed. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jx - K7 ESIMD s2 packed qkv M=1 card1
+
+CONTEXT -> A=s2 square scale-to-f16
+  is 11.5 us. s4 packed 16.6
+  wash vs square (occupancy).
+  Napkin occupancy ~11.5. A=s2
+  ranks vs square 11.5, s4
+  packed 16.6, packed s8 74 as
+  wall time only, not those
+  contracts. IGC s2 range
+  [-2,1]. A=s2 not W8A8.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s2_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s2 [-2,1] pack=4 scales
+  0.02 out f16. A=s2.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s2_qkv_m1.sh 1 4000
+  ```
+
+RESULT -> A=s2 cosine=1.000000
+  max_abs=0 ok=1. A=s2 event
+  11.276 pipe_host 11.675.
+  A=s2 timed act=cur=2800
+  throttle=0. A=s2 spin_done
+  act=cur=2800 throttle=0.
+  A=s2 vs square 11.5 (wash,
+  occupancy not N-linear).
+  A=s2 vs s4 packed 16.6
+  (~0.70x wall). A=s2 vs packed
+  s8 74 (~0.16x wall). A=s2 vs
+  napkin 11.5 (wash).
+
+VERDICT -> A=s2 packed qkv M=1
+  is 11.675 us pipe_host card1
+  at 2800. A=s2 wash vs square
+  11.5, occupancy not N-linear.
+  A=s2 wall beats s4 packed
+  16.6 and packed s8 74. A=s2
+  is not a W8A8-contract beat.
+  A=s2 numeric closed. A=s2
+  one-card. Sibling before
+  FINDINGS. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jy - K7 ESIMD s2 packed qkv M=1 sibling card0
+
+CONTEXT -> A=s2 packed qkv M=1
+  card1 is 11.675 us pipe_host
+  at 2800 (2026-09-03jx),
+  cosine=1 max_abs=0. Wash vs
+  square 11.5. Occupancy not
+  N-linear. IGC s2 range
+  [-2,1]. A=s2 not W8A8.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s2_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=10240 k=5120. spin=4000.
+  Fill s2 [-2,1] pack=4 scales
+  0.02 out f16. A=s2.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s2_qkv_m1.sh 0 4000
+  ```
+
+RESULT -> A=s2 cosine=1.000000
+  max_abs=0 ok=1. A=s2 event
+  11.299 pipe_host 11.644 vs
+  card1 11.675. Spread ~0.27%.
+  A=s2 timed act=cur=2800
+  throttle=0. A=s2 spin_done
+  act=cur=2800 throttle=0.
+  A=s2 vs square 11.5 (wash,
+  occupancy not N-linear).
+  A=s2 vs s4 packed 16.6
+  (~0.70x wall). A=s2 vs packed
+  s8 74 (~0.16x wall). A=s2 vs
+  napkin 11.5 (wash).
+
+VERDICT -> A=s2 packed qkv M=1
+  is 12-class us pipe_host both
+  cards at 2800. A=s2 wash vs
+  square 11.5, occupancy not
+  N-linear. A=s2 wall beats s4
+  packed 16.6 and packed s8 74.
+  A=s2 is not a W8A8-contract
+  beat. A=s2 numeric closed.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03jz - K7 ESIMD s2 o-proj M=1 card1
+
+CONTEXT -> A=s2 square scale-to-f16
+  is 11.5 us. A=s2 o-proj napkin
+  K-linear 11.5*(6144/5120)~14 us.
+  s4 o-proj is 19 vs W8A8 47.
+  A=s2 ranks vs 14/19/47 as
+  wall time only, not those
+  contracts. IGC s2 range
+  [-2,1]. A=s2 not W8A8.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s2_sc.
+  gpu-run --card 1. NT=2 U=16
+  m=1 n=5120 k=6144. spin=4000.
+  Fill s2 [-2,1] pack=4 scales
+  0.02 out f16. A=s2.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 kernels/gdn/run_esimd_s2_oproj_m1.sh 1 4000
+  ```
+
+RESULT -> A=s2 cosine=1.000000
+  max_abs=0 ok=1. A=s2 event
+  13.159 pipe_host 13.545.
+  A=s2 timed act=cur=2800
+  throttle=0. A=s2 spin_done
+  act=cur=2800 throttle=0.
+  A=s2 vs napkin 14 (~0.97x,
+  near K-linear). A=s2 vs s4
+  19 (~0.71x wall). A=s2 vs
+  W8A8 47 (~0.29x wall, not a
+  W8A8 beat). A=s2 vs square
+  11.5 (~1.18x, K=1.2x).
+
+VERDICT -> A=s2 o-proj M=1 is
+  13.545 us pipe_host card1 at
+  2800. A=s2 near napkin 14
+  not occupancy-bound. A=s2
+  wall beats s4 19 and W8A8
+  47. A=s2 is not a
+  W8A8-contract beat of 47.
+  A=s2 numeric closed. A=s2
+  one-card. New s2 o-proj
+  floor. Sibling before
+  FINDINGS. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-03ka - K7 ESIMD s2 o-proj M=1 sibling card0
+
+CONTEXT -> card1 A=s2 o-proj was
+  13.545 us at 2800
+  (2026-09-03jz). First floor.
+  Sibling. spin=4000. Same TU.
+  A=s2 not W8A8.
+
+CONFIG -> backend sycl+l0, same
+  AOT dpas_s2_sc. gpu-run
+  --card 0. NT=2 U=16 m=1
+  n=5120 k=6144. spin=4000.
+  A=s2.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 kernels/gdn/run_esimd_s2_oproj_m1.sh 0 4000
+  ```
+
+RESULT -> A=s2 cosine=1 max_abs=0
+  ok=1. A=s2 event 13.167
+  pipe_host 13.519 vs card1
+  13.545. Spread ~0.2%. A=s2
+  timed act=cur=2800 throttle=0.
+  A=s2 spin_done act=cur=2800
+  throttle=0.
+
+VERDICT -> Sibling matches.
+  A=s2 o-proj M=1 is 14-class
+  us pipe_host both cards at
+  2800. Near K-linear vs square
+  11.5. Not a W8A8-contract
+  beat. vs W8A8 47 is wall-time
+  only. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

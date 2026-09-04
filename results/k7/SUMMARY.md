@@ -1374,3 +1374,424 @@ still oneDNN. Do not sibling
 the 214/274 losses. o-proj
 still 47. Seq 298 is the T=256
 mixer leftover.
+
+## ESIMD q-proj s8 M=1 card0 (2026-09-03jk)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=2048 k=5120
+NT=2 U=16 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+27.714 event 27.234. timed
+act=cur=2800 throttle=0. vs
+oneDNN q W8A8 45-58 (~0.61x
+of 45, a beat) vs packed qkv
+s8 74 (~0.375x) vs square s8
+34 (~0.82x) vs napkin 14
+(~2.0x). Held 2800. One-card.
+Sibling before promote.
+
+K7 next: sibling q-proj s8
+card1 before promote. v-proj
+s8 vs 46. packed qkv M=64/M=256
+still oneDNN. o-proj still 47.
+Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD v-proj s8 M=1 card1 (2026-09-03jl)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=6144 k=5120
+NT=2 U=16 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+53.226 event 52.609. timed
+act=cur=2800 throttle=0. vs
+oneDNN v W8A8 46 (~1.16x, a
+loss) vs packed qkv s8 74
+(~0.72x) vs square s8 34
+(~1.57x, N=1.2x napkin 41).
+Held 2800. One-card. Stop this
+tile vs 46. Do not promote.
+
+K7 next: sibling q-proj s8
+card1 before promote. packed
+qkv M=64/M=256 still oneDNN.
+o-proj still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD o-proj s8 NT=4 M=1 card0 (2026-09-03jm)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=5120 k=6144
+NT=4 U=8 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+103.086 event 102.187. timed
+act=cur=2800 throttle=0. vs
+oneDNN o-proj W8A8 46-47
+(~2.19x, a loss) vs NT=2 62
+(~1.66x) vs square s8 34
+(~3.03x, K=1.2x napkin 41).
+Held 2800. One-card. Stop this
+steal vs 47. Do not sibling.
+Do not promote.
+
+K7 next: sibling q-proj s8
+card1 before promote. packed
+qkv M=64/M=256 still oneDNN.
+o-proj still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD q-proj s8 M=1 sibling card1 (2026-09-03jn)
+
+backend sycl+l0, same dpas_s8_sc.
+M=1 n=2048 k=5120 NT=2 U=16
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 27.666 event
+27.258 vs card0 27.714. Spread
+~0.2%. timed act=cur=2800
+throttle=0. 28-class both at
+2800. Beats oneDNN q 45-58.
+q 27.7, k same shape 27.7,
+v 53.2 (jl), sum ~108.6 vs
+packed qkv s8 74. Packed 74
+still beats sequential q+k+v
+~109. Held 2800.
+
+K7 next: packed qkv s8 74 stays
+the M=1 qkv leftover vs split
+~109. packed qkv M=64/M=256
+still oneDNN. o-proj still 47.
+v-proj still 46. Seq 298 is
+the T=256 mixer leftover.
+
+## ESIMD packed qkv s8 NT=4 M=1 card0 (2026-09-03jo)
+
+backend sycl+l0, standalone
+dpas_s8_sc. M=1 n=10240 k=5120
+NT=4 U=8 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+105.746 event 105.193. timed
+act=cur=2800 throttle=0. vs
+NT=2 packed qkv s8 74 (~1.43x,
+a loss) vs W8A8 96 (~1.10x).
+NT=4 o-proj was 103 (loss);
+this N is 2x wider. Held 2800.
+One-card. Stop this steal vs
+74. Do not sibling. Do not
+promote.
+
+K7 next: packed qkv s8 74 stays
+the M=1 qkv leftover vs split
+~109. packed qkv M=64/M=256
+still oneDNN. o-proj still 47.
+v-proj still 46. Seq 298 is
+the T=256 mixer leftover.
+
+## ESIMD packed qkv A=s4 M=1 card1 (2026-09-03jp)
+
+backend sycl+l0, standalone
+dpas_s4_sc. A=s4 M=1 n=10240
+k=5120 NT=2 U=16 spin=4000.
+A=s4 cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 16.637 event
+16.250. A=s4 timed act=cur=2800
+throttle=0. A=s4 vs napkin 33
+(~0.50x, occupancy) vs packed
+s8 74 (~0.23x wall) vs W8A8 96
+(~0.17x wall, not a W8A8 beat)
+vs square A=s4 16.5 (wash).
+A=s4 held 2800. A=s4 one-card.
+Sibling before FINDINGS.
+
+K7 next: sibling A=s4 packed
+qkv M=1 card0 before promote.
+packed qkv s8 74 stays the s8
+M=1 leftover. packed qkv
+M=64/M=256 still oneDNN.
+o-proj still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD packed qkv A=s4 M=1 sibling card0 (2026-09-03jq)
+
+backend sycl+l0, same dpas_s4_sc.
+A=s4 M=1 n=10240 k=5120 NT=2
+U=16 spin=4000. A=s4 cosine=1
+max_abs=0 ok=1. A=s4 pipe_host
+16.607 event 16.229 vs card1
+16.637. Spread ~0.2%. A=s4
+timed act=cur=2800 throttle=0.
+A=s4 17-class both at 2800.
+A=s4 wash vs square 16.5.
+Occupancy not N-linear. A=s4
+not a W8A8-contract beat. vs
+packed s8 74 is wall-time
+only. Held 2800.
+
+K7 next: packed qkv s8 74 stays
+the s8 M=1 leftover vs split
+~109. packed qkv M=64/M=256
+still oneDNN. o-proj still 47.
+v-proj still 46. Seq 298 is
+the T=256 mixer leftover.
+
+## ESIMD packed qkv A=s4 M=64 card1 (2026-09-03jr)
+
+backend sycl+l0, standalone
+dpas_s4_db48. A=s4 M=64 n=10240
+k=5120 NT=2 U=16 wg=4x8 A-db
+spin=512. A=s4 cosine=1
+max_abs=0 ok=1. A=s4 pipe_host
+63.452 event 63.130. A=s4
+timed act=cur=2800 throttle=0.
+A=s4 vs napkin 67 (~0.95x,
+near N-linear) vs W8A8 140
+(~0.45x wall, not a W8A8
+beat) vs s8 214 (~0.30x wall)
+vs square A=s4 33.6 (~1.89x).
+A=s4 held 2800. A=s4 one-card.
+New s4 packed-qkv M=64 floor.
+Sibling before FINDINGS.
+
+K7 next: sibling A=s4 packed
+qkv M=64 card0 before promote.
+packed qkv s8 74 stays the s8
+M=1 leftover vs split ~109.
+packed qkv M=64/M=256 still
+oneDNN on the W8A8 contract.
+o-proj still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD packed qkv A=s4 M=64 sibling card0 (2026-09-03js)
+
+backend sycl+l0, same
+dpas_s4_db48. A=s4 M=64
+n=10240 k=5120 NT=2 U=16
+wg=4x8 A-db spin=512. A=s4
+cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 63.290 event
+62.750 vs card1 63.452.
+Spread ~0.3%. A=s4 timed
+act=cur=2800 throttle=0.
+A=s4 63-class both at 2800.
+A=s4 near N-linear vs square
+33.6. A=s4 not a
+W8A8-contract beat. vs W8A8
+140 is wall-time only. Held
+2800.
+
+K7 next: packed qkv s8 74 stays
+the s8 M=1 leftover vs split
+~109. packed qkv M=256 still
+oneDNN on the W8A8 contract.
+o-proj still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD packed qkv A=s4 M=256 card1 (2026-09-03jt)
+
+backend sycl+l0, standalone
+dpas_s4_w48m4. A=s4 M=256
+n=10240 k=5120 NT=2 U=8
+wg=4x8 4-acc spin=512. A=s4
+cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 95.262 event
+95.198. A=s4 timed
+act=cur=2800 throttle=0.
+A=s4 vs napkin 97 (~0.98x,
+near N-linear) vs W8A8 164
+(~0.58x wall, not a W8A8
+beat) vs s8 274 (~0.35x wall)
+vs square A=s4 48.6 (~1.96x).
+A=s4 held 2800. A=s4 one-card.
+New s4 packed-qkv M=256 floor.
+Sibling before FINDINGS.
+
+K7 next: sibling A=s4 packed
+qkv M=256 card0 before promote.
+packed qkv s8 74 stays the s8
+M=1 leftover vs split ~109.
+packed qkv M=256 still oneDNN
+on the W8A8 contract. o-proj
+still 47. v-proj still 46.
+Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD o-proj A=s4 M=1 card1 (2026-09-03jv)
+
+backend sycl+l0, standalone
+dpas_s4_sc. A=s4 M=1 n=5120
+k=6144 NT=2 U=16 spin=4000.
+A=s4 cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 19.394 event
+19.039. A=s4 timed act=cur=2800
+throttle=0. A=s4 vs napkin 20
+(~0.97x, near K-linear) vs s8
+62 (~0.31x wall) vs W8A8 47
+(~0.41x wall, not a W8A8 beat)
+vs square A=s4 16.5 (~1.18x).
+A=s4 held 2800. A=s4 one-card.
+New s4 o-proj floor. Sibling
+before FINDINGS.
+
+K7 next: sibling A=s4 o-proj
+M=1 card0 before promote.
+packed qkv s8 74 stays the s8
+M=1 leftover vs split ~109.
+packed qkv M=256 still oneDNN
+on the W8A8 contract. o-proj
+W8A8 still 47. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD packed qkv A=s4 M=256 sibling card0 (2026-09-03ju)
+
+backend sycl+l0, same
+dpas_s4_w48m4. A=s4 M=256
+n=10240 k=5120 NT=2 U=8
+wg=4x8 4-acc spin=512. A=s4
+cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 93.706 event
+93.984 vs card1 95.262.
+Spread ~1.7%. A=s4 timed
+act=cur=2800 throttle=0.
+A=s4 95-class both at 2800.
+A=s4 near N-linear vs square
+48.6. A=s4 not a
+W8A8-contract beat. vs W8A8
+164 is wall-time only. Qwen
+packed-qkv s4 map M=1/64/256
+closed (16.6 / 63 / 95). Held
+2800.
+
+K7 next: packed qkv s8 74 stays
+the s8 M=1 leftover vs split
+~109. packed qkv M=256 still
+oneDNN on the W8A8 contract.
+o-proj sibling A=s4 M=1 card0
+before promote. v-proj still
+46. Seq 298 is the T=256 mixer
+leftover.
+
+## ESIMD o-proj A=s4 M=1 sibling card0 (2026-09-03jw)
+
+backend sycl+l0, same
+dpas_s4_sc. A=s4 M=1 n=5120
+k=6144 NT=2 U=16 spin=4000.
+A=s4 cosine=1 max_abs=0 ok=1.
+A=s4 pipe_host 19.381 event
+19.005 vs card1 19.394.
+Spread ~0.07%. A=s4 timed
+act=cur=2800 throttle=0.
+A=s4 19-class both at 2800.
+A=s4 near K-linear vs square
+16.5. A=s4 not a
+W8A8-contract beat. vs W8A8
+47 is wall-time only. Held
+2800.
+
+K7 next: packed qkv s8 74 stays
+the s8 M=1 leftover vs split
+~109. packed qkv M=256 still
+oneDNN on the W8A8 contract.
+o-proj A=s4 19-class both; vs
+W8A8 47 is wall-time only.
+v-proj still 46. Seq 298 is
+the T=256 mixer leftover.
+
+## ESIMD packed qkv A=s2 M=1 card1 (2026-09-03jx)
+
+backend sycl+l0, standalone
+dpas_s2_sc. A=s2 M=1 n=10240
+k=5120 NT=2 U=16 spin=4000.
+A=s2 cosine=1 max_abs=0 ok=1.
+A=s2 pipe_host 11.675 event
+11.276. A=s2 timed act=cur=2800
+throttle=0. A=s2 vs square 11.5
+(wash, occupancy). A=s2 vs s4
+packed 16.6 (~0.70x wall).
+A=s2 vs packed s8 74 (~0.16x
+wall). A=s2 not a
+W8A8-contract beat. A=s2 held
+2800. A=s2 one-card. Sibling
+before FINDINGS.
+
+K7 next: sibling A=s2 packed
+qkv M=1 card0 before promote.
+packed qkv s8 74 stays the s8
+M=1 leftover vs split ~109.
+packed qkv M=256 still oneDNN
+on the W8A8 contract. o-proj
+A=s4 19-class both; vs W8A8
+47 is wall-time only. v-proj
+still 46. Seq 298 is the T=256
+mixer leftover.
+
+## ESIMD packed qkv A=s2 M=1 sibling card0 (2026-09-03jy)
+
+backend sycl+l0, same
+dpas_s2_sc. A=s2 M=1 n=10240
+k=5120 NT=2 U=16 spin=4000.
+A=s2 cosine=1 max_abs=0 ok=1.
+A=s2 pipe_host 11.644 event
+11.299 vs card1 11.675.
+Spread ~0.27%. A=s2 timed
+act=cur=2800 throttle=0.
+A=s2 12-class both at 2800.
+A=s2 wash vs square 11.5.
+Occupancy not N-linear. A=s2
+not a W8A8-contract beat. vs
+s4 packed 16.6 and packed s8
+74 is wall-time only. Held
+2800.
+
+K7 next: packed qkv s8 74 stays
+the s8 M=1 leftover vs split
+~109. packed qkv M=256 still
+oneDNN on the W8A8 contract.
+A=s2 packed qkv M=1 12-class
+both; wash vs square 11.5.
+o-proj A=s4 19-class both; vs
+W8A8 47 is wall-time only.
+v-proj still 46. Seq 298 is
+the T=256 mixer leftover.
+
+## ESIMD o-proj A=s2 M=1 card1 (2026-09-03jz)
+
+backend sycl+l0, standalone
+dpas_s2_sc. A=s2 M=1 n=5120
+k=6144 NT=2 U=16 spin=4000.
+A=s2 cosine=1 max_abs=0 ok=1.
+A=s2 pipe_host 13.545 event
+13.159. A=s2 timed act=cur=2800
+throttle=0. A=s2 vs napkin 14
+(~0.97x, near K-linear) vs s4
+19 (~0.71x wall) vs W8A8 47
+(~0.29x wall, not a W8A8 beat)
+vs square A=s2 11.5 (~1.18x).
+A=s2 held 2800. A=s2 one-card.
+New s2 o-proj floor. Sibling
+before FINDINGS.
+
+## ESIMD o-proj A=s2 M=1 sibling card0 (2026-09-03ka)
+
+backend sycl+l0, same dpas_s2_sc.
+A=s2 M=1 n=5120 k=6144 NT=2
+U=16 spin=4000. cosine=1
+max_abs=0 ok=1. pipe_host
+13.519 event 13.167 vs card1
+13.545. Spread ~0.2%. timed
+act=cur=2800 throttle=0.
+14-class both at 2800. Near
+K-linear vs square 11.5. Not
+a W8A8-contract beat.
+
+K7 next: W8A8 leftover is
+o-proj 47 and prefill packed
+140/164. Decode s8 packed 74
+stands. Seq 298 is the T=256
+mixer leftover. Integer s2/s4
+decode maps for packed qkv
+and o-proj are closed.

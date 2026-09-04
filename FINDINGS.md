@@ -4124,6 +4124,270 @@ VERDICT -> 62 us at 2800,
 
 Evidence: `results/k7/esimd_s8_oproj_m1_s4000_card1.txt`.
 
+## ESIMD v-proj s8 M=1 loses to W8A8 46 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc`.
+  M=1 n=6144 k=5120. NT=2 U=16.
+  Card1. spin=4000. Prior:
+  W8A8 46, packed qkv s8 74,
+  square s8 34, napkin ~41.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 53.226 event
+  52.609. timed act=cur=2800
+  throttle=0.
+
+VERDICT -> 53 us at 2800,
+  ~1.16x W8A8 46, worse than
+  N-linear 41. Stop this tile
+  vs v-proj. oneDNN stays the
+  floor. One-card. Sibling
+  before promote.
+
+Evidence: `results/k7/esimd_s8_v_m1_s4000_card1.txt`.
+
+## ESIMD q/k s8 n=2048 M=1 is 28-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc`.
+  M=1 n=2048 k=5120. NT=2 U=16.
+  Both cards. spin=4000. Prior:
+  oneDNN q W8A8 45-58, packed
+  qkv s8 74, square s8 34,
+  napkin ~14. Same tile as
+  k-proj.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 27.714 /
+  27.666. Spread ~0.2%. timed
+  act=cur=2800 throttle=0.
+  vs W8A8 45-58 (~0.61x of 45).
+  Split: q 27.7, k same shape
+  27.7, v 53.2 (jl), sum
+  ~108.6 vs packed qkv s8 74.
+
+VERDICT -> q/k s8 n=2048 is
+  28-class us pipe_host both
+  cards at 2800, a beat of
+  oneDNN q. Packed 74 still
+  beats sequential q+k+v ~109.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s8_q_m1_s4000_card0.txt`,
+  `results/k7/esimd_s8_q_m1_s4000_card1.txt`.
+
+## ESIMD packed qkv A=s4 M=1 is 17-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s4_sc` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N pack=2 scale-to-f16
+  as square A=s4 16.5. A=s4
+  M=1 n=10240 k=5120. NT=2
+  U=16. Both cards. spin=4000.
+  Prior: square A=s4 16.5,
+  napkin N-linear ~33, packed
+  s8 74, W8A8 96.
+
+RESULT -> A=s4 cosine=1.0
+  max_abs=0 ok=1. A=s4
+  pipe_host 16.607 / 16.637.
+  Spread ~0.2%. A=s4 timed
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 33 (~0.50x)
+  vs packed s8 74 (~0.22x
+  wall) vs W8A8 96 (~0.17x
+  wall) vs square 16.5 (wash).
+
+VERDICT -> A=s4 packed qkv M=1
+  is 17-class us pipe_host both
+  cards at 2800. Wash vs square
+  16.5. Occupancy not N-linear.
+  Not a W8A8-contract beat. vs
+  packed s8 74 is wall-time
+  only. Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s4_qkv_m1_s4000_card0.txt`,
+  `results/k7/esimd_s4_qkv_m1_s4000_card1.txt`.
+
+## ESIMD packed qkv A=s4 M=64 is 63-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s4_db48` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=8 4x8 A-db pack=2
+  scale-to-f16 as square A=s4
+  33.6. A=s4 M=64 n=10240
+  k=5120. NT=2 U=16. Both
+  cards. spin=512. Prior:
+  square A=s4 33.6, napkin
+  N-linear ~67, packed s8 214,
+  W8A8 140.
+
+RESULT -> A=s4 cosine=1.0
+  max_abs=0 ok=1. A=s4
+  pipe_host 63.290 / 63.452.
+  Spread ~0.3%. A=s4 timed
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 67 (~0.94x)
+  vs W8A8 140 (~0.45x wall)
+  vs s8 214 (~0.30x wall) vs
+  square 33.6 (~1.88x).
+
+VERDICT -> A=s4 packed qkv M=64
+  is 63-class us pipe_host both
+  cards at 2800. Near N-linear
+  vs square 33.6. Not a
+  W8A8-contract beat. vs W8A8
+  140 is wall-time only.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s4_qkv_m64_s512_card0.txt`,
+  `results/k7/esimd_s4_qkv_m64_s512_card1.txt`.
+
+## ESIMD packed qkv A=s4 M=256 is 95-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s4_w48m4` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=8 4x8 4-acc pack=2
+  scale-to-f16 as square A=s4
+  48.6. A=s4 M=256 n=10240
+  k=5120. NT=2 U=8. Both
+  cards. spin=512. Prior:
+  square A=s4 48.6, napkin
+  N-linear ~97, packed s8 274,
+  W8A8 164.
+
+RESULT -> A=s4 cosine=1.0
+  max_abs=0 ok=1. A=s4
+  pipe_host 93.706 / 95.262.
+  Spread ~1.7%. A=s4 timed
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 97 (~0.97x)
+  vs W8A8 164 (~0.57x wall)
+  vs s8 274 (~0.34x wall) vs
+  square 48.6 (~1.93x).
+
+VERDICT -> A=s4 packed qkv M=256
+  is 95-class us pipe_host both
+  cards at 2800. Near N-linear
+  vs square 48.6. Not a
+  W8A8-contract beat. vs W8A8
+  164 is wall-time only.
+  Qwen packed-qkv s4 map
+  M=1/64/256 closed (16.6 /
+  63 / 95). Numeric closed.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_s4_qkv_m256_s512_card0.txt`,
+  `results/k7/esimd_s4_qkv_m256_s512_card1.txt`.
+
+## ESIMD o-proj A=s4 M=1 is 19-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s4_sc` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N pack=2 scale-to-f16
+  as square A=s4 16.5. A=s4
+  M=1 n=5120 k=6144. NT=2
+  U=16. Both cards. spin=4000.
+  Prior: square A=s4 16.5,
+  napkin K-linear ~20, s8 62,
+  W8A8 47.
+
+RESULT -> A=s4 cosine=1.0
+  max_abs=0 ok=1. A=s4
+  pipe_host 19.381 / 19.394.
+  Spread ~0.07%. A=s4 timed
+  act=cur=2800 throttle=0.
+  A=s4 vs napkin 20 (~0.97x)
+  vs s8 62 (~0.31x wall) vs
+  W8A8 47 (~0.41x wall) vs
+  square 16.5 (~1.18x).
+
+VERDICT -> A=s4 o-proj M=1 is
+  19-class us pipe_host both
+  cards at 2800. Near K-linear
+  vs square 16.5. Not a
+  W8A8-contract beat. vs W8A8
+  47 is wall-time only.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s4_oproj_m1_s4000_card0.txt`,
+  `results/k7/esimd_s4_oproj_m1_s4000_card1.txt`.
+
+## ESIMD packed qkv A=s2 M=1 is 12-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s2_sc` AOT
+  `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N pack=4 scale-to-f16
+  as square A=s2 11.5. A=s2
+  M=1 n=10240 k=5120. NT=2
+  U=16. Both cards. spin=4000.
+  IGC s2 [-2,1]. Prior: square
+  A=s2 11.5, napkin occupancy
+  ~11.5, s4 packed 16.6, packed
+  s8 74, W8A8 96.
+
+RESULT -> A=s2 cosine=1.0
+  max_abs=0 ok=1. A=s2
+  pipe_host 11.644 / 11.675.
+  Spread ~0.27%. A=s2 timed
+  act=cur=2800 throttle=0.
+  A=s2 vs napkin 11.5 (wash)
+  vs s4 packed 16.6 (~0.70x
+  wall) vs packed s8 74 (~0.16x
+  wall) vs W8A8 96 (~0.12x
+  wall) vs square 11.5 (wash).
+
+VERDICT -> A=s2 packed qkv M=1
+  is 12-class us pipe_host both
+  cards at 2800. Wash vs square
+  11.5. Occupancy not N-linear.
+  Not a W8A8-contract beat. vs
+  s4 packed 16.6 and packed s8
+  74 is wall-time only.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s2_qkv_m1_s4000_card0.txt`,
+  `results/k7/esimd_s2_qkv_m1_s4000_card1.txt`.
+
+## ESIMD o-proj A=s2 M=1 is 14-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s2_sc`. A=s2
+  M=1 n=5120 k=6144. NT=2 U=16.
+  Both cards. spin=4000. IGC s2
+  [-2,1]. Prior: square 11.5,
+  napkin ~14, s4 o-proj 19,
+  W8A8 47.
+
+RESULT -> A=s2 cosine=1.0
+  max_abs=0 ok=1. A=s2
+  pipe_host 13.519 / 13.545.
+  Spread ~0.2%. A=s2 timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> A=s2 o-proj M=1 is
+  14-class us pipe_host both
+  cards at 2800. Near K-linear
+  vs square 11.5. Not a
+  W8A8-contract beat. vs W8A8
+  47 is wall-time only.
+  Numeric closed. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_s2_oproj_m1_s4000_card0.txt`,
+  `results/k7/esimd_s2_oproj_m1_s4000_card1.txt`.
+
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
 CONFIG -> backend `sycl+l0`,
@@ -5792,6 +6056,59 @@ Now local (K2): s4 DPAS exists. 1.49x s8 at 1024^3 / ~583 MHz;
   M=1 is 62 us card1 at 2800
   (2026-09-03jj), ~1.33x W8A8
   47. Stop this tile.
+  v-proj s8 M=1 is 53 us card1
+  at 2800 (2026-09-03jl),
+  ~1.16x W8A8 46. Stop this
+  tile.
+  q/k s8 n=2048 M=1 is 28-class
+  both cards at 2800
+  (2026-09-03jk/jn), beats
+  oneDNN q. Packed 74 still
+  beats sequential q+k+v ~109.
+  A=s4 packed qkv M=1 is
+  17-class both cards at 2800
+  (2026-09-03jp/jq), wash vs
+  square 16.5, occupancy not
+  N-linear. Not a W8A8-contract
+  beat. vs packed s8 74 is
+  wall-time only.
+  A=s4 packed qkv M=64 is
+  63-class both cards at 2800
+  (2026-09-03jr/js), near
+  N-linear vs square 33.6.
+  Not a W8A8-contract beat.
+  vs W8A8 140 is wall-time
+  only.
+  A=s4 packed qkv M=256 is
+  95-class both cards at 2800
+  (2026-09-03jt/ju), near
+  N-linear vs square 48.6.
+  Not a W8A8-contract beat.
+  vs W8A8 164 is wall-time
+  only. Qwen packed-qkv s4
+  map M=1/64/256 closed
+  (16.6 / 63 / 95).
+  A=s4 o-proj M=1 is
+  19-class both cards at 2800
+  (2026-09-03jv/jw), near
+  K-linear vs square 16.5.
+  Not a W8A8-contract beat.
+  vs W8A8 47 is wall-time
+  only.
+  A=s2 packed qkv M=1 is
+  12-class both cards at 2800
+  (2026-09-03jx/jy), wash vs
+  square 11.5, occupancy not
+  N-linear. Not a W8A8-contract
+  beat. vs packed s8 74 is
+  wall-time only.
+  A=s2 o-proj M=1 is 14-class
+  both cards at 2800
+  (2026-09-03jz/ka), near
+  K-linear vs square 11.5.
+  Not a W8A8-contract beat.
+  vs W8A8 47 is wall-time
+  only.
   s2 4x8
   M=256 N=17408 is 171 us both
   cards at 2800, throttle=1, beats

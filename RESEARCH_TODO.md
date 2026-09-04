@@ -716,14 +716,28 @@ Stop register-head FIR.
 o-proj s8 M=1 is 62 us card1
 (2026-09-03jj) at 2800, a loss
 vs W8A8 47. Stop this tile.
+q/k s8 n=2048 is 28-class both
+(2026-09-03jk/jn). v-proj s8
+is 53 us (jl), a loss vs 46.
+Packed 74 beats split q+k+v
+~109. Stop split vs packed.
+o-proj NT=4 is 103 (jm), a
+loss vs 62 and 47. Stop NT=4.
+packed qkv NT=4 is 106 (jo), a
+loss vs 74. Stop NT=4.
+A=s4 packed qkv map closed
+(16.6 / 63 / 95) at 2800 both.
+A=s4 o-proj is 19 both.
+A=s2 packed qkv M=1 is 12 both.
+A=s2 o-proj is 14 both.
+Not W8A8-contract beats.
 Seq 298 stays the T=256 mixer
-leftover. Decode leftover GEMM
-is packed qkv 74 (hand) plus
-o-proj 47 (oneDNN).
-Next: a prefill packed-qkv
-tile that can beat 140/164, or
-an o-proj tile that can beat
-47.
+leftover. W8A8 leftover GEMM
+is o-proj 47 and prefill
+packed 140/164. Decode s8
+packed 74 stands.
+Next: a new s8 prefill/o-proj
+kernel, or P2.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
@@ -734,19 +748,21 @@ serialize on gpu-run.
 Park fabric unless this list is
 empty. One question per fire. Split cards.
 
-1. packed qkv prefill tile that
-   can beat W8A8 140/164 (hand
-   s8 4x8 and 4-acc lost).
-2. o-proj tile that can beat
-   W8A8 47 (dpas_s8_sc lost at
-   62).
-3. split q/v proj vs packed 74.
-Park: conv-L2 per-t SLM (358 vs
-327), conv-L2r (531 vs 327),
-packed qkv s8 M=64 4x8 (214 vs
-140), packed qkv s8 M=256
-4-acc (274 vs 164), o-proj s8
-sc (62 vs 47), P2/P3, GRF256
+1. new s8 prefill packed-qkv
+   kernel vs W8A8 140/164
+   (existing 4x8 and 4-acc
+   lost).
+2. new s8 o-proj kernel vs
+   W8A8 47 (sc 62 and NT=4 103
+   lost).
+Park: split q/v vs packed 74
+(q+k+v ~109), NT=4 s8, conv-L2
+per-t SLM (358 vs 327),
+conv-L2r (531 vs 327), packed
+qkv s8 M=64 4x8 (214 vs 140),
+packed qkv s8 M=256 4-acc
+(274 vs 164), o-proj s8 sc
+(62 vs 47), P2/P3, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),
 skip-hi T=256 (330 vs slmht 260),
