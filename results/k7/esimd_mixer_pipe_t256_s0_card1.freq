@@ -1,0 +1,8 @@
+freq_sample t=1788500829.004325268 power=D3hot act=400 cur=400 throttle=0
+freq_sample t=1788500829.144279203 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788500829.225730618 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788500829.317868878 power=D0 act=400 cur=400 throttle=0
+freq_sample t=1788500829.408590988 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788500829.492769432 power=D0 act=0 cur=400 throttle=0
+freq_sample t=1788500829.582018674 power=D0 act=550 cur=550 throttle=0
+freq_sample t=1788500829.670085802 power=D0 act=2800 cur=2800 throttle=0

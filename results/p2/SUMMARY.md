@@ -121,3 +121,35 @@ Passing bulk P2P-off path (chunked).
 STOP one-shot XCCL all_gather >= 2.5 MiB.
 P4 may unblock on the chunked path.
 Do not enable P2P.
+
+# P2 XCCL sendrecv 2.5 MiB 2026-09-04aa
+
+Backend pytorch-xpu on sycl+l0. fabric xccl. p2p=0.
+timeout=45s. gpu-run both cards. No serve.
+Ping-pong sendrecv only. Rank us.
+
+Pre-health: card0 HEALTHY (16s), card1 HEALTHY (13s),
+COLLECTIVE_HEALTH_OK 4x5120 p2p=0 (30s).
+
+| name | op | us | GBs | ok |
+|---|---|---:|---:|---:|
+| prefill_256h 2.5MiB | sendrecv | 2640.586 | 0.993 | 1 |
+
+ok_all=1. rank0 ok=1, rank1 ok=1.
+TIMEOUT_OR_EXIT rc=0. gpu-run 19s.
+Timeout not hit. CCL_TOPO_P2P_ACCESS 0.
+Topology: PCIe. throttle=0. act briefly
+2800, cur mixed 2150-2800, not held.
+Do not freeze 2641 as 2800.
+vs 64h sendrecv 890-948 us.
+vs AR 256h 2081 us.
+vs chunked AG 2162 us.
+vs one-shot AG hang (04t rc=124 at 45s).
+
+Post-health: card0 HEALTHY (15s), card1 HEALTHY (15s),
+COLLECTIVE_HEALTH_OK 4x5120 p2p=0 (27s).
+Not WEDGED.
+
+Passing bulk P2P-off sendrecv path.
+STOP one-shot XCCL all_gather >= 2.5 MiB.
+Do not enable P2P.

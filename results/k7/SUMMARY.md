@@ -2137,3 +2137,45 @@ freeze (not 2800). Not a
 W8A8-contract beat. STOP
 prefetch on 4-acc M=256. Do
 not sibling. Rank pipe_host.
+
+## ESIMD mixer T-chunk two-queue pipe T=256 card1 (2026-09-04ac)
+
+backend sycl+l0, standalone
+gdn_mixer_pipe. T=256 C=10240
+nv=48 blk=16 nchunk=4 tchunk=64
+spin=0. cosine=0.984986
+max_abs=0.0038319
+cosine_o=0.957795
+max_abs_o=0.13934 ok=0.
+pipe_host 463.529 event
+398.872. timed act=cur=2800
+throttle=0. vs seq 298 a loss
+(~1.56x); vs mixer-slmht 471
+(~0.98x us, not a steal:
+ok=0). One-card. Numeric not
+closed. STOP this pipe. Do
+not sibling. Rank pipe_host.
+
+## ESIMD s8 4-acc split-K=2 + lsc_prefetch packed qkv M=256 leftover steal card0 (2026-09-04ab)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4skff.
+prefetch=lsc_prefetch_2d.
+NT=2 m=256 n=10240 k=5120
+splitK=2 wg=4x8 4acc k128
+unroll=5 spin=512. cosine=1
+max_abs=0 ok=1. pipe_host
+291.934 (gemm+reduce). event
+47.120 reduce-only. spin_done
+act=2583 cur=2800 throttle=1.
+timed act=2583 cur=2800
+throttle=1. vs W8A8 164 a
+loss (~1.78x); vs prefetch
+267.199 a loss (~1.09x); vs
+SK=2 295 295-class not a
+steal (~0.99x); vs 4-acc 274
+a loss (~1.07x). One-card.
+Do not freeze (not 2800).
+Not a W8A8-contract beat.
+STOP SK=2+prefetch at M=256.
+Do not sibling. Rank pipe_host.

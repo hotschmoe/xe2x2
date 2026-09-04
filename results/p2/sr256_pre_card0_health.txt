@@ -1,0 +1,5 @@
+gpu-run: [xe2x2-p2-sr256] acquired card(s) 0 -> xpu-health --card 0 --img vllm-xpu-env:int8g-v0251 --timeout 180
+=== probe card 0 (img=vllm-xpu-env:int8g-v0251 timeout=180s) ===
+  card 0: OK
+xpu-health: HEALTHY (cards 0)
+gpu-run: [xe2x2-p2-sr256] done in 16s (exit 0)

@@ -6567,3 +6567,96 @@ VERDICT -> First xe2x2 mixed 2x2 synthetic.
 
 Evidence: `results/p4/2x2_decode.txt`,
   `results/p4/SUMMARY.md`.
+
+## P2 XCCL 2.5 MiB sendrecv is 2641 us P2P-off
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  xccl, p2p=0 timeout=45s. gpu-run both cards.
+  torch 2.13.0+xpu. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  Payload prefill_256h 256*5120 bf16 = 2.5 MiB
+  ping-pong sendrecv. Pre/post xpu-health and
+  xpu-collective-health p2p=0.
+
+RESULT -> ok_all=1. rank0 ok=1, rank1 ok=1.
+  us=2640.586. TIMEOUT_OR_EXIT rc=0.
+  gpu-run 19s. Timeout not hit. vs 64h
+  sendrecv 890-948 us. vs AR 256h 2081 us.
+  vs chunked AG 2162 us. vs one-shot AG
+  hang (04t rc=124 at 45s). throttle=0.
+  act briefly 2800, cur mixed 2150-2800,
+  not held. Pre and post per-card HEALTHY
+  and COLLECTIVE_HEALTH_OK 4x5120 p2p=0.
+  Not WEDGED. P2P stayed 0. Topology: PCIe.
+
+VERDICT -> Passing bulk P2P-off sendrecv
+  path. 2640.586 us, ok_all=1. Identity
+  closed. Teardown health recovered. Do
+  not freeze 2641 as 2800. One-shot XCCL
+  all_gather >=2.5 MiB still hangs; STOP
+  that path. Do not enable P2P. Rank us.
+
+Evidence: `results/p2/xccl_sr256.txt`,
+  `results/p2/SUMMARY.md`.
+
+## ESIMD mixer T-chunk two-queue pipe T=256 loses (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_pipe`.
+  Two-queue T-chunk conv+slmht
+  pipeline, not a fuse. T=256
+  C=10240 nv=48 blk=16 nchunk=4
+  tchunk=64. Card1. spin=0.
+  Prior: seq conv+slmht ~298,
+  mixer-slmht 471, L2-once 327,
+  conv-L2 358, conv-L2r 531,
+  slmhtc 570 STOP.
+
+RESULT -> cosine=0.984986
+  max_abs=0.0038319
+  cosine_o=0.957795
+  max_abs_o=0.13934 ok=0.
+  pipe_host 463.529 event
+  398.872. timed act=cur=2800
+  throttle=0 both ends.
+
+VERDICT -> Numeric not closed
+  (s 0.985 o 0.958, need
+  >0.99). 464 us would still
+  lose to seq 298 (~1.56x).
+  STOP this pipe. Do not
+  sibling. Seq 298 stays the
+  T=256 leftover. Rank
+  pipe_host.
+
+Evidence: `results/k7/esimd_mixer_pipe_t256_s0_card1.txt`,
+  `results/k7/esimd_mixer_pipe_t256_s0_card1.freq`.
+
+## ESIMD packed qkv s8 SK=2 + prefetch M=256 loses to W8A8 164 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc8w48m4skff`.
+  splitK=2 prefetch=`lsc_prefetch_2d`.
+  M=256 n=10240 k=5120. NT=2
+  wg=4x8 4acc k128 unroll=5.
+  Card0. spin=512. Prior: W8A8
+  164, 4-acc 274, prefetch 267
+  STOP, SK=2 295.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 291.934 event
+  47.120 (reduce-only).
+  spin_done act=2583 cur=2800
+  throttle=1. timed act=2583
+  cur=2800 throttle=1.
+
+VERDICT -> 292 us, ~1.78x W8A8
+  164. 295-class vs SK=2 295,
+  worse than prefetch 267.
+  Not a steal. STOP SK=2+prefetch
+  on 4-acc M=256. Do not sibling.
+  Do not freeze (not 2800).
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_s8_qkv_skff_m256_s512_card0.txt`,
+  `results/k7/esimd_s8_qkv_skff_m256_s512_card0.freq`.

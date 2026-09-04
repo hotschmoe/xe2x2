@@ -13629,3 +13629,191 @@ VERDICT -> ESIMD packed qkv s8
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04aa - P2 XCCL sendrecv 2.5 MiB
+
+CONTEXT -> Parked charter P2 leftover
+  after one-shot 2.5 MiB XCCL
+  all_gather hang (2026-09-04i/t)
+  and AR 256h 2081 us (04i).
+  sendrecv ping-pong only.
+  P2P off. Timeout 45s.
+  Pause one-card.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0, fabric xccl, p2p=0
+  timeout=45s. Image
+  b70-sglang-xpu-int8-runtime:20260826-mtp6.
+  gpu-run both cards. torch
+  2.13.0+xpu. Outer timeout 45s
+  TERM then kill-after 8s.
+  No CCL_TOPO_P2P_ACCESS=1.
+  Payload prefill_256h 256*5120
+  bf16 = 2621440 bytes.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 xpu-health --card 0 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run --card 1 xpu-health --card 1 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run xpu-collective-health --p2p 0 --timeout 240
+  gpu-run bash parallel/tp2/run_sr256.sh
+  # post same three
+  ```
+
+RESULT -> Pre: card0 HEALTHY
+  (16s), card1 HEALTHY (13s),
+  COLLECTIVE_HEALTH_OK 4x5120
+  p2p=0 (30s). Identity:
+  rank=0 ok=1, rank=1 ok=1.
+  RESULT op=sendrecv
+  name=prefill_256h numel=1310720
+  bytes=2621440 us=2640.586
+  ok=1. VERDICT_LINE ok_all=1
+  path=sendrecv_256h p2p=0.
+  TIMEOUT_OR_EXIT rc=0.
+  gpu-run 19s. Timeout not hit.
+  CCL_TOPO_P2P_ACCESS 0.
+  Topology: PCIe between
+  devices. throttle=0. act
+  briefly 2800, cur mixed
+  2150-2800, not held. Do not
+  freeze 2641 as 2800. vs 64h
+  sendrecv 890-948 us. vs AR
+  256h 2081 us. vs chunked AG
+  2162 us. vs one-shot AG hang
+  (04t rc=124 at 45s). Post:
+  card0 HEALTHY (15s), card1
+  HEALTHY (15s),
+  COLLECTIVE_HEALTH_OK (27s).
+  Not WEDGED.
+
+VERDICT -> XCCL P2P-off sendrecv
+  at 2.5 MiB is 2640.586 us,
+  ok_all=1. Identity closed.
+  Teardown health recovered.
+  One-shot AG >=2.5 MiB still
+  hangs; STOP that path.
+  Do not enable P2P. Rank us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ac - K7 ESIMD mixer T-chunk two-queue pipe T=256 card1
+
+CONTEXT -> NEW leftover steal:
+  T-chunk two-queue conv+slmht
+  pipeline. NOT a fuse. Priors:
+  seq conv~38 + slmht~260 ~298.
+  mixer-slmht 471. L2-once 327.
+  conv-L2 358. conv-L2r 531.
+  slmhtc 570 STOP. Combined
+  two-kernel mixer-slmht was
+  471. Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_pipe.
+  gpu-run --card 1. T=256
+  C=10240 nv=48 blk=16 nchunk=4
+  tchunk=64. spin=0. Rank
+  pipe_host vs seq 298.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_mixer_pipe_t256.sh 1 0
+  ```
+
+RESULT -> cosine=0.984986
+  max_abs=0.0038319
+  cosine_o=0.957795
+  max_abs_o=0.13934 ok=0.
+  event 398.872 pipe_host
+  463.529. median 460.969
+  min 455.999 max 567.182.
+  timed_begin act=2800 cur=2800
+  throttle=0. timed_end act=2800
+  cur=2800 throttle=0. vs seq
+  298 (~1.56x, a loss) vs
+  mixer-slmht 471 (~0.98x us,
+  not a steal: ok=0). gpu-run
+  1s exit 1.
+
+VERDICT -> ESIMD mixer T-chunk
+  two-queue pipe T=256 is
+  463.529 us pipe_host card1,
+  numeric not closed (s 0.985
+  o 0.958, both <0.99). Loss
+  vs seq conv+slmht 298 even
+  on us. STOP this pipe. Do
+  not sibling. Sequential
+  conv+slmht ~298 stays the
+  T=256 leftover. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ab - K7 ESIMD s8 4-acc split-K=2 + lsc_prefetch packed qkv M=256 card0
+
+CONTEXT -> NEW leftover steal:
+  ESIMD s8 4-acc split-K=2 +
+  lsc_prefetch_2d packed qkv
+  M=256 n=10240 k=5120. Priors:
+  W8A8 packed M=256 is 164 us.
+  4-acc 274, prefetch-only
+  267.199 STOP, SK=2 295, SK=5
+  393, 2-acc 327, persist 344,
+  wg 8x4 279. M=64 SK=2 115
+  stands vs W8A8 140. This arm
+  is SK=2 occupancy PLUS
+  prefetch. Not a stopped tile.
+  Rank pipe_host (event is
+  reduce-only on SK kernels).
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w48m4skff.
+  prefetch=lsc_prefetch_2d.
+  gpu-run --card 0. NT=2 m=256
+  n=10240 k=5120. splitK=2
+  wg=4x8 4acc k128 unroll=5.
+  spin=512. Fill s8 [-64,64]
+  scales 0.02 out f16. Rank
+  pipe_host of gemm+reduce.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_qkv_skff_m256.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 47.120
+  (reduce-only). pipe_host
+  291.934. wait_host 307.370.
+  spin_done act=2583 cur=2800
+  throttle=1. timed act=2583
+  cur=2800 throttle=1. vs W8A8
+  164 (~1.78x, a loss) vs
+  prefetch 267.199 (~1.09x, a
+  loss) vs SK=2 295 (~0.99x,
+  295-class, not a steal) vs
+  4-acc 274 (~1.07x, a loss).
+  gpu-run 119s.
+
+VERDICT -> ESIMD packed qkv s8
+  4-acc split-K=2 +
+  lsc_prefetch_2d M=256 is
+  291.934 us pipe_host card0
+  at act=2583 cur=2800
+  throttle=1, a loss vs oneDNN
+  W8A8 164. Not a W8A8-contract
+  beat. 295-class vs SK=2 295,
+  worse than prefetch-only 267.
+  Combining two stopped tiles
+  is not a steal. Numeric
+  closed. One-card. Do not
+  freeze (not 2800). STOP
+  SK=2+prefetch at M=256. Do
+  not sibling. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

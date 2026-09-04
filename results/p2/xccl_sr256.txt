@@ -1,0 +1,14 @@
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 timeout=45s
+P2 leftover: sendrecv 2.5MiB. AG hangs. AR 256h worked.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 op=sendrecv name=prefill_256h bytes 2621440
+2026:09:04-05:41:25:   42 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-05:41:25:   42 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-05:41:25:   42 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-05:41:25:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:41:25:   43 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:41:25:   42:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+OK op=sendrecv rank=1 ok=1
+OK op=sendrecv rank=0 ok=1
+RESULT op=sendrecv name=prefill_256h numel=1310720 bytes=2621440 us=2640.586 ok=1
+VERDICT_LINE ok_all=1 path=sendrecv_256h p2p=0
+TIMEOUT_OR_EXIT rc=0

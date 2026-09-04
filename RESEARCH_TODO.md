@@ -738,6 +738,8 @@ CLOSED: NT=1 split-K=2 is
 W8A8 47. Packed qkv M=256
 W8A8 164 still open (2-acc
 327, SK=5 393, SK=2 295,
+SK=2+prefetch 292 STOP,
+prefetch 267 closest STOP,
 4-acc 274 all lost). Packed
 M=64 split-K 115 stands vs
 140. Decode packed s8 74
@@ -759,24 +761,27 @@ One question per fire. Split cards.
 P2 bulk hang is a new leftover.
 
 1. new s8 packed-qkv M=256
-   kernel vs W8A8 164 (4-acc
-   274, prefetch 267 closest
-   STOP, 2-acc 327, SK=2 295,
-   SK=5 393 all lost). M=64
-   SK=2 115 stands vs 140.
-   Next: SK=2 + prefetch, not
-   a stopped tile.
-2. P2 sendrecv 2.5 MiB still
-   unfired. One-shot AG hangs
-   at 45s. Chunked 4x64h AG
-   2162 us is the working bulk
-   path. Host-staged AR 439.
+   kernel vs W8A8 164 (prefetch
+   267 closest STOP, SK=2+ff
+   292 STOP, 4-acc 274, 2-acc
+   327, SK=2 295, SK=5 393 all
+   lost). M=64 SK=2 115 stands
+   vs 140. No new mapping on
+   the shelf. Do not rerun
+   stopped tiles.
+2. P2 sendrecv 2.5 MiB is
+   2641 us ok=1 (04aa). One-shot
+   AG still hangs at 45s.
+   Chunked 4x64h AG 2162 us is
+   the working bulk path.
+   Host-staged AR 439. P4
+   decode 690 stands.
 3. mixer T=256 seq ~298. STOP
-   slmhtc 570, mixer-slmht 471,
+   slmhtc 570, mixer-pipe 464
+   ok=0, mixer-slmht 471,
    L2-once 327, conv-L2 358,
-   conv-L2r 531. Next: T-chunk
-   two-queue pipeline, not a
-   fuse.
+   conv-L2r 531. No new
+   mapping on the shelf.
 Park o-proj: NT=1 SK=2 44
 beats W8A8 47. STOP sc 62,
 NT=4 103, NT=1 55, wg 4x2 74,
@@ -790,9 +795,11 @@ qkv s8 M=64 4x8 (214 vs 140)
 and wg 8x4 (154 vs 140), packed
 qkv s8 M=256 4-acc (274 vs 164)
 and prefetch (267 vs 164) and
+SK=2+prefetch (292 vs 164) and
 wg 8x4 (279 throttle=1 vs
 164) and persist B-pipe (344)
-and mixer-slmhtc (570 vs 298),
+and mixer-slmhtc (570 vs 298)
+and mixer-pipe (464 ok=0 vs 298),
 o-proj s8 sc (62 vs 47), o-proj
 B-pipe (67 vs 62), o-proj NT=1
 wg 4x2 (74 vs 55), P2 256h
