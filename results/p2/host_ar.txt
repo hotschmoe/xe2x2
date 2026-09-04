@@ -1,0 +1,37 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=1133 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6715188115844 energy2=pkg:3700095931091 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6654288238098 energy2=pkg:3820713586303 temp2_mC=51000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=1333 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6715197324157 energy2=pkg:3700101193908 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6654298076049 energy2=pkg:3820719323608 temp2_mC=51000
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=host_staged_ar p2p=0 img=b70-sglang-xpu-int8-runtime:20260826-mtp6
+P2 host-staged all_reduce. No XCCL all_gather. Timeout 180s.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=host_staged_ar p2p=0 world=2 torch 2.13.0+xpu
+2026:09:04-02:20:29:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-02:20:29:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-02:20:29:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-02:20:29:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-02:20:29:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-02:20:29:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+RESULT op=host_ar name=decode_h numel=5120 bytes=10240 us=438.944 GBs=0.023 ok=1
+RESULT op=host_ar name=health_4h numel=20480 bytes=40960 us=470.356 GBs=0.087 ok=1
+RESULT op=host_ar name=prefill_64h numel=327680 bytes=655360 us=2765.903 GBs=0.237 ok=1
+RESULT op=host_ar name=prefill_256h numel=1310720 bytes=2621440 us=9493.851 GBs=0.276 ok=1
+RESULT op=host_ar name=1MiB numel=524288 bytes=1048576 us=3983.281 GBs=0.263 ok=1
+VERDICT_LINE ok_all=1 path=host_staged_ar p2p=off
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6716031201049 energy2=pkg:3700581799987 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6655120461853 energy2=pkg:3821202257202 temp2_mC=52000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6716040176635 energy2=pkg:3700586838439 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6655129405334 energy2=pkg:3821207583862 temp2_mC=52000

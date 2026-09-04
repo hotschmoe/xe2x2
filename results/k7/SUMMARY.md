@@ -1920,3 +1920,74 @@ a loss. Both-card 74-class at
 2800. STOP this wg 4x2. Do not
 promote. Not a W8A8-contract
 beat. Rank pipe_host.
+
+## ESIMD o-proj s8 NT=1 B-pipeline leftover steal M=1 card0 (2026-09-04k)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1bp. NT=1
+B-pipeline m=1 n=5120 k=6144
+spin=4000. cosine=1 max_abs=0
+ok=1. pipe_host 60.244 event
+59.672. timed act=cur=2800
+throttle=0. vs NT=1 55 a loss;
+vs W8A8 47 a loss. Faster than
+NT=2 B-pipeline 67 and slight
+vs sc 62. One-card. STOP NT=1
+B-pipeline on o-proj. Do not
+sibling. Not a W8A8-contract
+beat. Rank pipe_host.
+
+## ESIMD s8 4-acc split-K=2 packed qkv M=64 leftover steal card1 (2026-09-04l)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4sk. NT=2 m=64
+n=10240 k=5120 splitK=2 wg=4x8
+4acc k128 unroll=5 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 115.081 (gemm+reduce).
+event 7.766 reduce-only.
+timed act=2783 cur=2800
+throttle=1. vs W8A8 138-142 a
+win; vs 4x8 A-db 214 a win; vs
+wg 8x4 154 a win; vs square
+4-acc 75 ~1.53x. One-card.
+Do not freeze (not 2800).
+W8A8-contract beat of 140 on
+this card. Still fire M=256.
+Sibling before FINDINGS.
+Rank pipe_host.
+
+## ESIMD s8 4-acc split-K=2 packed qkv M=64 sibling card0 (2026-09-04m)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4sk. NT=2 m=64
+n=10240 k=5120 splitK=2 wg=4x8
+4acc k128 unroll=5 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 117.264 vs card1
+115.081. Spread ~1.90%.
+event 6.531 reduce-only.
+timed act=2783 cur=2800
+throttle=1. vs W8A8 138-142 a
+win both cards. 115-class.
+Do not freeze (not 2800).
+Not a decode leftover.
+Rank pipe_host.
+
+## ESIMD s8 4-acc split-K=2 packed qkv M=256 leftover steal card1 (2026-09-04n)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4sk. NT=2 m=256
+n=10240 k=5120 splitK=2 wg=4x8
+4acc k128 unroll=5 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 294.564 (gemm+reduce).
+event 48.417 reduce-only.
+timed act=2650/2633 cur=2800
+throttle=1. vs W8A8 164 a
+loss (~1.80x); vs 4-acc 4x8
+274 a loss (~1.07x). One-card.
+Do not freeze (not 2800).
+Not a W8A8-contract beat.
+STOP split-K at M=256. Do not
+sibling. Rank pipe_host.

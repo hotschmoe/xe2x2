@@ -50,3 +50,28 @@ COLLECTIVE_HEALTH_OK 4x5120 p2p=0.
 STOP XCCL all_gather >= 2.5 MiB P2P-off until a
 new arm with a timeout. Not a full P2 exit.
 P4 stays blocked. Do not enable P2P.
+
+# P2 host-staged AR P2P-off 2026-09-04o
+
+Backend pytorch-xpu on sycl+l0. fabric host_staged_ar.
+p2p=0. gpu-run both cards. XCCL barrier only.
+Payload add host shm. Outer timeout 180s. Rank us.
+No clock spin. Do not freeze 439 as 2800.
+
+Pre-health: card0 HEALTHY, card1 HEALTHY.
+
+| name | bytes | us | GBs | ok |
+|---|---:|---:|---:|---:|
+| decode_h 10KiB | 10240 | 438.944 | 0.023 | 1 |
+| health_4h 40KiB | 40960 | 470.356 | 0.087 | 1 |
+| prefill_64h 640KiB | 655360 | 2765.903 | 0.237 | 1 |
+| prefill_256h 2.5MiB | 2621440 | 9493.851 | 0.276 | 1 |
+| 1MiB | 1048576 | 3983.281 | 0.263 | 1 |
+
+ok_all=1. Decode 439 us vs XCCL AR 99-137
+(~3.2-4.4x slower). 256h finished vs XCCL
+all_gather hang. Post-health: card0 HEALTHY,
+card1 HEALTHY.
+
+Not a full P2 exit. P4 stays blocked on
+XCCL 2.5 MiB all_gather hang. Do not enable P2P.

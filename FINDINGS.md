@@ -4054,6 +4054,36 @@ VERDICT -> 214 us at 2800,
 
 Evidence: `results/k7/esimd_s8_qkv_m64_s512_card1.txt`.
 
+## ESIMD packed qkv s8 split-K=2 M=64 is 115-class (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc8w48m4sk`.
+  M=64 n=10240 k=5120. NT=2
+  splitK=2 wg=4x8 4acc k128.
+  Both cards. spin=512. Prior:
+  W8A8 138-142, 4x8 A-db 214,
+  wg 8x4 154, square 4-acc 75.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 117.264 /
+  115.081. Spread ~1.90%.
+  event is reduce-only (~6.5 /
+  7.8 us); rank pipe_host.
+  timed act=2783 cur=2800
+  throttle=1 both.
+
+VERDICT -> Split-K packed qkv
+  M=64 is 115-class us
+  pipe_host both cards, a beat
+  of oneDNN W8A8 140. Clocks
+  named: act=2783 cur=2800
+  throttle=1. Do not freeze as
+  2800. Not a decode leftover.
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_s8_qkv_sk_m64_s512_card0.txt`,
+  `results/k7/esimd_s8_qkv_sk_m64_s512_card1.txt`.
+
 ## ESIMD packed qkv s8 M=256 4-acc loses to W8A8 (K7)
 
 CONFIG -> backend `sycl+l0`,
@@ -6352,9 +6382,31 @@ VERDICT -> First xe2x2 PP=2 synthetic. Decode
 Evidence: `results/p3/handoff_host.txt`,
   `results/p3/SUMMARY.md`.
 
+## P2 host-staged AR is correct through 2.5 MiB; decode loses to XCCL
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  host_staged_ar, p2p=0. gpu-run both cards. torch 2.13.0+xpu.
+  Image `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  XCCL barrier only; payload add is host shm.
+  Pre/post xpu-health. Outer timeout 180s.
+
+RESULT -> ok_all=1. decode_h 438.944 us vs XCCL AR
+  99-137. prefill_256h 9493.851 us finished (2.5 MiB).
+  Pre and post per-card HEALTHY. No hang.
+
+VERDICT -> Identity closed. Decode host-staged AR
+  loses ~3-4x to XCCL. Bulk AR does not hang.
+  Does not unblock P4 (XCCL 2.5 MiB all_gather still
+  hung). Do not enable P2P. Rank us.
+
+Evidence: `results/p2/host_ar.txt`,
+  `results/p2/SUMMARY.md`.
+
 ## Mixed 2x2
 
-Blocked until P2 has a passing bulk collective
+Blocked until P2 has a passing bulk XCCL collective
 (no hang) plus teardown health, on this host
 with the current UMD. P3 host-staged identity
-is not enough.
+and P2 host-staged AR through 2.5 MiB are not
+enough. XCCL 2.5 MiB all_gather still hung.
+Do not enable P2P.

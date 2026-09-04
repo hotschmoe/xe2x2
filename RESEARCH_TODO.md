@@ -734,13 +734,17 @@ Not W8A8-contract beats.
 Seq 298 stays the T=256 mixer
 leftover. W8A8 leftover GEMM
 is o-proj 47 (NT=1 55 both,
-still a loss) and prefill
-packed 140/164. Decode s8
-packed 74 stands. P2 decode
-XCCL P2P-off AR 99-137 us;
-STOP 2.5 MiB all_gather hang.
-P3 host-staged T=1 77 us,
-identity ok, bubble ~71%.
+still a loss) and packed
+qkv M=256 164. Packed M=64
+split-K is 115-class both
+(beats W8A8 140) at act=2783
+throttle=1; do not freeze as
+2800. Decode s8 packed 74
+stands. P2 decode XCCL AR
+99-137 us; STOP 2.5 MiB
+all_gather hang. Host-staged
+AR decode 439 us, 256h 9494
+us ok=1 no hang. P3 T=1 77 us.
 P4 blocked.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
@@ -752,18 +756,23 @@ serialize on gpu-run.
 One question per fire. Split cards.
 P2 bulk hang is a new leftover.
 
-1. new s8 prefill packed-qkv
-   kernel vs W8A8 140/164
-   (4x8, 4-acc, wg 8x4, persist
-   B-pipeline all lost).
+1. new s8 packed-qkv M=256
+   kernel vs W8A8 164 (4x8,
+   4-acc 274, wg 8x4 279,
+   persist 344, split-K 295
+   all lost). M=64 split-K
+   115 stands vs 140.
 2. new s8 o-proj kernel vs
    W8A8 47 (sc 62, NT=4 103,
    NT=1 55, wg 4x2 74, B-pipe
-   67 all lost; NT=1 is the
-   hand floor).
+   67, NT=1 B-pipe 60 all
+   lost; NT=1 55 is the hand
+   floor).
 3. P2 XCCL all_gather >=2.5 MiB
-   P2P-off with a timeout, or
-   host-staged AR at that size.
+   P2P-off with a timeout.
+   Host-staged AR works (439 /
+   9494) but loses to XCCL
+   decode 99-137.
 Park: split q/v vs packed 74
 (q+k+v ~109), NT=4 s8, conv-L2
 per-t SLM (358 vs 327),
