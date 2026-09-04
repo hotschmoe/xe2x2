@@ -6878,12 +6878,12 @@ RESULT -> REFUSED. stderr
 VERDICT -> Stock merge LUT
   cannot run hidden 2688.
   pipe_host REFUSED. STOP
-  rewrite until a u14 (or
-  k-loop) exists for
-  nibble_lut. 158 us remains
-  the 5120 number. Do not
-  quote a Lightning LUT us.
-  Rank pipe_host.
+  rewrite of U=16. 158 us
+  remains the 5120 number.
+  Do not quote a Lightning
+  LUT us from this refuse.
+  U=14 closed 83.659 us
+  (04an). Rank pipe_host.
 
 Evidence: `results/k8/nibble_lut_moe_up_m1_s4000_card0.txt`,
   `results/k8/nibble_lut_moe_up_m1_s4000_card0.freq`,
@@ -6959,4 +6959,100 @@ VERDICT -> Packed qkv s8 M=1 is
 
 Evidence: `results/k8/esimd_s8_qkv_m1_s4000_card0.txt`,
   `results/k8/esimd_s8_qkv_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning routed expert UP-proj E2M1 two-term s4 is 15.5 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `compose_e2m1_sc_u14`
+  AOT `intel_gpu_bmg_g31`. Same
+  RC=4 8x2-N two-term family as
+  5120 28.5, U=14 so inner_k=896
+  divides hidden 2688. A=s4.
+  B=E2M1 split `w_lo+8*w_hi`.
+  Never bitcast. M=1 n=1856
+  k=2688. NT=2. Card1.
+  spin=4000. Prior: two-term
+  5120 28.5, s8 expert 16.060,
+  W8A8 44.285.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 15.518 event
+  15.245. timed act=cur=2800
+  throttle=0. vs s8 16.060
+  (~0.97x) vs W8A8 44.285
+  (~0.35x) vs 5120 28.5
+  (~0.54x) vs K-linear ~15.0
+  (~1.04x).
+
+VERDICT -> Routed expert UP-proj
+  E2M1 two-term s4 is 15.5-class
+  us pipe_host card1 at 2800,
+  launch class vs s8 16, a beat
+  of W8A8 44. Gap vs s8 shrinks
+  vs 5120 (0.84x -> 0.97x) on
+  the 16-class launch floor.
+  A=s4, not s8-A. Numeric
+  closed. One-card enough
+  (matched two-term RC=4
+  family, clocks held). Rank
+  pipe_host.
+
+Evidence: `results/k8/e2m1_twoterm_moe_up_u14_s4000_card1.txt`,
+  `results/k8/e2m1_twoterm_moe_up_u14_s4000_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning nibble LUT U=14 expert-up is 83 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `nibble_lut_sc_u14`
+  AOT `intel_gpu_bmg_g31`.
+  NT=2 U=14 inner_k=896
+  (three blocks). Lightning
+  routed-up M=1 n=1856
+  k=2688. Packed E2M1 B.
+  simd nibble LUT, VNNI4,
+  RC=4 8x2-N s8 scale-to-f16.
+  Never bitcast s4. Card0.
+  spin=4000. One-card U=14
+  unroll steal on the K6 LUT
+  family (5120 already
+  both-card). Stock U=16
+  REFUSED 04ak. Priors: s8
+  16.060, W8A8 44.285, LUT
+  5120 is 158. Napkin
+  K-linear 158*(2688/5120)~83
+  (CONFIG).
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  83.130 pipe_host 83.659
+  wait_host 97.376. TOPS
+  0.1200. packedB 30.007
+  GB/s. timed act=cur=2800
+  throttle=0 both ends.
+  spin_done act=cur=2800
+  throttle=0. freq 50 ms
+  throttle=0 all 12 samples.
+  vs s8 16.060 (~5.21x) vs
+  W8A8 44.285 (~1.89x) vs
+  LUT 5120 158 (~0.529x) vs
+  napkin K-linear ~83.
+
+VERDICT -> Lightning merge LUT
+  U=14 expert-up is 83.659 us
+  pipe_host card0 at 2800.
+  Numeric closed. Clocks
+  held. Loses to s8 and
+  W8A8. K-linear vs 5120
+  158, not launch-class.
+  LUT tax (30 GB/s). Packed
+  E2M1, never bitcast s4.
+  One-card enough (LUT
+  family already both-card
+  at 5120; U=14 k-block).
+  Rank pipe_host.
+
+Evidence: `results/k8/nibble_lut_moe_up_u14_s4000_card0.txt`,
+  `results/k8/nibble_lut_moe_up_u14_s4000_card0.freq`,
   `results/k8/SUMMARY.md`.

@@ -336,3 +336,86 @@ open.
 
 Evidence: `results/k8/esimd_s8_qkv_m1_s4000_card0.txt`,
 `results/k8/esimd_s8_qkv_m1_s4000_card0.freq`.
+
+## E2M1 two-term s4 U=14 routed expert UP-proj M=1 card1 (2026-09-04ao)
+
+backend sycl+l0, standalone AOT
+compose_e2m1_sc_u14. NT=2 U=14
+m=1 n=1856 k=2688 spin=4000.
+A=s4. B=E2M1 split two s4
+planes, acc=acc_lo+8*acc_hi.
+RC=4 wg=8x2_alongN
+dpas_lo_hi=56. Never bitcast.
+Rank pipe_host.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 2s.
+
+| card | event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 15.245 | 15.518 | 0.6545 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 9 samples.
+GPU-window act=0,0,0,400,750,
+2800,2800,0. start D3hot
+act=0 cur=2800 throttle=0. end
+D0 act=0 cur=2800 throttle=0.
+vs s8 16.060 (~0.97x, same
+class); vs W8A8 44.285 (~0.35x,
+a beat); vs 5120 two-term 28.5
+(~0.54x); vs N-linear
+28.5*(1856/5120)~10.3 (~1.50x);
+vs K-linear 28.5*(2688/5120)~15.0
+(~1.04x). Launch class vs s8,
+tracks K-linear not N-linear.
+Numeric closed. Clocks held.
+One-card enough (matched
+two-term RC=4 family both-card
+at 5120). Never bitcast.
+
+Evidence: `results/k8/e2m1_twoterm_moe_up_u14_s4000_card1.txt`,
+`results/k8/e2m1_twoterm_moe_up_u14_s4000_card1.freq`.
+
+## NVFP4 nibble LUT U=14 routed expert UP-proj M=1 card0 (2026-09-04an)
+
+backend sycl+l0, standalone AOT
+nibble_lut_sc_u14. NT=2 U=14
+inner_k=896 m=1 n=1856
+k=2688 spin=4000. Packed
+E2M1 B, simd nibble LUT,
+VNNI4, RC=4 8x2-N
+scale-to-f16. Never bitcast
+s4. Stock U=16 REFUSED 04ak.
+Rank pipe_host. One-card
+U=14 steal on LUT family.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 2s.
+
+| card | event_us | pipe_host_us | TOPS | GBs_packedB | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 83.130 | 83.659 | 0.1200 | 30.007 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 12 samples.
+GPU-window act=0,0,0,0,0 then
+4x 2800 then 3x 0. start D0
+act=0 cur=2800 throttle=0. end
+D0 act=0 cur=2800 throttle=0.
+vs s8 16.060 (~5.21x); vs
+W8A8 44.285 (~1.89x); vs LUT
+5120 158 (~0.529x); vs napkin
+K-linear 158*(2688/5120)~83
+(~1.01x). K-linear, not
+launch-class. LUT tax (30
+GB/s). Numeric closed. Clocks
+held. One-card enough
+(matched LUT family at 5120).
+
+Evidence: `results/k8/nibble_lut_moe_up_u14_s4000_card0.txt`,
+`results/k8/nibble_lut_moe_up_u14_s4000_card0.freq`.

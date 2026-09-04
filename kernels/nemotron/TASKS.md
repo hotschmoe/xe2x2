@@ -7,8 +7,9 @@ tiles. Napkin is CONFIG, not RESULT.
 Held K6 priors to re-test on Lightning expert shapes, not to skip:
 NVFP4 can feed XMX via nibble->s8 (slow). Not as fast as s8 with
 s8-A. Two-term s4 compose can beat s8 at decode 5120, not at
-FFN-down or large-M vs W8A8. Never bitcast. iselect / product-LUT
-GEMV already lost on 5120.
+FFN-down or large-M vs W8A8. Lightning expert-up M=1 U=14 is
+15.518 us (04ao), 16-class vs s8 16.060. Never bitcast.
+iselect / product-LUT GEMV already lost on 5120.
 
 ## 0. Inventory (no serve)
 
@@ -26,9 +27,11 @@ GEMV already lost on 5120.
 
 ## 1. Mamba-2 (new math, not GDN)
 
-- [ ] SSU decode T=1, 64 heads x 64 dim, d_state=128, vs eager
-      and vs sibling SSU B8/W4. Rank pipe_host.
-- [ ] conv1d K=4 on mamba channels (C~4096, not GDN 10240).
+- [x] SSU decode T=1, 64 heads x 64 dim, d_state=128.
+      card0 80.064 us pipe_host at 2800 (04ah). spin=0 was
+      190 us ramp, do not freeze 190. Sibling card1 in flight.
+- [x] conv1d K=4 on mamba channels C=4096. card1 4.355 us at
+      2800 (04ai), wash vs C=2048 4.4.
 - [ ] Fuse conv+SSU T=1 vs sequential.
 - [ ] SSD / chunked prefill chunk=128, T=256 vs sequential
       conv+SSU. Combined wall time, not additive napkin.
@@ -47,9 +50,15 @@ Shared 2688 x 3712, every token. top-6 of 128.
 
 - [ ] Router 2688 -> 128, sigmoid, grouped top-6, expert bias.
       vs native XPU grouped-topk.
-- [ ] Decode M=1, 6 routed experts, s8 vs W8A8 vs oneDNN
-      nvfp4_gemm_w4a16 vs GPTQ s4. Launch tax named.
+- [x] Decode M=1, 6 routed experts s8 vs W8A8 (one expert).
+      s8 U=14 one-expert 16.060 us beats W8A8 44.285 (launch
+      class, not N-linear). Grouped-6 165.223 us beats 6x
+      W8A8 ~266, ~1.72x vs 6x16 napkin (k64 loop not U=14).
+      nvfp4_gemm_w4a16 and GPTQ s4 still open.
 - [ ] Shared expert M=1, 2688 x 3712, same dtypes.
+      W8A8 42.273 us card1 (04am), 44-class
+      launch like routed-up 44.285 not N-linear.
+      s8 / nvfp4 / GPTQ still open.
 - [ ] Prefill M=64 grouped (not 128 launches).
 - [ ] Prefill M=256 grouped.
 - [ ] Packing: fused grouped DPAS vs gather-scatter into a
@@ -61,6 +70,11 @@ Shared 2688 x 3712, every token. top-6 of 128.
 ## 3. Attention (6 layers only -- cheap, still measure)
 
 - [ ] Packed qkv M=1 n=4608 k=2688 s8 vs W8A8.
+      s8 U=14 16.609 us pipe_host
+      card0 at 2800 (04al). Launch
+      class vs expert-up 16.060,
+      not napkin 40. W8A8 still
+      open.
 - [ ] Packed qkv M=64 and M=256.
 - [ ] o-proj M=1 n=2688 k=4096.
 - [ ] GQA 32/2 decode attn vs Mamba SSU us (expect attn << SSU
@@ -91,8 +105,20 @@ repack. Both-card on first numeric of a new spoof.
 
 ### 5b. Held K6 spoofs, Lightning shapes (do not skip)
 
-- [ ] Nibble LUT -> s8 DPAS (merge) M=1 expert up/down.
+- [x] Nibble LUT -> s8 DPAS (merge) M=1 expert up.
+      Stock U=16 REFUSED 04ak. U=14 83.659 us
+      pipe_host card0 at 2800 (04an). Loses to
+      s8 16.060 (~5.21x) and W8A8 44.285 (~1.89x).
+      K-linear vs 5120 158, not launch-class.
+- [ ] Nibble LUT -> s8 DPAS (merge) M=1 expert down.
+      Same U=16 inner_k=1024; 1856%1024=832 would
+      also refuse. Do not fire stock.
 - [ ] Closed-form nibble->s8 (exp/mant) M=1 expert.
+- [x] Two-term s4 compose `w_lo + 8*w_hi` A=s4 M=1 expert up.
+      U=14 15.518 us pipe_host card1 at
+      2800 (04ao). Launch class vs s8
+      16.060, beats W8A8 44.285. Never
+      bitcast.
 - [ ] Two-term s4 compose `w_lo + 8*w_hi` A=s4 M=1 expert down.
 - [ ] Two-term at M=64 and M=256 expert (prior: loses large-M).
 - [ ] Dyadic s2/s4 planes {0.5,1,2,4} plus residual {1.5,3,6}.

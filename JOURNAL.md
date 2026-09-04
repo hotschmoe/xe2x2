@@ -14445,3 +14445,176 @@ Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
 
+### 2026-09-04ao - K8 E2M1 two-term s4 U=14 Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 NVFP4 spoof:
+  two-term s4 compose
+  w_lo+8*w_hi U=14 at
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  A=s4. Never bitcast.
+  Priors: two-term 5120 is
+  28.5 us. s8 expert 16.060
+  (04ad U=14). W8A8 44.285
+  (04ae). Stock
+  compose_e2m1_sc NT=2 U=16
+  inner_k=1024 would refuse
+  2688%1024=640. Same tile
+  U=14 inner_k=896 divides
+  2688. Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  compose_e2m1_sc_u14.
+  gpu-run --card 1. NT=2
+  U=14 m=1 n=1856 k=2688.
+  spin=4000. A=s4, B=E2M1
+  split two s4 planes,
+  acc=acc_lo+8*acc_hi. RC=4
+  wg=8x2_alongN
+  dpas_lo_hi=56. Never
+  bitcast. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_e2m1_twoterm_moe_up_u14.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  15.245 pipe_host 15.518
+  wait_host 29.226. median
+  15.312 min 14.583 max
+  16.146. TOPS 0.6545.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,400,
+  750,2800,2800,0. start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  s8 16.060 (~0.97x, same
+  class) vs W8A8 44.285
+  (~0.35x, a beat) vs 5120
+  two-term 28.5 (~0.54x)
+  vs N-linear napkin
+  28.5*(1856/5120)~10.3
+  (~1.50x) vs K-linear
+  28.5*(2688/5120)~15.0
+  (~1.04x). gpu-run 2s.
+
+VERDICT -> E2M1 two-term s4
+  U=14 Lightning routed
+  expert UP-proj M=1 is
+  15.518 us pipe_host card1
+  at 2800, launch class vs
+  s8 16.060, a beat of
+  oneDNN W8A8 44.285. Tracks
+  K-linear from 5120 28.5,
+  not N-linear 10.3. Gap vs
+  s8 shrinks vs 5120 (0.84x
+  -> 0.97x) on the 16-class
+  launch floor. A=s4, not
+  the s8-A LUT contract.
+  Numeric closed. Clocks
+  held. One-card enough
+  (matched two-term RC=4
+  family both-card at 5120,
+  cosine closed, clocks
+  held). Never bitcast.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04an - K8 NVFP4 nibble LUT U=14 Lightning routed expert UP-proj M=1 card0
+
+CONTEXT -> K8 U=14 shape steal
+  on held K6 merge LUT family
+  at Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Stock nibble_lut_sc U=16
+  REFUSED 04ak (inner_k=1024,
+  2688%1024=640). Binary
+  nibble_lut_sc_u14 COMPILE_OK
+  (icpx 2026.1.1 AOT
+  intel_gpu_bmg_g31). Priors:
+  s8 U=14 16.060 (04ad),
+  W8A8 44.285 (04ae), LUT
+  5120 is 158. Napkin
+  K-linear 158*(2688/5120)~83;
+  N-linear 158*(1856/5120)~57;
+  LUT-tax 16.060*(158/34)~75
+  (CONFIG). Packed E2M1.
+  Never bitcast s4. One-card
+  LUT family + U=14 unroll.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  nibble_lut_sc_u14
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. NT=2 U=14
+  inner_k=896 (three blocks).
+  m=1 n=1856 k=2688.
+  spin=4000. Packed E2M1 B
+  2/byte along K, simd nibble
+  LUT, VNNI4, RC=4 8x2-N s8
+  scale-to-f16. dpas=56.
+  No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_nibble_lut_moe_up_u14.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  83.130 pipe_host 83.659
+  wait_host 97.376. median
+  83.125 min 82.188 max
+  83.437. TOPS 0.1200.
+  GBs_packedB 30.007.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 12 samples.
+  GPU-window act=0,0,0,0,0
+  then 4x 2800 then 3x 0.
+  start D0 act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. check
+  4x32x896 cosine=1.000000
+  max_abs=0 ok=1 at act=400
+  (not Lightning timed). vs
+  s8 16.060 (~5.21x) vs
+  W8A8 44.285 (~1.89x) vs
+  LUT 5120 158 (~0.529x) vs
+  napkin K-linear ~83
+  (~1.01x) vs N-linear ~57
+  (~1.46x). gpu-run 2s
+  exit 0.
+
+VERDICT -> NVFP4 nibble LUT
+  U=14 Lightning expert-up
+  M=1 is 83.659 us pipe_host
+  card0 at 2800. Numeric
+  closed. Clocks held. Loses
+  to s8 16.060 and W8A8
+  44.285. Tracks 5120 LUT
+  158 by K, not launch-class
+  like s8/W8A8. LUT tax (30
+  GB/s), not HBM. Packed
+  E2M1, never bitcast s4.
+  One-card enough (LUT
+  family already both-card
+  at 5120; this is U=14
+  unroll/k-block). Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
