@@ -736,16 +736,18 @@ leftover. o-proj leftover
 CLOSED: NT=1 split-K=2 is
 44-class both at 2800, beats
 W8A8 47. Packed qkv M=256
-W8A8 164 still open (SK=5
-393 lost, SK=2 295 lost).
-Packed M=64 split-K 115
-stands vs 140. Decode packed
-s8 74 stands. P2 decode XCCL
-AR 99-137; all_gather 2.5 MiB
-HANG timeout=45s bounded,
-teardown HEALTHY. Host-staged
-AR 439/9494 no hang. P3 T=1
-77 us. P4 blocked.
+W8A8 164 still open (2-acc
+327, SK=5 393, SK=2 295,
+4-acc 274 all lost). Packed
+M=64 split-K 115 stands vs
+140. Decode packed s8 74
+stands. P2 decode XCCL AR
+99-137; one-shot AG 2.5 MiB
+HANG 45s. Chunked 4x64h AG
+2162 us ok=1. Host-staged AR
+439/9494. P3 T=1 77 us. P4
+decode sendrecv+AR 690 us
+ok=1 p2p=0.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.

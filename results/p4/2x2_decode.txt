@@ -1,0 +1,14 @@
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=2x2_decode p2p=0 timeout=90s
+P4: PP sendrecv + TP all_reduce at hidden 5120 bf16.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=2x2_decode p2p=0 pp=sendrecv tp=all_reduce numel 5120
+2026:09:04-05:08:39:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-05:08:39:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-05:08:39:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-05:08:39:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:08:39:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:08:40:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+OK op=2x2_decode rank=1 pp_ok=1 tp_ok=1
+OK op=2x2_decode rank=0 pp_ok=1 tp_ok=1
+RESULT op=2x2_decode name=decode_h numel=5120 bytes=10240 us=689.721 pp_ok=1 tp_ok=1
+VERDICT_LINE ok_all=1 path=pp_sendrecv+tp_ar p2p=0
+TIMEOUT_OR_EXIT rc=0

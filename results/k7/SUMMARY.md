@@ -2059,3 +2059,41 @@ vs W8A8 47 a win (~0.94x).
 44-class both at 2800.
 W8A8-contract beat of 47
 both cards. Rank pipe_host.
+
+## ESIMD s8 2-acc packed qkv M=64 leftover steal card1 (2026-09-04v)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m2. NT=2 m=64
+n=10240 k=5120 wg=4x8 2acc
+k128 unroll=8 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 141.647 event
+140.521. timed act=cur=2800
+throttle=0. vs SK=2 115 a
+loss (~1.23x); vs W8A8 140 a
+loss (~1.01x); vs 4x8 A-db
+214 a win; vs wg 8x4 154 a
+win; vs square 4-acc 75
+~1.89x. One-card. Held 2800.
+STOP 2-acc at M=64. Do not
+sibling. Not a W8A8-contract
+beat. Rank pipe_host.
+
+## ESIMD s8 2-acc wg 4x8 k128 packed qkv M=256 leftover steal card0 (2026-09-04u)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m2. NT=2 m=256
+n=10240 k=5120 wg=4x8 2acc
+k128 unroll=8 spin=512.
+cosine=1 max_abs=0 ok=1.
+pipe_host 327.053 event
+325.896. timed act=2667
+cur=2800 throttle=1. vs W8A8
+164 a loss (~1.99x); vs
+4-acc 4x8 274 a loss (~1.19x);
+vs SK=2 295 a loss (~1.11x);
+vs SK=5 393 (~0.83x). One-card.
+Do not freeze (not 2800).
+Not a W8A8-contract beat.
+STOP 2-acc at M=256. Do not
+sibling. Rank pipe_host.

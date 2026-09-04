@@ -6458,11 +6458,53 @@ VERDICT -> Bounded hang is a RESULT. Confirms
 Evidence: `results/p2/xccl_ag256.txt`,
   `results/p2/SUMMARY.md`.
 
-## Mixed 2x2
+## P2 chunked XCCL 4x64h all_gather is a passing bulk P2P-off path
 
-Blocked until P2 has a passing bulk XCCL collective
-(no hang) plus teardown health, on this host
-with the current UMD. P3 host-staged identity
-and P2 host-staged AR through 2.5 MiB are not
-enough. XCCL 2.5 MiB all_gather hung within 45s
-P2P-off (2026-09-04t). Do not enable P2P.
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  xccl, p2p=0, chunked 4x64h, timeout=90s.
+  gpu-run both cards. torch 2.13.0+xpu. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  Payload prefill_256h as 4 sequential 64*5120
+  bf16 gathers = 2.5 MiB. Pre/post xpu-health.
+
+RESULT -> ok_all=1. rank0 ok=1, rank1 ok=1.
+  us=2161.738. TIMEOUT_OR_EXIT rc=0. gpu-run 20s.
+  Timeout not hit. vs one-shot 2.5 MiB hang
+  (04t rc=124 at 45s). vs 4x 64h AG ~544 us
+  (~2176 us linear). Pre and post per-card
+  HEALTHY. Not WEDGED. P2P stayed 0.
+
+VERDICT -> Passing bulk P2P-off path (chunked).
+  One-shot XCCL all_gather >=2.5 MiB still hangs.
+  P4 may unblock on this chunked path.
+  Do not enable P2P. Rank us.
+
+Evidence: `results/p2/xccl_ag_chunk64.txt`,
+  `results/p2/SUMMARY.md`.
+
+## Mixed 2x2 decode sendrecv+all_reduce is 690 us P2P-off
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  2x2_decode, p2p=0, timeout=90s. gpu-run both cards.
+  torch 2.13.0+xpu. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  PP sendrecv + TP all_reduce at hidden 5120 bf16
+  = 10240 bytes. Pre/post xpu-health.
+
+RESULT -> ok_all=1. rank0 pp_ok=1 tp_ok=1,
+  rank1 pp_ok=1 tp_ok=1. us=689.721.
+  TIMEOUT_OR_EXIT rc=0. gpu-run 18s.
+  Timeout not hit. vs P2 AR 99-137 +
+  P2 sendrecv 539-848 (additive ~638-985).
+  Pre and post per-card HEALTHY. Not
+  WEDGED. P2P stayed 0. Topology: PCIe.
+
+VERDICT -> First xe2x2 mixed 2x2 synthetic.
+  Decode-sized PP sendrecv + TP all_reduce
+  is 690 us class, sendrecv-dominated.
+  Identity closed. Teardown health recovered.
+  One-shot 2.5 MiB AG still hangs (not this
+  arm). Do not enable P2P. Rank us.
+
+Evidence: `results/p4/2x2_decode.txt`,
+  `results/p4/SUMMARY.md`.

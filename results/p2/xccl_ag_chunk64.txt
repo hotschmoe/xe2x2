@@ -1,0 +1,14 @@
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 timeout=90s
+P2 leftover: 2.5MiB as 4x 64h all_gather. 64h already passed.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 op=chunked_all_gather chunk=64h nchunk=4 bytes 2621440
+2026:09:04-05:02:59:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-05:02:59:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-05:02:59:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-05:02:59:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:02:59:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-05:02:59:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+OK op=chunked_all_gather rank=0 ok=1
+OK op=chunked_all_gather rank=1 ok=1
+RESULT op=chunked_all_gather name=prefill_256h_as_4x64h chunk_numel=327680 nchunk=4 bytes=2621440 us=2161.738 ok=1
+VERDICT_LINE ok_all=1 path=chunked_ag_64h p2p=0
+TIMEOUT_OR_EXIT rc=0

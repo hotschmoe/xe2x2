@@ -94,3 +94,30 @@ Not WEDGED.
 
 STOP XCCL all_gather >= 2.5 MiB P2P-off.
 P4 stays blocked. Do not enable P2P.
+
+# P2 chunked XCCL AG 4x64h 2026-09-04w
+
+Backend pytorch-xpu on sycl+l0. fabric xccl. p2p=0.
+timeout=90s. gpu-run both cards. No serve.
+4 sequential 64h all_gather. Rank us.
+
+Pre-health: card0 HEALTHY, card1 HEALTHY.
+
+| name | op | us | ok |
+|---|---|---:|---:|
+| prefill_256h_as_4x64h 2.5MiB | chunked_all_gather | 2161.738 | 1 |
+
+ok_all=1. TIMEOUT_OR_EXIT rc=0.
+gpu-run 20s. Timeout not hit.
+CCL_TOPO_P2P_ACCESS 0. Topology: PCIe.
+vs one-shot hang (04t rc=124 at 45s).
+vs 64h AG ~544 us x4 ~2176 linear.
+vs host-staged AR 256h 9494 us.
+
+Post-health: card0 HEALTHY, card1 HEALTHY.
+Not WEDGED.
+
+Passing bulk P2P-off path (chunked).
+STOP one-shot XCCL all_gather >= 2.5 MiB.
+P4 may unblock on the chunked path.
+Do not enable P2P.

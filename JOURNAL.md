@@ -13298,3 +13298,233 @@ VERDICT -> Bounded hang is a
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04v - K7 ESIMD s8 2-acc packed qkv M=64 leftover steal card1
+
+CONTEXT -> NEW s8 2-acc wg 4x8
+  k128 packed qkv M=64 n=10240
+  k=5120. Priors: SK=2 115
+  beats W8A8 140 (2026-09-04l).
+  4x8 A-db 214. wg 8x4 154.
+  Square 4-acc 75. Rank
+  pipe_host.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w48m2.
+  gpu-run --card 1. NT=2 m=64
+  n=10240 k=5120. wg=4x8 2acc
+  k128 unroll=8. spin=512.
+  Fill s8 [-64,64] scales 0.02
+  out f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_s8_qkv_m2_m64.sh 1 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 140.521
+  pipe_host 141.647. wait_host
+  157.001. timed act=cur=2800
+  throttle=0. spin_done
+  act=cur=2800 throttle=0.
+  vs SK=2 115 (~1.23x, a
+  loss) vs W8A8 140 (~1.01x, a
+  loss) vs 4x8 A-db 214
+  (~0.66x) vs wg 8x4 154
+  (~0.92x) vs square 4-acc 75
+  (~1.89x). gpu-run 32s.
+
+VERDICT -> ESIMD packed qkv s8
+  2-acc wg 4x8 k128 M=64 is
+  141.647 us pipe_host card1
+  at 2800, a loss vs SK=2 115
+  and vs oneDNN W8A8 140. Not
+  a W8A8-contract beat. Numeric
+  closed. One-card. Held 2800.
+  STOP 2-acc at M=64. Do not
+  sibling. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04u - K7 ESIMD s8 2-acc wg 4x8 k128 packed qkv M=256 leftover steal card0
+
+CONTEXT -> NEW s8 2-acc wg 4x8
+  k128 packed qkv M=256 n=10240
+  k=5120. Priors: W8A8 packed
+  M=256 is 164 us. 4-acc 4x8
+  274 lost. SK=2 295 lost
+  (2026-09-04n). SK=5 393
+  lost (2026-09-04q). Same-
+  family M=64 2-acc 142 lost
+  vs W8A8 140 (2026-09-04v).
+  2-acc = 2x M WGs vs 4-acc.
+  Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w48m2.
+  gpu-run --card 0. NT=2 m=256
+  n=10240 k=5120. wg=4x8 2acc
+  k128 unroll=8. spin=512.
+  Fill s8 [-64,64] scales 0.02
+  out f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_qkv_m2_m256.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 325.896
+  pipe_host 327.053. wait_host
+  341.648. timed act=2667
+  cur=2800 throttle=1.
+  spin_done act=2667 cur=2800
+  throttle=1. vs W8A8 164
+  (~1.99x, a loss) vs 4-acc
+  4x8 274 (~1.19x, a loss)
+  vs SK=2 295 (~1.11x, a
+  loss) vs SK=5 393 (~0.83x).
+  gpu-run 120s.
+
+VERDICT -> ESIMD packed qkv s8
+  2-acc wg 4x8 k128 M=256 is
+  327.053 us pipe_host card0
+  at act=2667 cur=2800
+  throttle=1, a loss vs oneDNN
+  W8A8 164. Not a W8A8-contract
+  beat. Worse than 4-acc 274
+  and SK=2 295. Numeric closed.
+  One-card. Do not freeze (not
+  2800). STOP 2-acc at M=256.
+  Do not sibling. Do not
+  promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04w - P2 chunked XCCL all_gather 4x64h both cards
+
+CONTEXT -> Parked charter P2 leftover
+  after one-shot 2.5 MiB XCCL
+  all_gather hang (2026-09-04i/t)
+  and host-staged AR finish
+  (2026-09-04o). 64h already
+  ~544 us. 4 sequential 64h
+  gathers, P2P off. Timeout
+  90s. Pause one-card.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0, fabric xccl, p2p=0
+  chunked 4x64h. Image
+  b70-sglang-xpu-int8-runtime:20260826-mtp6.
+  gpu-run both cards. torch
+  2.13.0+xpu. Outer timeout 90s
+  TERM then kill-after 10s.
+  No CCL_TOPO_P2P_ACCESS=1.
+  Payload prefill_256h as 4x
+  64*5120 bf16 = 2621440 bytes.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 xpu-health --card 0 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run --card 1 xpu-health --card 1 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run bash parallel/tp2/run_ag_chunk64.sh
+  # post xpu-health same as pre
+  ```
+
+RESULT -> Pre: card0 HEALTHY
+  (25s), card1 HEALTHY (25s).
+  Identity: rank=0 ok=1,
+  rank=1 ok=1. RESULT
+  op=chunked_all_gather
+  name=prefill_256h_as_4x64h
+  chunk_numel=327680 nchunk=4
+  bytes=2621440 us=2161.738
+  ok=1. VERDICT_LINE ok_all=1
+  path=chunked_ag_64h p2p=0.
+  TIMEOUT_OR_EXIT rc=0.
+  gpu-run 20s. Timeout not hit.
+  CCL_TOPO_P2P_ACCESS 0.
+  Topology: PCIe between
+  devices. vs one-shot hang
+  (04t rc=124 at 45s). vs 4x
+  64h AG ~544 us (~2176 us
+  linear). vs host-staged AR
+  256h 9494 us. Post: card0
+  HEALTHY (21s), card1 HEALTHY
+  (21s). Not WEDGED.
+
+VERDICT -> Chunked XCCL P2P-off
+  all_gather is a passing bulk
+  path. 2161.738 us, ok_all=1.
+  One-shot 2.5 MiB still hangs;
+  STOP one-shot AG >=2.5 MiB.
+  Teardown health recovered.
+  P4 may unblock on this
+  chunked path. Do not enable
+  P2P. Rank us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04x - P4 mixed 2x2 decode sendrecv+AR both cards
+
+CONTEXT -> Parked charter P4 after
+  P3 host-staged passed (04j) and
+  P2 chunked AG 4x64h passed (04w,
+  2162 us). Decode-sized PP
+  sendrecv + TP all_reduce. Timeout
+  90s. Pause one-card. P2P off.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0, fabric 2x2_decode, p2p=0.
+  Image
+  b70-sglang-xpu-int8-runtime:20260826-mtp6.
+  gpu-run both cards. torch
+  2.13.0+xpu. Outer timeout 90s
+  TERM then kill-after 10s.
+  No CCL_TOPO_P2P_ACCESS=1.
+  Payload decode_h 5120 bf16 =
+  10240 bytes.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 xpu-health --card 0 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run --card 1 xpu-health --card 1 --img vllm-xpu-env:int8g-v0251 --timeout 180
+  gpu-run bash parallel/2x2/run_decode.sh
+  # post xpu-health same as pre
+  ```
+
+RESULT -> Pre: card0 HEALTHY
+  (19s), card1 HEALTHY (20s).
+  Identity: rank=0 pp_ok=1 tp_ok=1,
+  rank=1 pp_ok=1 tp_ok=1. RESULT
+  op=2x2_decode name=decode_h
+  numel=5120 bytes=10240
+  us=689.721 pp_ok=1 tp_ok=1.
+  VERDICT_LINE ok_all=1
+  path=pp_sendrecv+tp_ar p2p=0.
+  TIMEOUT_OR_EXIT rc=0.
+  gpu-run 18s. Timeout not hit.
+  CCL_TOPO_P2P_ACCESS 0.
+  Topology: PCIe between
+  devices. vs P2 AR 99-137 +
+  P2 sendrecv 539-848 (additive
+  ~638-985). Post: card0
+  HEALTHY (24s), card1 HEALTHY
+  (24s). Not WEDGED.
+
+VERDICT -> First xe2x2 mixed 2x2
+  synthetic. Decode sendrecv+AR
+  is 689.721 us, ok_all=1,
+  sendrecv-dominated. Identity
+  closed. Teardown health
+  recovered. One-shot 2.5 MiB AG
+  still hangs (not this arm).
+  Do not enable P2P. Rank us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
