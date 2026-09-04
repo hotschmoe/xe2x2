@@ -2097,3 +2097,43 @@ Do not freeze (not 2800).
 Not a W8A8-contract beat.
 STOP 2-acc at M=256. Do not
 sibling. Rank pipe_host.
+
+## ESIMD mixer-slmhtc T=256 card1 (2026-09-04z)
+
+backend sycl+l0, standalone
+gdn_mixer_slmhtc. T=256 C=10240
+nv=48 blk=16 spin=0. cosine=1
+max_abs=7.6e-6 cosine_o=1
+max_abs_o=1.2e-4 ok=1. pipe_host
+570.074 event 563.070. timed
+act 2800-2717 cur=2800
+throttle=1. vs seq 298 a loss
+(~1.91x); vs mixer-slmht 471
+(~1.21x); vs L2-once 327
+(~1.74x); vs conv-L2 358
+(~1.59x); vs conv-L2r 531
+(~1.07x). One-card. Do not
+freeze (not 2800). STOP this
+fuse. Do not sibling. Rank
+pipe_host.
+
+## ESIMD s8 4-acc + lsc_prefetch packed qkv M=256 card0 (2026-09-04y)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4ff.
+prefetch=lsc_prefetch_2d.
+NT=2 m=256 n=10240 k=5120
+wg=4x8 4acc k128 unroll=8
+spin=512. cosine=1 max_abs=0
+ok=1. pipe_host 267.199 event
+269.198. spin_done act=2650
+cur=2800 throttle=0. timed
+act=2650-2733 cur=2800
+throttle=1. vs W8A8 164 a
+loss (~1.63x); vs 4-acc 4x8
+274 (~0.97x, 274-class, not
+a steal). One-card. Do not
+freeze (not 2800). Not a
+W8A8-contract beat. STOP
+prefetch on 4-acc M=256. Do
+not sibling. Rank pipe_host.

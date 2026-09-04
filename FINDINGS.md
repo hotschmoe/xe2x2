@@ -4132,6 +4132,65 @@ VERDICT -> 531 us, worse than
 
 Evidence: `results/k7/esimd_mixer_convl2r_t256_s0_card0.txt`.
 
+## ESIMD mixer-slmhtc T=256 loses to seq 298 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_mixer_slmhtc`.
+  One-kernel FIR conv +
+  register L2 + slmht. T=256
+  C=10240 nv=48 blk=16. Card1.
+  spin=0. Prior: seq conv+slmht
+  ~298, mixer-slmht 471,
+  L2-once 327, conv-L2 358,
+  conv-L2r 531.
+
+RESULT -> cosine=1.0 max_abs
+  7.6e-6 / 1.2e-4 ok=1.
+  pipe_host 570.074 event
+  563.070. timed_begin act=2800
+  cur=2800 throttle=0.
+  timed_end act=2717 cur=2800
+  throttle=1.
+
+VERDICT -> 570 us, ~1.91x seq
+  298. Worse than mixer-slmht
+  471, L2-once 327, conv-L2
+  358, and conv-L2r 531. STOP
+  this fuse. Do not sibling.
+  Seq 298 stays the T=256
+  leftover. Do not freeze 570
+  as 2800. Rank pipe_host.
+
+Evidence: `results/k7/esimd_mixer_slmhtc_t256_s0_card1.txt`,
+  `results/k7/esimd_mixer_slmhtc_t256_s0_card1.freq`.
+
+## ESIMD packed qkv s8 4-acc + prefetch M=256 loses to W8A8 164 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc8w48m4ff`.
+  prefetch=`lsc_prefetch_2d`.
+  M=256 n=10240 k=5120. NT=2
+  wg=4x8 4acc k128 unroll=8.
+  Card0. spin=512. Prior: W8A8
+  164, 4-acc 274.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 267.199 event
+  269.198. spin_done act=2650
+  cur=2800 throttle=0. timed
+  act=2650-2733 cur=2800
+  throttle=1.
+
+VERDICT -> 267 us, ~1.63x W8A8
+  164. 274-class vs 4-acc 274,
+  not a steal. STOP prefetch on
+  4-acc M=256. Do not sibling.
+  Do not freeze (not 2800).
+  Rank pipe_host.
+
+Evidence: `results/k7/esimd_s8_qkv_m4ff_m256_s512_card0.txt`,
+  `results/k7/esimd_s8_qkv_m4ff_m256_s512_card0.freq`.
+
 ## ESIMD o-proj s8 M=1 loses to W8A8 47 (K7)
 
 CONFIG -> backend `sycl+l0`,

@@ -760,15 +760,23 @@ P2 bulk hang is a new leftover.
 
 1. new s8 packed-qkv M=256
    kernel vs W8A8 164 (4-acc
-   274, 2-acc 327, SK=2 295,
+   274, prefetch 267 closest
+   STOP, 2-acc 327, SK=2 295,
    SK=5 393 all lost). M=64
    SK=2 115 stands vs 140.
-2. one-shot XCCL AG 2.5 MiB
-   still hangs. Chunked 4x64h
+   Next: SK=2 + prefetch, not
+   a stopped tile.
+2. P2 sendrecv 2.5 MiB still
+   unfired. One-shot AG hangs
+   at 45s. Chunked 4x64h AG
    2162 us is the working bulk
    path. Host-staged AR 439.
-3. mixer T=256 seq ~298. No
-   new mapping this wave.
+3. mixer T=256 seq ~298. STOP
+   slmhtc 570, mixer-slmht 471,
+   L2-once 327, conv-L2 358,
+   conv-L2r 531. Next: T-chunk
+   two-queue pipeline, not a
+   fuse.
 Park o-proj: NT=1 SK=2 44
 beats W8A8 47. STOP sc 62,
 NT=4 103, NT=1 55, wg 4x2 74,
@@ -781,8 +789,10 @@ conv-L2r (531 vs 327), packed
 qkv s8 M=64 4x8 (214 vs 140)
 and wg 8x4 (154 vs 140), packed
 qkv s8 M=256 4-acc (274 vs 164)
-and wg 8x4 (279 throttle=1 vs
-164) and persist B-pipe (344),
+and prefetch (267 vs 164) and
+wg 8x4 (279 throttle=1 vs
+164) and persist B-pipe (344)
+and mixer-slmhtc (570 vs 298),
 o-proj s8 sc (62 vs 47), o-proj
 B-pipe (67 vs 62), o-proj NT=1
 wg 4x2 (74 vs 55), P2 256h

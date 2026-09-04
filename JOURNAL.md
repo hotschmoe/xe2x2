@@ -13528,3 +13528,104 @@ VERDICT -> First xe2x2 mixed 2x2
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04z - K7 ESIMD mixer-slmhtc T=256 card1
+
+CONTEXT -> NEW one-kernel mixer
+  FIR conv + register L2 +
+  slmht. Priors: seq conv 38 +
+  slmht 260 ~298. mixer-slmht
+  471. L2-once 327. conv-L2
+  SLM 358. conv-L2r 531.
+  Napkin: drop conv launch, L2
+  free in registers, beat 298.
+  spin=0.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_mixer_slmhtc.
+  gpu-run --card 1. T=256
+  C=10240 nv=48 blk=16. spin=0.
+  Rank pipe_host vs seq 298.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_mixer_slmhtc_t256.sh 1 0
+  ```
+
+RESULT -> cosine=1 max_abs=7.6e-6
+  cosine_o=1 max_abs_o=1.2e-4
+  ok=1. event 563.070 pipe_host
+  570.074. wait_host 586.271.
+  timed_begin act=2800 cur=2800
+  throttle=0. timed_end act=2717
+  cur=2800 throttle=1. vs seq
+  298 (~1.91x, a loss) vs
+  mixer-slmht 471 (~1.21x) vs
+  L2-once 327 (~1.74x) vs
+  conv-L2 358 (~1.59x) vs
+  conv-L2r 531 (~1.07x).
+  gpu-run 1s.
+
+VERDICT -> ESIMD mixer-slmhtc
+  T=256 is 570.074 us pipe_host
+  card1, a loss vs seq conv+slmht
+  298. Numeric closed. One-card.
+  STOP this fuse. Do not sibling.
+  Sequential conv+slmht ~298
+  stays the T=256 leftover. Do
+  not freeze 570 as 2800. Rank
+  pipe_host.
+
+### 2026-09-04y - K7 ESIMD s8 4-acc + lsc_prefetch packed qkv M=256 card0
+
+CONTEXT -> NEW s8 4-acc +
+  lsc_prefetch_2d packed qkv
+  M=256 n=10240 k=5120. Priors:
+  W8A8 packed M=256 is 164 us.
+  4-acc 4x8 274 lost. ngen
+  issues ff prefetch. Steal
+  lsc_prefetch_2d of next k128
+  A/B on the 4-acc tile. NT=1
+  prefetch o-proj STOP (04p).
+  Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w48m4ff.
+  prefetch=lsc_prefetch_2d.
+  gpu-run --card 0. NT=2 m=256
+  n=10240 k=5120. wg=4x8 4acc
+  k128 unroll=8. spin=512.
+  Fill s8 [-64,64] scales 0.02
+  out f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_qkv_m4ff_m256.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 269.198
+  pipe_host 267.199. wait_host
+  285.027. spin_done act=2650
+  cur=2800 throttle=0. timed
+  act=2650-2733 cur=2800
+  throttle=1. vs W8A8 164
+  (~1.63x, a loss) vs 4-acc
+  274 (~0.97x, 274-class, not
+  a steal). gpu-run 119s.
+
+VERDICT -> ESIMD packed qkv s8
+  4-acc + lsc_prefetch_2d M=256
+  is 267.199 us pipe_host card0
+  at act=2650-2733 cur=2800
+  throttle=1, a loss vs oneDNN
+  W8A8 164. Not a W8A8-contract
+  beat. 274-class vs 4-acc 274,
+  not a steal. Numeric closed.
+  One-card. Do not freeze (not
+  2800). STOP prefetch on 4-acc
+  M=256. Do not sibling. Do not
+  promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
