@@ -13817,3 +13817,119 @@ VERDICT -> ESIMD packed qkv s8
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04ae - K8 oneDNN W8A8 Lightning routed expert UP-proj M=1 card1
+
+CONTEXT -> K8 incumbent floor:
+  oneDNN int8_gemm_w8a8 at
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Prior: W8A8 square M=1 5120
+  is 44 us. ONE expert
+  GEMM-only. Not 6-expert
+  grouped. Not a serve.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  int8_gemm_w8a8. heat M=64
+  spin=512. m=1 n=1856 k=2688.
+  Rank us. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_w8a8_moe_up_m1.sh 1
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0.030334 ok=1.
+  44.285 us. 112.655 GB/s.
+  vs square 44. Napkin
+  44*(1856/5120)~16 (CONFIG).
+  GPU-window act=550-2800
+  cur=550-2800 throttle=0.
+  Two samples act=cur=2800.
+  start act=0 cur=2800
+  throttle=0 D3hot. end
+  act=0 cur=2800 throttle=0
+  D0. gpu-run 14s.
+
+VERDICT -> oneDNN W8A8 Lightning
+  routed expert UP-proj M=1 is
+  44.285 us card1, 44-class
+  launch like square 5120, not
+  N-linear. Numeric closed.
+  throttle=0. Do not freeze
+  (act not held 2800). One-
+  card enough (W8A8 family
+  already matched both cards).
+  Rank us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ad - K8 ESIMD s8 RC=4 Lightning routed expert UP-proj M=1 card0
+
+CONTEXT -> K8 first s8 floor:
+  existing RC=4 8x2-N
+  scale-to-f16 tile at
+  Lightning routed expert
+  UP-proj M=1 n=1856 k=2688.
+  Priors: square s8 M=1 5120
+  is 34 us. Napkin N-linear
+  34*(1856/5120)~12 us.
+  W8A8 sibling card1 is
+  44.285 us (04ae). ONE
+  expert, not grouped-6.
+  Stock dpas_s8_sc NT=2 U=16
+  refused: inner_k=1024,
+  2688%1024=640. Same tile
+  U=14 inner_k=896 divides
+  2688. Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  dpas_s8_sc_u14. gpu-run
+  --card 0. NT=2 U=14 m=1
+  n=1856 k=2688. spin=4000.
+  Fill s8 [-64,64] scales
+  0.02 out f16. RC=4
+  wg=8x2_alongN dpas=56.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_esimd_s8_moe_up_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  15.622 pipe_host 16.060.
+  median 15.625 min 14.375
+  max 16.458. TOPS 0.6387.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. vs W8A8 44.285
+  (~0.36x, a beat) vs square
+  s8 34 (~0.47x) vs napkin
+  12 (~1.30x). Stock U=16
+  check-only then rc=2.
+  gpu-run 2s.
+
+VERDICT -> ESIMD s8 RC=4
+  Lightning routed expert
+  UP-proj M=1 is 16.060 us
+  pipe_host card0 at 2800,
+  a beat of oneDNN W8A8
+  44.285. Stock U=16 cannot
+  run hidden 2688; U=14 is
+  the same family. Numeric
+  closed. One-card enough
+  (matched s8 RC=4 family,
+  cosine closed, clocks
+  held). ONE expert, not
+  grouped-6. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

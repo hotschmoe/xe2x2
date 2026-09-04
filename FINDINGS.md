@@ -6660,3 +6660,72 @@ VERDICT -> 292 us, ~1.78x W8A8
 
 Evidence: `results/k7/esimd_s8_qkv_skff_m256_s512_card0.txt`,
   `results/k7/esimd_s8_qkv_skff_m256_s512_card0.freq`.
+
+## Lightning routed expert UP-proj W8A8 is 44 us decode (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  `int8_gemm_w8a8` GEMM-only. M=1
+  n=1856 k=2688. Heat M=64
+  spin=512. Card1. Prior: square
+  M=1 5120 is 44 us. ONE expert.
+  No serve.
+
+RESULT -> cosine=1.000000
+  max_abs=0.030334 ok=1.
+  44.285 us. 112.655 GB/s.
+  GPU-window act=550-2800
+  cur=550-2800 throttle=0.
+  Two samples act=cur=2800.
+
+VERDICT -> Routed expert UP-proj
+  W8A8 is 44.285 us card1, same
+  44-class launch as square
+  5120, not N-linear. Numeric
+  closed. One-card enough (W8A8
+  family already matched). Do
+  not freeze (act not held
+  2800). Rank us.
+
+Evidence: `results/k8/w8a8_moe_up_m1_card1.txt`,
+  `results/k8/w8a8_moe_up_m1_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning routed expert UP-proj s8 is 16 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_u14` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 family as
+  square s8 34, U=14 so
+  inner_k=896 divides hidden
+  2688. Stock `dpas_s8_sc` NT=2
+  U=16 refused (k % 1024 != 0).
+  M=1 n=1856 k=2688. NT=2.
+  Card0. spin=4000. Prior:
+  W8A8 sibling 44.285, square
+  s8 34, napkin N-linear ~12.
+  ONE expert, not grouped-6.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 16.060 event
+  15.622. timed act=cur=2800
+  throttle=0. vs W8A8 44.285
+  (~0.36x) vs square s8 34
+  (~0.47x) vs napkin 12
+  (~1.30x).
+
+VERDICT -> Routed expert UP-proj
+  s8 is 16-class us pipe_host
+  card0 at 2800, a beat of
+  oneDNN W8A8 44. Stock U=16
+  cannot run Lightning hidden
+  2688. Numeric closed. One-card
+  enough (matched s8 RC=4
+  family, clocks held). Rank
+  pipe_host.
+
+Evidence: `results/k8/esimd_s8_moe_up_m1_s4000_card0.txt`,
+  `results/k8/esimd_s8_moe_up_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.
