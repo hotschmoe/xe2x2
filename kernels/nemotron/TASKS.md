@@ -12,14 +12,17 @@ GEMV already lost on 5120.
 
 ## 0. Inventory (no serve)
 
-- [ ] Dump one BF16 layer: op names, dtypes, MNK, bytes of
+- [x] Dump one BF16 layer: op names, dtypes, MNK, bytes of
       mamba state vs expert weights vs KV at T=1 and T=256.
+      CONFIG napkin in results/k8/inventory.md. No ckpt on host.
 - [ ] Dump the NVFP4 checkpoint layout: which tensors are
       E2M1+FP8-scale, which are FP8, which stay BF16.
+      BLOCKED: no NVFP4 tree on disk.
 - [ ] Histogram E2M1 codes on routed experts vs shared expert
       (overflow rate of codes 8 and 12). Per-expert if cheap.
-- [ ] Confirm `moe_latent_size` is null at runtime (no d->l
-      projection). If a dump shows latent, that is a new arm.
+      BLOCKED: no NVFP4 tree on disk. Synthetic E2M1 OK for spoofs.
+- [x] Confirm `moe_latent_size` is null at published config
+      (no d->l). Runtime dump still open if a later ckpt appears.
 
 ## 1. Mamba-2 (new math, not GDN)
 

@@ -1,0 +1,21 @@
+=== clocks start ===
+card1 pci=0000:44:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7111202997009 energy2=pkg:4038487178466 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7053107458618 energy2=pkg:4167786592895 temp2_mC=52000
+CONFIG backend=sycl+l0 card=1 arm=moe_group_s8_m1 spin=4000 experts=6 m=1 n=1856 k=2688 scale=0.02 out=f16
+Six expert launches share A and one in-order queue. Rank pipe_host.
+=== esimd grouped s8 MoE experts=6 m=1 n=1856 k=2688 spin=4000 ===
+# CONFIG backend=sycl+l0 device="Intel(R) Arc(TM) Pro B70 Graphics" driver=1.15.38646+4 op=moe_group_s8_m1 dtype=s8xs8_to_f16 experts=6 m=1 n=1856 k=2688 scale=0.0200 RC=4 NT=2 kstep=64 wg=8x2_alongN warmup=50 iters=40 card=1 spin=4000 mhz=2400 heat=none
+spin_done n=4000 act=2800 cur=2800 power=D0 throttle=0
+timed_begin act=2800 cur=2800 power=D0 throttle=0
+timed_end act=2800 cur=2800 power=D0 throttle=0
+phase,experts,m,n,k,event_us,last_event_us,wait_host_us,pipe_host_us,TOPS,cosine,max_abs,ok,median_sum_us,min_sum_us,max_sum_us
+timed,6,1,1856,2688,164.633,33.398,231.041,165.223,0.3623,1.000000,0,1,164.636,161.770,168.749
+=== clocks end ===
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:7111259710815 energy2=pkg:4038519305541 temp2_mC=51000
+hwmon hwmon7 cap_uW=230000000 energy1=card:7053217515502 energy2=pkg:4167858001098 temp2_mC=55000

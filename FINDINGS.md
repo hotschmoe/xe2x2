@@ -6729,3 +6729,116 @@ VERDICT -> Routed expert UP-proj
 Evidence: `results/k8/esimd_s8_moe_up_m1_s4000_card0.txt`,
   `results/k8/esimd_s8_moe_up_m1_s4000_card0.freq`,
   `results/k8/SUMMARY.md`.
+
+## Lightning Mamba-2 SSU T=1 is 80 us at 2800 (K8, one-card)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `mamba_ssu_t1` AOT
+  `intel_gpu_bmg_g31`. T=1
+  heads=64 d_head=64 d_state=128
+  groups=8 VL=16 wi=one_per_head.
+  Card0. spin=4000. Not GDN.
+  Prior: 04af first light
+  190.028 us spin=0 (clocks
+  not held). GDN fused decode
+  7.1 us is the WRONG math.
+  Sibling SSU B8/W4 is
+  community, not FINDINGS.
+
+RESULT -> cosine=1.000000
+  max_abs=4.7684e-07 ok=1.
+  pipe_host 80.064 event
+  79.531. 52.65 GB/s.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. vs 04af 190.028
+  (~0.42x; 190 was ramp).
+
+VERDICT -> One-card held-clock:
+  Mamba-2 SSD SSU T=1 is 80 us
+  pipe_host card0 at 2800,
+  numeric closed. Clocks held
+  (spin=4000). Do not freeze
+  190. Sibling pending. Not a
+  both-card floor. GDN 7.1 is
+  the wrong math. Rank
+  pipe_host.
+
+Evidence: `results/k8/mamba_ssu_t1_s4000_card0.txt`,
+  `results/k8/mamba_ssu_t1_s4000_card0.freq`,
+  `results/k8/mamba_ssu_t1_s0_card0.txt`,
+  `results/k8/mamba_ssu_t1_s0_card0.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning grouped 6-expert s8 decode is 165 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `moe_group_s8_m1` AOT
+  `intel_gpu_bmg_g31`. Six routed
+  experts, each s8 M=1 n=1856
+  k=2688, one in-order queue
+  sharing A. RC=4 NT=2 kstep=64
+  wg=8x2_alongN. Card1.
+  spin=4000. Not U=14. Priors:
+  one expert s8 U=14 16.060 us
+  (04ad), W8A8 44.285 us (04ae).
+  Napkin 6*16~96 vs 6*44~266.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 165.223 event
+  164.633 last_event 33.398.
+  timed act=cur=2800 throttle=0.
+  vs 6*16.060=96.360 (~1.72x)
+  vs 6*44.285=265.710 (~0.62x).
+
+VERDICT -> Grouped 6-expert s8
+  decode is 165-class us
+  pipe_host card1 at 2800, a
+  beat of 6x W8A8 266 napkin.
+  Loses to 6x U=14 96 napkin:
+  this binary is k64-loop not
+  U=14 (mean 27.4 us/expert).
+  In-order queue packed (pipe
+  ~ event sum). Numeric closed.
+  Clocks held. One-card enough
+  (matched s8 RC=4 family).
+  Rank pipe_host.
+
+Evidence: `results/k8/moe_group_s8_m1_s4000_card1.txt`,
+  `results/k8/moe_group_s8_m1_s4000_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning Mamba conv1d C=4096 T=1 is 4.4 us (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `gdn_conv1d` AOT
+  `intel_gpu_bmg_g31`. Depthwise
+  K=4 T=1 C=4096 f16. VL=16
+  wg=16. Card1. spin=4000.
+  Existing generic --c path.
+  Priors: GDN C=2048 T=1
+  4.350/4.500, C=6144 4.799/
+  5.000, fused qkv ~4.4.
+  Occupancy may wash vs C=2048.
+
+RESULT -> cosine=1.000000
+  max_abs=0 cosine_st=1.000000
+  max_abs_st=0 ok=1. pipe_host
+  4.355 event 0.896. 22.57 GB/s.
+  timed act=cur=2800 throttle=0.
+  vs C=2048 4.350/4.500 (wash,
+  not 2x).
+
+VERDICT -> Lightning Mamba
+  conv1d C=4096 T=1 is 4.355 us
+  pipe_host card1 at 2800,
+  occupancy wash vs GDN C=2048
+  4.4 not 2x. Numeric closed.
+  One-card enough (conv family
+  already both-card at other
+  C). Rank pipe_host.
+
+Evidence: `results/k8/mamba_conv_c4096_s4000_card1.txt`,
+  `results/k8/mamba_conv_c4096_s4000_card1.freq`,
+  `results/k8/SUMMARY.md`.

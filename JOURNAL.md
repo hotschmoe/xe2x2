@@ -13933,3 +13933,262 @@ VERDICT -> ESIMD s8 RC=4
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04af - K8 ESIMD Mamba-2 SSD SSU T=1 card0
+
+CONTEXT -> K8 NEW math: first
+  Mamba-2 SSD SSU decode T=1.
+  Not GDN. Priors: GDN fused
+  decode 7.1 us is the WRONG
+  math. Sibling SSU B8/W4 is
+  a community floor, not
+  FINDINGS. Binary
+  mamba_ssu_t1 COMPILE_OK.
+  Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT mamba_ssu_t1
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. T=1 heads=64
+  d_head=64 d_state=128
+  groups=8 VL=16
+  wi=one_per_head. spin=0.
+  Rank pipe_host vs eager
+  napkin. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_mamba_ssu_t1.sh 0 0
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=4.7684e-07 ok=1.
+  event 234.510 pipe_host
+  190.028 wait_host 258.467.
+  22.18 GB/s. median 234.219
+  min 231.458 max 238.542.
+  timed_begin act=950 cur=933
+  throttle=0. timed_end
+  act=cur=2800 throttle=0.
+  start D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. freq
+  throttle=0. vs GDN delta
+  7.1 (wrong math, not a
+  steal). gpu-run 2s.
+
+VERDICT -> ESIMD Mamba-2 SSD
+  SSU T=1 is 190.028 us
+  pipe_host card0, numeric
+  closed. Clocks not held
+  (spin=0, timed_begin
+  act=950). Do not freeze
+  190. One-card first light;
+  sibling pending (new math,
+  not a both-card floor).
+  GDN 7.1 is the wrong math.
+  Sibling SSU B8/W4 stays
+  community. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ag - K8 ESIMD grouped 6-expert s8 decode M=1 card1
+
+CONTEXT -> K8 grouped decode:
+  6 routed experts, each s8
+  M=1 n=1856 k=2688, one
+  in-order queue. Priors:
+  one expert s8 U=14 is
+  16.060 us card0 at 2800
+  (04ad). W8A8 one expert
+  44.285 us (04ae). Napkin
+  6*16~96 vs 6*44~266.
+  Rank pipe_host of all 6.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT
+  moe_group_s8_m1. gpu-run
+  --card 1. experts=6 m=1
+  n=1856 k=2688. spin=4000.
+  RC=4 NT=2 kstep=64
+  wg=8x2_alongN scale 0.02
+  out f16. Six launches
+  share A and one in-order
+  queue. Not U=14.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_moe_group_s8_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  164.633 last_event 33.398
+  wait_host 231.041
+  pipe_host 165.223. TOPS
+  0.3623. median_sum 164.636
+  min 161.770 max 168.749.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 17 samples.
+  GPU-window act=517,400 then
+  7x 2800. start act=0
+  cur=2800 throttle=0 D3hot.
+  end act=0 cur=2800
+  throttle=0 D0. vs
+  6*16.060=96.360 (~1.72x)
+  vs 6*44.285=265.710
+  (~0.62x). gpu-run 2s.
+
+VERDICT -> ESIMD grouped 6
+  routed-expert s8 decode
+  M=1 is 165.223 us
+  pipe_host card1 at 2800.
+  Beats 6x W8A8 266 napkin.
+  Loses to 6x U=14 96 napkin
+  (~1.72x): this binary is
+  k64-loop not U=14; mean
+  event 27.4 us/expert vs
+  16.060. pipe_host ~ event
+  sum, so the in-order queue
+  packed the six launches.
+  Numeric closed. Clocks
+  held. One-card enough
+  (matched s8 RC=4 family).
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ai - K8 ESIMD Mamba conv1d K=4 C=4096 T=1 card1
+
+CONTEXT -> K8 Mamba depthwise
+  conv K=4 C=4096 T=1 using
+  existing gdn_conv1d --c 4096.
+  Same FIR as GDN, different
+  C (not 10240 leftover).
+  Priors: GDN conv C=2048 T=1
+  4.350/4.500 us at 1700/1400.
+  C=6144 T=1 4.799/5.000.
+  Fused qkv T=1 C=2048 ~4.4.
+  Occupancy may wash vs
+  C=2048. Rank pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT gdn_conv1d
+  intel_gpu_bmg_g31. gpu-run
+  --card 1. T=1 C=4096 k=4
+  f16 VL=16 wg=16. spin=4000
+  mhz=2400. Generic --c path.
+  No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_mamba_conv_c4096.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 cosine_st=1.000000
+  max_abs_st=0 ok=1. event
+  0.896 wait_host 14.891
+  pipe_host 4.355. 22.57 GB/s.
+  median 0.937 min 0.729 max
+  0.938. spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 7 samples.
+  GPU-window act=0,0,0,0,550,
+  0,0 cur=2800,2800,2800,400,
+  2800,2800,2800 (sampler
+  miss, short kernel). start
+  D3hot act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  C=2048 4.350/4.500 (wash,
+  not 2x). vs C=6144 4.799/
+  5.000. vs fused qkv 4.4.
+  gpu-run 2s.
+
+VERDICT -> ESIMD Mamba conv1d
+  K=4 C=4096 T=1 is 4.355 us
+  pipe_host card1 at 2800
+  (kernel sample), occupancy
+  wash vs GDN C=2048 4.4 not
+  2x. Numeric closed. Clocks
+  held at kernel sample.
+  One-card enough (conv
+  family already both-card
+  at other C). Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ah - K8 ESIMD Mamba-2 SSD SSU T=1 held-clock card0
+
+CONTEXT -> K8 NEW math: first
+  held-clock Mamba-2 SSD SSU
+  decode T=1. Not GDN. Prior
+  04af first light 190.028 us
+  pipe_host spin=0 (timed_begin
+  act=950, clocks not held).
+  Do not freeze 190. Rank
+  pipe_host.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT mamba_ssu_t1
+  intel_gpu_bmg_g31. gpu-run
+  --card 0. T=1 heads=64
+  d_head=64 d_state=128
+  groups=8 VL=16
+  wi=one_per_head. spin=4000.
+  Rank pipe_host vs 04af 190
+  and vs GDN 7.1 (wrong math).
+  No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_mamba_ssu_t1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=4.7684e-07 ok=1.
+  event 79.531 pipe_host
+  80.064 wait_host 93.563.
+  52.65 GB/s. median 79.427
+  min 78.541 max 80.833.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. start D0 act=0
+  cur=2800 throttle=0. end D0
+  act=cur=2800 throttle=0.
+  freq 50 ms throttle=0 all
+  11 samples. GPU-window
+  act=0,0,0,400 then 4x 2800
+  then 3x 0. vs 04af 190.028
+  (~0.42x; 190 was ramp). vs
+  GDN delta 7.1 (wrong math,
+  not a steal). gpu-run 2s.
+
+VERDICT -> ESIMD Mamba-2 SSD
+  SSU T=1 is 80.064 us
+  pipe_host card0 at 2800,
+  numeric closed. Clocks held
+  (spin=4000, timed
+  act=cur=2800). 04af 190.028
+  was spin=0 ramp; do not
+  freeze 190. One-card held-
+  clock; sibling pending (new
+  math, not a both-card
+  floor). GDN 7.1 is the
+  wrong math. Sibling SSU
+  B8/W4 stays community.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

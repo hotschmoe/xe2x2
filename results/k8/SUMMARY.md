@@ -62,3 +62,142 @@ RC=4 family).
 Evidence: `results/k8/esimd_s8_moe_up_m1_s4000_card0.txt`,
 `results/k8/esimd_s8_moe_up_m1_s4000_card0.freq`,
 `results/k8/esimd_s8_moe_up_m1_s4000_card0.u16_refuse.txt`.
+
+## ESIMD Mamba-2 SSD SSU T=1 card0 (2026-09-04af)
+
+backend sycl+l0, standalone AOT
+mamba_ssu_t1. T=1 heads=64
+d_head=64 d_state=128 groups=8
+VL=16 wi=one_per_head spin=0.
+Not GDN. Rank pipe_host.
+GDN delta 7.1 is the wrong math.
+Sibling SSU B8/W4 is community,
+not FINDINGS.
+
+cosine=1.000000 max_abs=4.7684e-07
+ok=1. gpu-run 2s.
+
+| card | event_us | pipe_host_us | wait_host_us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 234.510 | 190.028 | 258.467 | 22.18 | 1.000000 | 4.7684e-07 | 1 |
+
+timed_begin act=950 cur=933
+throttle=0. timed_end act=cur=2800
+throttle=0. start D3hot act=0
+cur=2800 throttle=0. end D0
+act=0 cur=2800 throttle=0.
+Do not freeze (spin=0, clocks
+not held). Held-clock 04ah
+80.064 us. One-card first
+light. Sibling pending. New
+math: not a both-card floor.
+
+Evidence: `results/k8/mamba_ssu_t1_s0_card0.txt`,
+`results/k8/mamba_ssu_t1_s0_card0.freq`.
+
+## ESIMD grouped 6-expert s8 decode M=1 card1 (2026-09-04ag)
+
+backend sycl+l0, standalone AOT
+moe_group_s8_m1. experts=6 m=1
+n=1856 k=2688 spin=4000. RC=4
+NT=2 kstep=64 wg=8x2_alongN
+scale 0.02 out f16. Six
+launches share A and one
+in-order queue. Not U=14.
+Rank pipe_host of all 6.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 2s.
+
+| card | event_us | last_event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 164.633 | 33.398 | 165.223 | 0.3623 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done
+act=cur=2800 throttle=0.
+freq 50 ms throttle=0 all 17
+samples. GPU-window act=517,400
+then 7x 2800. vs 6*16.060=96.360
+(~1.72x); vs 6*44.285=265.710
+(~0.62x). mean event 27.4
+us/expert vs U=14 16.060.
+pipe_host ~ event sum. Numeric
+closed. Clocks held. One-card
+enough (matched s8 RC=4 family).
+
+Evidence: `results/k8/moe_group_s8_m1_s4000_card1.txt`,
+`results/k8/moe_group_s8_m1_s4000_card1.freq`.
+
+## ESIMD Mamba conv1d K=4 C=4096 T=1 card1 (2026-09-04ai)
+
+backend sycl+l0, standalone AOT
+gdn_conv1d. T=1 C=4096 k=4 f16
+VL=16 wg=16 spin=4000. Existing
+generic --c path. Rank
+pipe_host. Occupancy may wash
+vs GDN C=2048 4.4.
+
+cosine=1.000000 max_abs=0
+cosine_st=1.000000 max_abs_st=0
+ok=1. gpu-run 2s.
+
+| card | event_us | wait_host_us | pipe_host_us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 0.896 | 14.891 | 4.355 | 22.57 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done
+act=cur=2800 throttle=0.
+freq 50 ms throttle=0 all 7
+samples. GPU-window act=0 then
+550 then 0 (sampler miss,
+short kernel). start D3hot
+act=0 cur=2800 throttle=0.
+end D0 act=0 cur=2800
+throttle=0. vs C=2048
+4.350/4.500 (wash, not 2x);
+vs C=6144 4.799/5.000; vs
+fused qkv 4.4. Numeric
+closed. One-card enough
+(conv family already both-
+card at other C).
+
+Evidence: `results/k8/mamba_conv_c4096_s4000_card1.txt`,
+`results/k8/mamba_conv_c4096_s4000_card1.freq`.
+
+## ESIMD Mamba-2 SSD SSU T=1 held-clock card0 (2026-09-04ah)
+
+backend sycl+l0, standalone AOT
+mamba_ssu_t1. T=1 heads=64
+d_head=64 d_state=128 groups=8
+VL=16 wi=one_per_head spin=4000.
+Not GDN. Rank pipe_host.
+GDN delta 7.1 is the wrong math.
+Prior 04af 190.028 us spin=0.
+Sibling SSU B8/W4 is community,
+not FINDINGS.
+
+cosine=1.000000 max_abs=4.7684e-07
+ok=1. gpu-run 2s.
+
+| card | event_us | pipe_host_us | wait_host_us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 79.531 | 80.064 | 93.563 | 52.65 | 1.000000 | 4.7684e-07 | 1 |
+
+spin_done act=cur=2800
+throttle=0. timed act=cur=2800
+throttle=0 both ends. start D0
+act=0 cur=2800 throttle=0. end
+D0 act=cur=2800 throttle=0.
+freq 50 ms throttle=0 all 11
+samples. GPU-window act=0,0,0,400
+then 4x 2800 then 3x 0. vs 04af
+190.028 (~0.42x; 190 was ramp).
+Numeric closed. Clocks held.
+One-card held-clock. Sibling
+pending. New math: not a
+both-card floor.
+
+Evidence: `results/k8/mamba_ssu_t1_s4000_card0.txt`,
+`results/k8/mamba_ssu_t1_s4000_card0.freq`.
