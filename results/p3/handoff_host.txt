@@ -1,0 +1,32 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2550 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6601953119750 energy2=pkg:3637248679382 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6539678606872 energy2=pkg:3753620597290 temp2_mC=54000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=400 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6601963485290 energy2=pkg:3637254600341 temp2_mC=50000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6539689317993 energy2=pkg:3753626822448 temp2_mC=54000
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=host_staged_pp2 p2p=0 img=b70-sglang-xpu-int8-runtime:20260826-mtp6
+P3 synthetic stage0 -> host -> stage1. Identity of the tensor.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=host_staged_pp2 p2p 0 torch 2.13.0+xpu xpu_count 2 ZE_AFFINITY_MASK 0,1
+RESULT op=host_handoff name=T1_H5120 rows=1 cols=5120 bytes=10240 us=76.848 samecard_us=22.047 bubble=0.713 GBs=0.133 ok=1
+RESULT op=host_handoff name=T4_H5120 rows=4 cols=5120 bytes=40960 us=76.204 samecard_us=13.262 bubble=0.826 GBs=0.538 ok=1
+RESULT op=host_handoff name=T64_H5120 rows=64 cols=5120 bytes=655360 us=303.123 samecard_us=11.865 bubble=0.961 GBs=2.162 ok=1
+RESULT op=host_handoff name=T256_H5120 rows=256 cols=5120 bytes=2621440 us=1026.181 samecard_us=14.012 bubble=0.986 GBs=2.555 ok=1
+RESULT op=host_handoff name=T1_H6144 rows=1 cols=6144 bytes=12288 us=50.307 samecard_us=13.135 bubble=0.739 GBs=0.244 ok=1
+RESULT op=host_handoff name=1MiB rows=524288 cols=1 bytes=1048576 us=467.278 samecard_us=13.376 bubble=0.971 GBs=2.244 ok=1
+VERDICT_LINE ok_all=1 path=host_staged p2p=off
+=== clocks end ===
+card0 pci=0000:0b:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6602635448913 energy2=pkg:3637639439941 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6540360978027 energy2=pkg:3754022129211 temp2_mC=56000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6602645780090 energy2=pkg:3637645311523 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6540371526794 energy2=pkg:3754028370788 temp2_mC=56000

@@ -4388,6 +4388,31 @@ VERDICT -> A=s2 o-proj M=1 is
 Evidence: `results/k7/esimd_s2_oproj_m1_s4000_card0.txt`,
   `results/k7/esimd_s2_oproj_m1_s4000_card1.txt`.
 
+## ESIMD o-proj s8 NT=1 M=1 is 55-class at 2800 (K7)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc_nt1`.
+  NT=1 M=1 n=5120 k=6144. U=16.
+  Both cards. spin=4000. Prior:
+  sc NT=2 62, W8A8 47, square
+  s8 34, napkin ~41.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 55.016 /
+  55.323. Spread ~0.56%. timed
+  act=cur=2800 throttle=0.
+
+VERDICT -> NT=1 o-proj is
+  55-class us pipe_host both
+  cards at 2800. Beats sc NT=2
+  62. Loses to W8A8 47. Not a
+  leftover close. Not a
+  W8A8-contract beat. Numeric
+  closed. Rank pipe_host.
+
+Evidence: `results/k7/esimd_s8_oproj_nt1_m1_s4000_card0.txt`,
+  `results/k7/esimd_s8_oproj_nt1_m1_s4000_card1.txt`.
+
 ## ESIMD skip-hi T=256 loses to slmht leftover (K7)
 
 CONFIG -> backend `sycl+l0`,
@@ -6283,11 +6308,53 @@ we cannot beat XeTLA.
 Serving-shaped work ranks by us, not TOPS%. Four B70s are
 evidence-gated. Model shelf after the math floor: docs/MODELS.md.
 
-## PP=2
+## P2 XCCL P2P-off decode works; 2.5 MiB all_gather hangs
 
-No xe2x2-owned pipeline-parallel finding yet.
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`, fabric
+  xccl, p2p=0. gpu-run both cards. torch 2.13.0+xpu.
+  Image `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  Pre/post xpu-health and xpu-collective-health p2p=0.
+
+RESULT -> Decode 5120 bf16 all_reduce 99-137 us,
+  all_gather 128-210, sendrecv ping-pong 539-848,
+  ok=1. 64-token AR 535-562. 256-token AR 2081 us
+  ok=1 then all_gather 2.5 MiB hung (docker killed).
+  Post-kill per-card HEALTHY and
+  COLLECTIVE_HEALTH_OK 4x5120 p2p=0.
+
+VERDICT -> Decode-sized XCCL P2P-off is a us floor,
+  not a full P2 exit. STOP all_gather >=2.5 MiB
+  P2P-off until a timeout arm. Teardown recovered.
+  Do not enable P2P. P4 stays blocked.
+
+Evidence: `results/p2/xccl_p2p0_hang137.txt`,
+  `results/p2/xccl_p2p0.txt`,
+  `results/p2/SUMMARY.md`.
+
+## PP=2 host-staged handoff is correct; bubble dominates decode
+
+CONFIG -> backend `pytorch-xpu` on `sycl+l0`,
+  fabric host_staged_pp2, p2p=0. One process,
+  both XPUs. xpu:0 -> host DRAM -> xpu:1.
+  No peer access. No clock spin.
+
+RESULT -> ok_all=1. T1_H5120 76.848 us vs
+  same-card copy 22.047, bubble 0.713. T64
+  303 us bubble 0.961. T256 1026 us bubble
+  0.986. Identity closed.
+
+VERDICT -> First xe2x2 PP=2 synthetic. Decode
+  host bounce is 77 us class, ~71% bubble.
+  Do not freeze 77 as 2800. Device-P2P path
+  not measured. P4 stays blocked on P2 bulk
+  hang.
+
+Evidence: `results/p3/handoff_host.txt`,
+  `results/p3/SUMMARY.md`.
 
 ## Mixed 2x2
 
-Blocked until TP=2 and PP=2 each have a passing correctness + health
-run in this repo.
+Blocked until P2 has a passing bulk collective
+(no hang) plus teardown health, on this host
+with the current UMD. P3 host-staged identity
+is not enough.

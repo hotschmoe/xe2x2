@@ -733,11 +733,15 @@ A=s2 o-proj is 14 both.
 Not W8A8-contract beats.
 Seq 298 stays the T=256 mixer
 leftover. W8A8 leftover GEMM
-is o-proj 47 and prefill
+is o-proj 47 (NT=1 55 both,
+still a loss) and prefill
 packed 140/164. Decode s8
-packed 74 stands.
-Next: a new s8 prefill/o-proj
-kernel, or P2.
+packed 74 stands. P2 decode
+XCCL P2P-off AR 99-137 us;
+STOP 2.5 MiB all_gather hang.
+P3 host-staged T=1 77 us,
+identity ok, bubble ~71%.
+P4 blocked.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
@@ -745,24 +749,34 @@ serialize on gpu-run.
 
 ## 10-hour remaining (ruthless)
 
-Park fabric unless this list is
-empty. One question per fire. Split cards.
+One question per fire. Split cards.
+P2 bulk hang is a new leftover.
 
 1. new s8 prefill packed-qkv
    kernel vs W8A8 140/164
-   (existing 4x8 and 4-acc
-   lost).
+   (4x8, 4-acc, wg 8x4, persist
+   B-pipeline all lost).
 2. new s8 o-proj kernel vs
-   W8A8 47 (sc 62 and NT=4 103
-   lost).
+   W8A8 47 (sc 62, NT=4 103,
+   NT=1 55, wg 4x2 74, B-pipe
+   67 all lost; NT=1 is the
+   hand floor).
+3. P2 XCCL all_gather >=2.5 MiB
+   P2P-off with a timeout, or
+   host-staged AR at that size.
 Park: split q/v vs packed 74
 (q+k+v ~109), NT=4 s8, conv-L2
 per-t SLM (358 vs 327),
 conv-L2r (531 vs 327), packed
-qkv s8 M=64 4x8 (214 vs 140),
-packed qkv s8 M=256 4-acc
-(274 vs 164), o-proj s8 sc
-(62 vs 47), P2/P3, GRF256
+qkv s8 M=64 4x8 (214 vs 140)
+and wg 8x4 (154 vs 140), packed
+qkv s8 M=256 4-acc (274 vs 164)
+and wg 8x4 (279 throttle=1 vs
+164) and persist B-pipe (344),
+o-proj s8 sc (62 vs 47), o-proj
+B-pipe (67 vs 62), o-proj NT=1
+wg 4x2 (74 vs 55), P2 256h
+all_gather hang, P4, GRF256
 retry (still zebin 128), mixer
 T=256 packed (1557 vs seq 298),
 skip-hi T=256 (330 vs slmht 260),
@@ -776,7 +790,9 @@ slmht blk=32 T=128,
 inner unroll, slmht unroll, pack a/b/v,
 packed-o, SLM f32, SLM db, slmht SLM-db,
 SLM LUT / u4+sign / skip-hi
-kernel, persist-s8 GEMM us.
+kernel, persist-s8 GEMM us
+(decode B-pipe and 4-acc B-pipe
+already lost).
 
 ## After P0: kernel workstreams (parallelizable)
 

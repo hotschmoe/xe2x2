@@ -12266,3 +12266,506 @@ VERDICT -> Sibling matches.
 Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
+
+### 2026-09-04a - K7 ESIMD s8 o-proj NT=1 M=1 card0
+
+CONTEXT -> oneDNN o-proj W8A8
+  M=1 is 46-47 us. sc NT=2
+  62 us. NT=4 103 us. Square
+  s8 34. Napkin K-linear ~41.
+  NT=1 is 20 WGs vs NT=2 10
+  WGs. Leftover GEMM, not
+  fused mixer 7.1.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc_nt1. gpu-run
+  --card 0. NT=1 U=16 m=1
+  n=5120 k=6144. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_oproj_nt1_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 54.443
+  pipe_host 55.016. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 47
+  (~1.17x, a loss) vs NT=2 62
+  (~0.89x) vs NT=4 103
+  (~0.53x) vs square s8 34
+  (~1.62x, K=1.2x napkin 41).
+
+VERDICT -> ESIMD o-proj s8
+  NT=1 M=1 is 55.016 us
+  pipe_host card0 at 2800.
+  Occupancy steal vs NT=2 62
+  (20 WGs vs 10). Same s8
+  scale-to-f16 contract as
+  W8A8 47, not faster, not a
+  W8A8-contract beat. Worse
+  than K-linear 41. Numeric
+  closed. One-card. Leftover
+  GEMM. Do not replace fused
+  mixer 7.1. Sibling later
+  before FINDINGS. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04b - K7 ESIMD s8 o-proj B-pipeline hail-mary persist/mainloop M=1 card1
+
+CONTEXT -> New s8 B-software-
+  pipeline leftover steal
+  (hail-mary persist/mainloop)
+  vs sc NT=2. At M=1 B is the
+  traffic.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc_bp, hail-mary
+  persist/mainloop. gpu-run
+  --card 1. NT=2 m=1 n=5120
+  k=6144. spin=4000. Fill s8
+  [-64,64] scales 0.02 out
+  f16. Priors: W8A8 o-proj
+  46-47 us; sc NT=2 62 us;
+  NT=4 103 us; square s8 34;
+  napkin K-linear ~41. At M=1
+  B is the traffic.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_s8_oproj_bp_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 66.250
+  pipe_host 66.892. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0.
+
+VERDICT -> hail-mary
+  persist/mainloop. ESIMD
+  o-proj s8 B-pipeline M=1
+  is 66.892 us pipe_host
+  card1 at 2800, a loss vs
+  sc NT=2 62 and vs oneDNN
+  o-proj W8A8 47. Not a
+  W8A8-contract beat of 47.
+  Worse than K-linear 41.
+  Numeric closed. One-card.
+  STOP this B-pipeline on
+  decode o-proj. Do not
+  sibling. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04c - K7 ESIMD s8 o-proj NT=1 M=1 sibling card1
+
+CONTEXT -> card0 NT=1 o-proj was
+  55.016 us at 2800
+  (2026-09-04a). First floor.
+  Sibling. spin=4000. Same TU
+  dpas_s8_sc_nt1.
+
+CONFIG -> backend sycl+l0, same
+  AOT dpas_s8_sc_nt1. gpu-run
+  --card 1. NT=1 U=16 m=1
+  n=5120 k=6144. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_s8_oproj_nt1_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 54.784
+  pipe_host 55.323 vs card0
+  55.016. Spread ~0.56%. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 47
+  (~1.18x, a loss) vs NT=2 62
+  (~0.89x).
+
+VERDICT -> Sibling matches.
+  ESIMD o-proj s8 NT=1 M=1 is
+  55-class us pipe_host both
+  cards at 2800. Occupancy
+  steal vs sc NT=2 62. Same
+  s8 scale-to-f16 contract as
+  W8A8 47, not faster, not a
+  W8A8-contract beat. Not a
+  leftover close. Worse than
+  K-linear 41. Numeric closed.
+  Leftover GEMM. Rank
+  pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04d - K7 ESIMD s8 4-acc wg 8x4 k128 packed qkv M=64 leftover steal card0
+
+CONTEXT -> NEW s8 4-acc wg 8x4
+  k128 leftover steal on packed
+  qkv M=64 n=10240 k=5120.
+  Priors: W8A8 packed qkv M=64
+  is 138-142 us. 4x8 A-db 214
+  lost. square 4-acc 75.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w84m4. gpu-run
+  --card 0. NT=2 m=64 n=10240
+  k=5120. wg=8x4 4acc k128.
+  spin=512. Fill s8 [-64,64]
+  scales 0.02 out f16. Rank
+  pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_qkv_w84m4_m64.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 153.906
+  pipe_host 154.074. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs W8A8 138-142
+  (~1.10x, a loss) vs 4x8 A-db
+  214 (~0.72x) vs square 4-acc
+  75 (~2.05x).
+
+VERDICT -> ESIMD packed qkv s8
+  4-acc wg 8x4 k128 M=64 is
+  154.074 us pipe_host card0
+  at 2800, a loss vs oneDNN
+  W8A8 140. Not a W8A8-contract
+  beat. Faster than 4x8 A-db
+  214, still ~2.05x square
+  4-acc 75. Numeric closed.
+  One-card. STOP this wg 8x4
+  at M=64. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04e - K7 ESIMD s8 4-acc wg 8x4 k128 packed qkv M=256 leftover steal card0
+
+CONTEXT -> NEW s8 4-acc wg 8x4
+  k128 leftover steal on packed
+  qkv M=256 n=10240 k=5120.
+  Priors: W8A8 packed qkv M=256
+  is 164 us. 4-acc 4x8 274 lost.
+  square 4-acc 128. Same-family
+  M=64 was 154 vs W8A8 140
+  (2026-09-04d). STOP at M=64
+  already; this is a different
+  leftover.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w84m4. gpu-run
+  --card 0. NT=2 m=256 n=10240
+  k=5120. wg=8x4 4acc k128.
+  spin=512. Fill s8 [-64,64]
+  scales 0.02 out f16. Rank
+  pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_qkv_w84m4_m256.sh 0 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 281.568
+  pipe_host 278.725. timed
+  act=2717 cur=2800 throttle=1.
+  spin_done act=2717 cur=2800
+  throttle=1. vs W8A8 164
+  (~1.70x, a loss) vs 4-acc
+  4x8 274 (~1.02x) vs square
+  4-acc 128 (~2.18x). gpu-run
+  119s.
+
+VERDICT -> ESIMD packed qkv s8
+  4-acc wg 8x4 k128 M=256 is
+  278.725 us pipe_host card0
+  at act=2717 cur=2800
+  throttle=1, a loss vs oneDNN
+  W8A8 164. Not a W8A8-contract
+  beat. Same class as 4-acc
+  4x8 274, still ~2.18x square
+  4-acc 128. Numeric closed.
+  One-card. Do not freeze (not
+  2800). STOP this wg 8x4 at
+  M=256. Do not promote.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04f - K7 ESIMD s8 4-acc B-pipeline hail-mary persist/mainloop packed qkv M=256 card1
+
+CONTEXT -> hail-mary
+  persist/mainloop 4-acc
+  B-pipeline packed-qkv M=256
+  n=10240 k=5120. Priors:
+  W8A8 packed 164. 4-acc 4x8
+  274. Decode B-pipeline
+  o-proj LOST (66.9 vs 62).
+  This is prefill 4-acc, still
+  label hail-mary.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc8w48m4bp
+  hail-mary persist/mainloop.
+  gpu-run --card 1. NT=2 m=256
+  n=10240 k=5120 wg=4x8 4acc
+  B-pipeline spin=512. Fill s8
+  [-64,64] scales 0.02 out
+  f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_s8_qkv_w48m4bp_m256.sh 1 512
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 344.135
+  pipe_host 343.995. timed
+  act=2700 cur=2800 throttle=1.
+  spin_done act=2700 cur=2800
+  throttle=1. vs W8A8 164
+  (~2.10x, a loss) vs 4-acc
+  4x8 274 (~1.25x, a loss).
+  gpu-run 123s.
+
+VERDICT -> hail-mary
+  persist/mainloop. ESIMD
+  packed qkv s8 4-acc
+  B-pipeline M=256 is 343.995
+  us pipe_host card1, a loss
+  vs 4-acc 4x8 274 and vs
+  oneDNN W8A8 164. Not a
+  W8A8-contract beat. Numeric
+  closed. One-card. Clocks not
+  2800 (throttle=1). Do not
+  freeze. STOP this persist
+  B-pipeline on packed
+  prefill. Do not sibling. Do
+  not promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04g - K7 ESIMD s8 o-proj NT=1 wg 4x2 M=1 card0
+
+CONTEXT -> NEW s8 NT=1 wg 4x2
+  o-proj (40 WGs vs NT=1 8x2
+  20 WGs). NT=1 wg 8x2 is
+  55.016/55.323 both at 2800
+  vs W8A8 47 vs sc 62.
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc_nt1w42. NT=1
+  wg=4x2 m=1 n=5120 k=6144
+  spin=4000. gpu-run --card 0.
+  Fill s8 [-64,64] scales 0.02
+  out f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/gdn/run_esimd_s8_oproj_nt1w42_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 74.010
+  pipe_host 74.278. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs NT=1 8x2 55
+  (~1.35x, a loss) vs W8A8 47
+  (~1.58x, a loss) vs sc NT=2
+  62 (~1.20x, a loss). gpu-run
+  2s.
+
+VERDICT -> ESIMD o-proj s8
+  NT=1 wg 4x2 M=1 is 74.278 us
+  pipe_host card0 at 2800, a
+  loss vs NT=1 wg 8x2 55.
+  Occupancy steal 40 WGs vs 20
+  lost. Not a W8A8-contract
+  beat of 47. Numeric closed.
+  One-card. STOP smaller WG on
+  o-proj. Do not sibling. Do
+  not promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04h - K7 ESIMD s8 o-proj NT=1 wg 4x2 M=1 card1
+
+CONTEXT -> NEW s8 NT=1 wg 4x2
+  o-proj leftover steal vs NT=1
+  8x2 55 both. 40 WGs vs 20.
+  Both-card new WG map. card0
+  74.278 at 2800 (2026-09-04g).
+
+CONFIG -> backend sycl+l0,
+  arm dpas_s8_sc_nt1w42. gpu-run
+  --card 1. NT=1 wg=4x2 m=1
+  n=5120 k=6144. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16. Rank pipe_host.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/gdn/run_esimd_s8_oproj_nt1w42_m1.sh 1 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event 72.901
+  pipe_host 74.636 vs card0
+  74.278. Spread ~0.48%. timed
+  act=cur=2800 throttle=0.
+  spin_done act=cur=2800
+  throttle=0. vs NT=1 8x2 55
+  (~1.36x, a loss) vs W8A8 47
+  (~1.59x, a loss) vs sc NT=2
+  62 (~1.20x, a loss). gpu-run
+  2s.
+
+VERDICT -> Sibling matches the
+  loss. ESIMD o-proj s8 NT=1
+  wg 4x2 M=1 is 74.636 us
+  pipe_host card1 at 2800, a
+  loss vs NT=1 8x2 55.
+  Occupancy steal 40 WGs vs 20
+  lost. Not a W8A8-contract
+  beat of 47. Numeric closed.
+  Both cards 74-class at 2800.
+  STOP this wg 4x2. Do not
+  promote. Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04i - P2 synthetic XCCL P2P-off us sweep both cards
+
+CONTEXT -> Parked charter P2. Kernel leftover
+  GEMM still open (o-proj NT=1 55 vs
+  W8A8 47). Pause one-card. P2P off.
+  Pre-health green. Decode through
+  64-token payloads, then hang.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0, fabric xccl, p2p=0.
+  Image b70-sglang-xpu-int8-runtime:20260826-mtp6.
+  gpu-run both cards. torch 2.13.0+xpu.
+  Payloads decode_h 5120 bf16 through
+  8MiB. No CCL_TOPO_P2P_ACCESS=1.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 xpu-health --card 0 --img vllm-xpu-env:int8g-v0251
+  gpu-run --card 1 xpu-health --card 1 --img vllm-xpu-env:int8g-v0251
+  gpu-run xpu-collective-health --p2p 0 --timeout 240
+  gpu-run bash parallel/tp2/run_xccl_p2p0.sh
+  # hang at prefill_256h; docker killed; post-health
+  ```
+
+RESULT -> Pre: card0 HEALTHY, card1
+  HEALTHY, COLLECTIVE_HEALTH_OK
+  world=2 shape=4x5120 p2p=0.
+  Fire 1 (hang137): decode_h
+  all_reduce 137.119 us ok=1,
+  all_gather 210.358, sendrecv
+  848.166. health_4h AR 125.922
+  AG 172.312 SR 649.646.
+  prefill_64h AR 535.338 AG
+  544.275 SR 948.873. Then no
+  RESULT for ~18 min at act=2800.
+  docker rm unruffled_wing.
+  Fire 2 (instrumented retry):
+  decode_h AR 98.846 AG 127.938
+  SR 538.775. prefill_64h AR
+  562.496 AG 563.377 SR 890.072.
+  prefill_256h all_reduce 2081.428
+  ok=1, then hang on all_gather
+  2.5 MiB. docker rm
+  zealous_blackburn. Post-health
+  after both kills: card0/card1
+  HEALTHY, COLLECTIVE_HEALTH_OK
+  4x5120 p2p=0.
+
+VERDICT -> Decode-sized XCCL
+  P2P-off all_reduce is ~99-137 us,
+  all_gather ~128-210, sendrecv
+  ping-pong ~539-848. 64-token
+  AR ~535-562. 256-token AR can
+  finish (~2081 us) but all_gather
+  at 2.5 MiB hangs. STOP XCCL
+  all_gather >=2.5 MiB P2P-off
+  until a new arm with a timeout.
+  Teardown recovered. Not a full
+  P2 exit. P4 stays blocked.
+  Rank us. Do not enable P2P.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04j - P3 host-staged PP=2 activation handoff both cards
+
+CONTEXT -> Parked charter P3 after
+  P2 hang+teardown health. Host
+  bounce stage0 xpu:0 -> DRAM ->
+  stage1 xpu:1. P2P off. Identity.
+
+CONFIG -> backend pytorch-xpu on
+  sycl+l0, fabric host_staged_pp2,
+  p2p=0. One process, both XPUs.
+  gpu-run both cards. No peer
+  access. No clock spin.
+
+COMMAND ->
+  ```
+  gpu-run bash parallel/pp2/run_handoff_host.sh
+  ```
+
+RESULT -> ok_all=1. T1_H5120
+  host_handoff 76.848 us,
+  samecard 22.047, bubble 0.713,
+  ok=1. T4 76.204 bubble 0.826.
+  T64 303.123 bubble 0.961.
+  T256 1026.181 bubble 0.986.
+  T1_H6144 50.307 bubble 0.739.
+  1MiB 467.278 bubble 0.971.
+  Start clocks D3hot/2550, end
+  2800. Do not freeze 77 as 2800.
+  Post2 health after P2 kills
+  still HEALTHY + COLLECTIVE_OK.
+
+VERDICT -> Host-staged PP=2
+  handoff is correct. Decode
+  T=1 hidden 5120 is 77 us class
+  with ~71% bubble vs same-card
+  copy 22 us. Bubble dominates.
+  Identity closed. First xe2x2
+  PP=2 synthetic. Device-P2P
+  handoff not measured (P2P off).
+  P4 stays blocked on P2 bulk
+  hang. Rank us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.

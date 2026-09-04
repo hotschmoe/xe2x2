@@ -1,0 +1,60 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2800 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6604467396972 energy2=pkg:3638614139831 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6542182175537 energy2=pkg:3755009940734 temp2_mC=54000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=567 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6604478017333 energy2=pkg:3638620157104 temp2_mC=53000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6542193055419 energy2=pkg:3755016224304 temp2_mC=54000
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 img=b70-sglang-xpu-int8-runtime:20260826-mtp6
+P2 synthetic all_reduce / all_gather / sendrecv. Decode hidden through 8MiB.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 world=2 torch 2.13.0+xpu ZE_AFFINITY_MASK 0,1
+BEGIN name=decode_h numel=5120 bytes=10240 rank=0
+BEGIN name=decode_h numel=5120 bytes=10240 rank=1
+2026:09:04-01:41:37:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-01:41:37:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-01:41:37:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-01:41:37:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-01:41:37:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-01:41:37:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+OK op=all_reduce name=decode_h rank=0 got=3.0000 ok=1
+OK op=all_reduce name=decode_h rank=1 got=3.0000 ok=1
+RESULT op=all_reduce name=decode_h numel=5120 bytes=10240 us=98.846 GBs=0.104 ok=1
+OK op=all_gather name=decode_h rank=1 ok=1
+OK op=all_gather name=decode_h rank=0 ok=1
+RESULT op=all_gather name=decode_h numel=5120 bytes=10240 us=127.938 GBs=0.160 ok=1
+OK op=sendrecv name=decode_h rank=0 ok=1OK op=sendrecv name=decode_h rank=1 ok=1
+
+BEGIN name=health_4h numel=20480 bytes=40960 rank=1
+RESULT op=sendrecv name=decode_h numel=5120 bytes=10240 us=538.775 GBs=0.019 ok=1
+BEGIN name=health_4h numel=20480 bytes=40960 rank=0
+OK op=all_reduce name=health_4h rank=1 got=3.0000 ok=1
+OK op=all_reduce name=health_4h rank=0 got=3.0000 ok=1
+RESULT op=all_reduce name=health_4h numel=20480 bytes=40960 us=88.563 GBs=0.462 ok=1
+OK op=all_gather name=health_4h rank=0 ok=1
+OK op=all_gather name=health_4h rank=1 ok=1
+RESULT op=all_gather name=health_4h numel=20480 bytes=40960 us=129.711 GBs=0.632 ok=1
+OK op=sendrecv name=health_4h rank=1 ok=1OK op=sendrecv name=health_4h rank=0 ok=1
+
+BEGIN name=prefill_64h numel=327680 bytes=655360 rank=1
+RESULT op=sendrecv name=health_4h numel=20480 bytes=40960 us=524.313 GBs=0.078 ok=1
+BEGIN name=prefill_64h numel=327680 bytes=655360 rank=0
+OK op=all_reduce name=prefill_64h rank=0 got=3.0000 ok=1
+OK op=all_reduce name=prefill_64h rank=1 got=3.0000 ok=1
+RESULT op=all_reduce name=prefill_64h numel=327680 bytes=655360 us=562.496 GBs=1.165 ok=1
+OK op=all_gather name=prefill_64h rank=0 ok=1
+OK op=all_gather name=prefill_64h rank=1 ok=1
+RESULT op=all_gather name=prefill_64h numel=327680 bytes=655360 us=563.377 GBs=2.327 ok=1
+OK op=sendrecv name=prefill_64h rank=0 ok=1
+OK op=sendrecv name=prefill_64h rank=1 ok=1
+BEGIN name=prefill_256h numel=1310720 bytes=2621440 rank=1
+RESULT op=sendrecv name=prefill_64h numel=327680 bytes=655360 us=890.072 GBs=0.736 ok=1
+BEGIN name=prefill_256h numel=1310720 bytes=2621440 rank=0
+OK op=all_reduce name=prefill_256h rank=1 got=3.0000 ok=1
+OK op=all_reduce name=prefill_256h rank=0 got=3.0000 ok=1
+RESULT op=all_reduce name=prefill_256h numel=1310720 bytes=2621440 us=2081.428 GBs=1.259 ok=1
+
+HANG: retry after instrumented BEGIN/OK. prefill_256h all_reduce completed 2081.428 us ok=1. Next op (all_gather 256h) produced no RESULT. docker rm -f zealous_blackburn. STOP XCCL all_gather at 2.5 MiB P2P-off until a new arm with a timeout.

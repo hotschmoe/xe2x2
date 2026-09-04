@@ -1,0 +1,31 @@
+=== clocks start ===
+card0 pci=0000:0b:00.0 power_state=D3hot
+  gt0 act=0 cur=2283 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6427638481201 energy2=pkg:3519619263610 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6367306258422 energy2=pkg:3628952041320 temp2_mC=52000
+card1 pci=0000:44:00.0 power_state=D0
+  gt0 act=0 cur=500 min=400 max=2800 rp0=2800 rpn=400 throttle=0
+  gt1 act=0 cur=400 min=400 max=1500 rp0=1500 rpn=400 throttle=0
+hwmon hwmon6 cap_uW=230000000 energy1=card:6427648501770 energy2=pkg:3519625008728 temp2_mC=52000
+hwmon hwmon7 cap_uW=230000000 energy1=card:6367316744445 energy2=pkg:3628958165588 temp2_mC=52000
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 img=b70-sglang-xpu-int8-runtime:20260826-mtp6
+P2 synthetic all_reduce / all_gather / sendrecv. Decode hidden through 8MiB.
+CONFIG backend=pytorch-xpu on sycl+l0 fabric=xccl p2p=0 world=2 torch 2.13.0+xpu ZE_AFFINITY_MASK 0,1
+2026:09:04-01:05:25:   41 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:09:04-01:05:25:   41 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 0 (default:-1)
+2026:09:04-01:05:25:   41 |CCL_WARN| value of CCL_KERNEL_PATH changed to be /opt/venv/lib/ccl/kernels (default:)
+2026:09:04-01:05:25:   41 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-01:05:26:   42 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:09:04-01:05:26:   41:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+RESULT op=all_reduce name=decode_h numel=5120 bytes=10240 us=137.119 GBs=0.075 ok=1
+RESULT op=all_gather name=decode_h numel=5120 bytes=10240 us=210.358 GBs=0.097 ok=1
+RESULT op=sendrecv name=decode_h numel=5120 bytes=10240 us=848.166 GBs=0.012 ok=1
+RESULT op=all_reduce name=health_4h numel=20480 bytes=40960 us=125.922 GBs=0.325 ok=1
+RESULT op=all_gather name=health_4h numel=20480 bytes=40960 us=172.312 GBs=0.475 ok=1
+RESULT op=sendrecv name=health_4h numel=20480 bytes=40960 us=649.646 GBs=0.063 ok=1
+RESULT op=all_reduce name=prefill_64h numel=327680 bytes=655360 us=535.338 GBs=1.224 ok=1
+RESULT op=all_gather name=prefill_64h numel=327680 bytes=655360 us=544.275 GBs=2.408 ok=1
+RESULT op=sendrecv name=prefill_64h numel=327680 bytes=655360 us=948.873 GBs=0.691 ok=1
+
+HANG: after prefill_64h sendrecv, next shape prefill_256h produced no RESULT for ~18 min at act=2800. docker rm -f unruffled_wing. gpu-run released. First fire log ends here.

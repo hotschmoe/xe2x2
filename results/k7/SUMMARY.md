@@ -1789,9 +1789,134 @@ K-linear vs square 11.5. Not
 a W8A8-contract beat.
 
 K7 next: W8A8 leftover is
-o-proj 47 and prefill packed
+o-proj 47 (NT=1 55 both, still
+a loss) and prefill packed
 140/164. Decode s8 packed 74
 stands. Seq 298 is the T=256
 mixer leftover. Integer s2/s4
 decode maps for packed qkv
-and o-proj are closed.
+and o-proj are closed. STOP
+B-pipeline decode, wg 8x4
+prefill, persist 4-acc, NT=1
+wg 4x2.
+
+## ESIMD o-proj s8 NT=1 M=1 card0 (2026-09-04a)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1. NT=1 m=1
+n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 55.016 event 54.443.
+timed act=cur=2800 throttle=0.
+vs W8A8 47 a loss; steal vs
+NT=2 62. One-card. Rank
+pipe_host.
+
+## ESIMD o-proj s8 B-pipeline hail-mary persist/mainloop M=1 card1 (2026-09-04b)
+
+backend sycl+l0, arm
+dpas_s8_sc_bp. hail-mary
+persist/mainloop NT=2 m=1
+n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 66.892 event 66.250.
+timed act=cur=2800 throttle=0.
+Loss vs sc 62 and W8A8 47.
+STOP this B-pipeline on
+decode o-proj. One-card.
+
+## ESIMD o-proj s8 NT=1 M=1 sibling card1 (2026-09-04c)
+
+backend sycl+l0, same
+dpas_s8_sc_nt1. NT=1 m=1
+n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 55.323 event 54.784
+vs card0 55.016. Spread ~0.56%.
+timed act=cur=2800 throttle=0.
+55-class both at 2800. Beats
+sc NT=2 62. Loses to W8A8 47.
+Not a leftover close. Rank
+pipe_host.
+
+## ESIMD s8 4-acc wg 8x4 k128 packed qkv M=64 leftover steal card0 (2026-09-04d)
+
+backend sycl+l0, arm
+dpas_s8_sc8w84m4. NT=2 m=64
+n=10240 k=5120 wg=8x4 4acc
+k128 spin=512. cosine=1
+max_abs=0 ok=1. pipe_host
+154.074 event 153.906. timed
+act=cur=2800 throttle=0.
+vs W8A8 138-142 a loss; vs
+4x8 A-db 214 a win; vs square
+4-acc 75 ~2.05x. One-card.
+STOP this wg 8x4 at M=64.
+Not a W8A8-contract beat.
+Rank pipe_host.
+
+## ESIMD s8 4-acc wg 8x4 k128 packed qkv M=256 leftover steal card0 (2026-09-04e)
+
+backend sycl+l0, arm
+dpas_s8_sc8w84m4. NT=2 m=256
+n=10240 k=5120 wg=8x4 4acc
+k128 spin=512. cosine=1
+max_abs=0 ok=1. pipe_host
+278.725 event 281.568. timed
+act=2717 cur=2800 throttle=1.
+vs W8A8 164 a loss; vs 4-acc
+4x8 274 same class; vs square
+4-acc 128 ~2.18x. One-card.
+Do not freeze (not 2800).
+STOP this wg 8x4 at M=256.
+Not a W8A8-contract beat.
+Rank pipe_host.
+
+## ESIMD s8 4-acc B-pipeline hail-mary persist/mainloop packed qkv M=256 card1 (2026-09-04f)
+
+backend sycl+l0, arm
+dpas_s8_sc8w48m4bp. hail-mary
+persist/mainloop. NT=2 m=256
+n=10240 k=5120 wg=4x8 4acc
+B-pipeline spin=512. cosine=1
+max_abs=0 ok=1. pipe_host
+343.995 event 344.135. timed
+act=2700 cur=2800 throttle=1.
+vs W8A8 164 (~2.10x) a loss;
+vs 4-acc 4x8 274 (~1.25x) a
+loss. One-card. Do not freeze
+(not 2800). STOP this persist
+B-pipeline on packed prefill.
+Not a W8A8-contract beat.
+Rank pipe_host.
+
+## ESIMD o-proj s8 NT=1 wg 4x2 M=1 card0 (2026-09-04g)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1w42. NT=1 wg=4x2
+m=1 n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 74.278 event 74.010.
+timed act=cur=2800 throttle=0.
+vs NT=1 8x2 55 a loss; vs
+W8A8 47 a loss; vs sc NT=2 62
+a loss. One-card. STOP smaller
+WG on o-proj. Do not sibling.
+Not a W8A8-contract beat.
+Rank pipe_host.
+
+## ESIMD o-proj s8 NT=1 wg 4x2 M=1 sibling card1 (2026-09-04h)
+
+backend sycl+l0, arm
+dpas_s8_sc_nt1w42. NT=1 wg=4x2
+m=1 n=5120 k=6144 spin=4000.
+cosine=1 max_abs=0 ok=1.
+pipe_host 74.636 event 72.901
+vs card0 74.278. Spread ~0.48%.
+timed act=cur=2800 throttle=0.
+vs NT=1 8x2 55 a loss; vs
+W8A8 47 a loss; vs sc NT=2 62
+a loss. Both-card 74-class at
+2800. STOP this wg 4x2. Do not
+promote. Not a W8A8-contract
+beat. Rank pipe_host.
