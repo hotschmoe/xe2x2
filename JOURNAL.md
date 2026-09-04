@@ -14618,3 +14618,144 @@ Do not drop below 5m: M=256 FFN spin=512
 already 2-4 min GPU, overlapping fires
 serialize on gpu-run.
 
+### 2026-09-04aq - K8 oneDNN W8A8 Lightning packed qkv M=1 card1
+
+CONTEXT -> K8 incumbent floor:
+  oneDNN int8_gemm_w8a8 at
+  Lightning packed qkv M=1
+  n=4608 k=2688. Packed Q
+  4096 + K 256 + V 256.
+  Priors: s8 packed qkv
+  16.609 (04al). W8A8
+  expert-up 44.285 launch-
+  class (04ae). Shared
+  42.273 (04am). Expect
+  44-class if launch bound.
+  Napkin N-linear
+  44.285*(4608/1856)~109.95
+  (CONFIG). GEMM-only. Not
+  a serve.
+
+CONFIG -> backend pytorch-xpu
+  on sycl+l0. gpu-run --card 1.
+  Image b70-sglang-xpu-int8-
+  runtime:20260826-mtp6.
+  int8_gemm_w8a8. heat M=64
+  spin=512. m=1 n=4608 k=2688.
+  Rank us. No P2P. No serve.
+
+COMMAND ->
+  ```
+  gpu-run --card 1 bash kernels/nemotron/run_w8a8_qkv_m1.sh 1
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0.030884 ok=1.
+  41.320 us. 299.765 GB/s.
+  vs s8 packed qkv 16.609
+  (~2.49x; s8 wins) vs
+  expert-up 44.285 (~0.93x)
+  vs shared 42.273 (~0.98x)
+  vs napkin 109.95 (~0.38x)
+  vs square 44. GPU-window
+  act=400,850,850,1000,2800
+  cur=400,817,817,967,2800.
+  One sample act=cur=2800.
+  freq 50 ms throttle=0 all
+  173 samples. start act=0
+  cur=2800 throttle=0 D3hot.
+  end act=0 cur=2800
+  throttle=0 D0. gpu-run 15s.
+
+VERDICT -> oneDNN W8A8 Lightning
+  packed qkv M=1 is 41.320
+  us card1, 44-class launch
+  like expert-up 44.285 and
+  shared 42.273, not
+  N-linear (2.48x N did not
+  2.48x us). Loses to s8
+  16.609 (~2.49x). Numeric
+  closed. throttle=0. Do
+  not freeze (act not held
+  2800). One-card enough
+  (W8A8 family already
+  matched both cards). Rank
+  us.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+
+### 2026-09-04ap - K8 ESIMD s8 o-proj M=1 card0
+
+CONTEXT -> K8 Lightning attn
+  o-proj M=1 n=2688 k=4096
+  using stock dpas_s8_sc U=16
+  (k=4096 divides inner_k=1024,
+  4 K-blocks). Priors: packed
+  qkv s8 16.609 (04al).
+  expert-up 16.060 (04ad).
+  packed qkv W8A8 41.320
+  (04aq). Qwen o-proj NT1 SK
+  44 vs W8A8 47. Rank
+  pipe_host. One-card on s8
+  RC=4 family.
+
+CONFIG -> backend sycl+l0,
+  standalone AOT dpas_s8_sc.
+  gpu-run --card 0. NT=2 U=16
+  m=1 n=2688 k=4096. spin=4000.
+  Fill s8 [-64,64] scales 0.02
+  out f16. RC=4 wg=8x2_alongN
+  dpas=64.
+
+COMMAND ->
+  ```
+  gpu-run --card 0 bash kernels/nemotron/run_esimd_s8_oproj_m1.sh 0 4000
+  ```
+
+RESULT -> cosine=1.000000
+  max_abs=0 ok=1. event
+  22.776 pipe_host 23.115
+  wait_host 36.728. median
+  22.656 min 21.979 max
+  23.854. TOPS 0.9668.
+  spin_done act=cur=2800
+  throttle=0. timed
+  act=cur=2800 throttle=0
+  both ends. freq 50 ms
+  throttle=0 all 9 samples.
+  GPU-window act=0,0,0,400,0
+  then 3x 2800 then 0. start
+  D0 act=0 cur=2800
+  throttle=0. end D0 act=0
+  cur=2800 throttle=0. vs
+  packed qkv 16.609 (~1.39x)
+  vs expert-up 16.060 (~1.44x)
+  vs packed qkv W8A8 41.320
+  (~0.56x) vs Qwen NT1 SK 44
+  (~0.53x) vs Qwen W8A8 47
+  (~0.49x) vs K-block napkin
+  16.609*(4/3)~22.1 (~1.04x).
+  gpu-run 2s.
+
+VERDICT -> ESIMD s8 o-proj
+  M=1 is 23.115 us pipe_host
+  card0 at 2800. Not launch-
+  class 16 like packed qkv /
+  expert-up. Tracks extra
+  K-block (U=16 inner_k=1024,
+  4 blocks vs qkv 3). Beats
+  Qwen o-proj NT1 SK 44 and
+  W8A8 47 (Qwen shapes) and
+  Lightning packed-qkv W8A8
+  41.320. Numeric closed.
+  Clocks held. One-card
+  enough (matched s8 RC=4
+  family, cosine closed,
+  clocks held). Lightning
+  W8A8 o-proj still open.
+  Rank pipe_host.
+Do not drop below 5m: M=256 FFN spin=512
+already 2-4 min GPU, overlapping fires
+serialize on gpu-run.
+

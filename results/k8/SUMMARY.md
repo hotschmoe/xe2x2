@@ -419,3 +419,76 @@ held. One-card enough
 
 Evidence: `results/k8/nibble_lut_moe_up_u14_s4000_card0.txt`,
 `results/k8/nibble_lut_moe_up_u14_s4000_card0.freq`.
+
+## W8A8 packed qkv M=1 card1 (2026-09-04aq)
+
+cosine=1.000000 max_abs=0.030884 ok=1.
+gpu-run 15s.
+
+| card | us | GBs | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 41.320 | 299.765 | 1.000000 | 0.030884 | 1 |
+
+Clocks (freq 50 ms): throttle=0 all 173 samples.
+GPU-window act=400,850,850,1000,2800
+cur=400,817,817,967,2800.
+One sample act=cur=2800. start act=0
+cur=2800 throttle=0 D3hot. end act=0
+cur=2800 throttle=0 D0.
+
+vs s8 packed qkv 16.609 (~2.49x;
+s8 wins). vs routed-up W8A8
+44.285 (~0.93x) and shared
+42.273 (~0.98x) and square
+M=1 5120 44 us. Launch class,
+not N-linear (napkin
+44.285*(4608/1856)~109.95 CONFIG).
+Do not freeze (act not held 2800).
+One-card enough (W8A8 family
+already matched both cards).
+
+Evidence: `results/k8/w8a8_qkv_m1_card1.txt`,
+`results/k8/w8a8_qkv_m1_card1.freq`.
+
+## ESIMD s8 o-proj M=1 card0 (2026-09-04ap)
+
+backend sycl+l0, standalone AOT
+dpas_s8_sc. NT=2 U=16 m=1
+n=2688 k=4096 spin=4000. Same
+RC=4 8x2-N scale-to-f16 family
+as packed qkv 16.609. Stock
+U=16 inner_k=1024 divides
+4096 (4 K-blocks). Rank
+pipe_host.
+
+cosine=1.000000 max_abs=0 ok=1.
+gpu-run 2s.
+
+| card | event_us | pipe_host_us | TOPS | cosine | max_abs | ok |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 22.776 | 23.115 | 0.9668 | 1.000000 | 0 | 1 |
+
+timed act=cur=2800 throttle=0
+both ends. spin_done act=cur=2800
+throttle=0. freq 50 ms
+throttle=0 all 9 samples.
+GPU-window act=0,0,0,400,0 then
+3x 2800 then 0. start D0
+act=0 cur=2800 throttle=0. end
+D0 act=0 cur=2800 throttle=0.
+vs packed qkv 16.609 (~1.39x);
+vs expert-up 16.060 (~1.44x);
+vs packed qkv W8A8 41.320
+(~0.56x); vs Qwen NT1 SK 44
+(~0.53x); vs Qwen W8A8 47
+(~0.49x); vs K-block napkin
+16.609*(4/3)~22.1 (~1.04x).
+Not launch-class 16. Tracks
+extra K-block (4 vs 3).
+Numeric closed. Clocks held.
+One-card enough (matched s8
+RC=4 family). Lightning W8A8
+o-proj still open.
+
+Evidence: `results/k8/esimd_s8_oproj_m1_s4000_card0.txt`,
+`results/k8/esimd_s8_oproj_m1_s4000_card0.freq`.

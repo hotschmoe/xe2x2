@@ -69,14 +69,23 @@ Shared 2688 x 3712, every token. top-6 of 128.
 
 ## 3. Attention (6 layers only -- cheap, still measure)
 
-- [ ] Packed qkv M=1 n=4608 k=2688 s8 vs W8A8.
+- [x] Packed qkv M=1 n=4608 k=2688 s8 vs W8A8.
       s8 U=14 16.609 us pipe_host
-      card0 at 2800 (04al). Launch
-      class vs expert-up 16.060,
-      not napkin 40. W8A8 still
-      open.
+      card0 at 2800 (04al). W8A8
+      41.320 us card1 (04aq).
+      Launch class vs expert-up
+      16.060 / 44.285, not
+      napkin 40 / 110.
 - [ ] Packed qkv M=64 and M=256.
-- [ ] o-proj M=1 n=2688 k=4096.
+- [x] o-proj M=1 n=2688 k=4096.
+      s8 stock U=16 23.115 us
+      pipe_host card0 at 2800
+      (04ap). Tracks 4 K-blocks
+      vs packed qkv 16.609, not
+      launch-class 16. Beats
+      Qwen NT1 SK 44 / W8A8 47
+      and qkv W8A8 41.320.
+      Lightning W8A8 still open.
 - [ ] GQA 32/2 decode attn vs Mamba SSU us (expect attn << SSU
       at long T; measure).
 

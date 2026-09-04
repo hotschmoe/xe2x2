@@ -7056,3 +7056,85 @@ VERDICT -> Lightning merge LUT
 Evidence: `results/k8/nibble_lut_moe_up_u14_s4000_card0.txt`,
   `results/k8/nibble_lut_moe_up_u14_s4000_card0.freq`,
   `results/k8/SUMMARY.md`.
+
+## Lightning packed qkv W8A8 is 41 us decode (K8)
+
+CONFIG -> backend `pytorch-xpu` on
+  `sycl+l0`. Image
+  `b70-sglang-xpu-int8-runtime:20260826-mtp6`.
+  `int8_gemm_w8a8` GEMM-only. M=1
+  n=4608 k=2688. Heat M=64
+  spin=512. Card1. Prior: s8
+  packed qkv 16.609 (04al),
+  expert-up W8A8 44.285.
+  Packed Q 4096 + K 256 + V
+  256. No serve.
+
+RESULT -> cosine=1.000000
+  max_abs=0.030884 ok=1.
+  41.320 us. 299.765 GB/s.
+  GPU-window act=400,850,850,
+  1000,2800 cur=400,817,817,
+  967,2800 throttle=0. One
+  sample act=cur=2800.
+
+VERDICT -> Packed qkv W8A8 is
+  41.320 us card1, same
+  44-class launch as expert-up
+  44.285 and shared 42.273,
+  not N-linear (2.48x N).
+  Loses to s8 16.609 (~2.49x).
+  Numeric closed. One-card
+  enough (W8A8 family already
+  matched). Do not freeze
+  (act not held 2800). Rank
+  us.
+
+Evidence: `results/k8/w8a8_qkv_m1_card1.txt`,
+  `results/k8/w8a8_qkv_m1_card1.freq`,
+  `results/k8/SUMMARY.md`.
+
+## Lightning o-proj s8 M=1 is 23 us at 2800 (K8)
+
+CONFIG -> backend `sycl+l0`,
+  standalone `dpas_s8_sc` AOT
+  `intel_gpu_bmg_g31`. Same RC=4
+  8x2-N scale-to-f16 U=16 family
+  as square s8 34. M=1 n=2688
+  k=4096. NT=2. Card0.
+  spin=4000. Stock U=16: k=4096
+  divides inner_k=1024 (4
+  K-blocks). Prior: packed qkv
+  s8 16.609, expert-up 16.060,
+  packed qkv W8A8 41.320, Qwen
+  o-proj NT1 SK 44 vs W8A8 47.
+
+RESULT -> cosine=1.0 max_abs=0
+  ok=1. pipe_host 23.115 event
+  22.776. timed act=cur=2800
+  throttle=0. vs packed qkv
+  16.609 (~1.39x) vs expert-up
+  16.060 (~1.44x) vs packed
+  qkv W8A8 41.320 (~0.56x) vs
+  Qwen NT1 SK 44 (~0.53x) vs
+  Qwen W8A8 47 (~0.49x) vs
+  K-block 16.609*(4/3)~22.1
+  (~1.04x).
+
+VERDICT -> Lightning o-proj s8
+  M=1 is 23-class us pipe_host
+  card0 at 2800. Not launch-
+  class 16 like packed qkv /
+  expert-up. Tracks extra
+  K-block (4 vs 3). Beats Qwen
+  o-proj 44/47 and Lightning
+  packed-qkv W8A8 41. Numeric
+  closed. One-card enough
+  (matched s8 RC=4 family,
+  clocks held). Lightning
+  W8A8 o-proj still open.
+  Rank pipe_host.
+
+Evidence: `results/k8/esimd_s8_oproj_m1_s4000_card0.txt`,
+  `results/k8/esimd_s8_oproj_m1_s4000_card0.freq`,
+  `results/k8/SUMMARY.md`.

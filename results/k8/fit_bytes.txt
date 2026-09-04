@@ -1,0 +1,12 @@
+CONFIG napkin Lightning expert pool bytes. No checkpoint.
+routed_elems 29374808064 shared_elems 458981376
+bf16 routed_GiB=54.71 shared_GiB=0.85 experts_GiB=55.57 fit_30.3=False
+s8_repack routed_GiB=27.36 shared_GiB=0.43 experts_GiB=27.78 fit_30.3=True
+nvfp4_nibble routed_GiB=13.68 shared_GiB=0.21 experts_GiB=13.89 fit_30.3=True
+gptq_s4 routed_GiB=13.68 shared_GiB=0.21 experts_GiB=13.89 fit_30.3=True
+two_term_s4_planes routed_GiB=27.36 shared_GiB=0.43 experts_GiB=27.78 fit_30.3=True
+kv_bf16_T=32768 GiB=0.188
+kv_bf16_T=120000 GiB=0.687
+kv_bf16_T=256144 GiB=1.466
+mamba_state_f32_GiB 0.044921875
+VERDICT s8_repack_routed ~27.4 GiB likely no-fit with KV. nvfp4 ~14 GiB fits napkin.
