@@ -759,17 +759,16 @@ One question per fire. Split cards.
 P2 bulk hang is a new leftover.
 
 1. new s8 packed-qkv M=256
-   kernel vs W8A8 164 (4x8,
-   4-acc 274, wg 8x4 279,
-   persist 344, SK=2 295,
-   SK=5 unroll=8 393 all
-   lost). M=64 split-K 115
-   stands vs 140.
-2. P2 XCCL all_gather 2.5 MiB
-   still hangs at 45s. Need a
-   different arm (not more
-   wait). Host-staged AR works
-   but 439 vs XCCL 99-137.
+   kernel vs W8A8 164 (4-acc
+   274, 2-acc 327, SK=2 295,
+   SK=5 393 all lost). M=64
+   SK=2 115 stands vs 140.
+2. one-shot XCCL AG 2.5 MiB
+   still hangs. Chunked 4x64h
+   2162 us is the working bulk
+   path. Host-staged AR 439.
+3. mixer T=256 seq ~298. No
+   new mapping this wave.
 Park o-proj: NT=1 SK=2 44
 beats W8A8 47. STOP sc 62,
 NT=4 103, NT=1 55, wg 4x2 74,
