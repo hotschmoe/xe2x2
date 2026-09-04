@@ -92,7 +92,8 @@ No tok/s in FINDINGS.
 
 Then swap cards. Then K3 compose (measure the napkin), K4 W8 A/B
 at Qwen3.8 shapes, K5 epilogue-quant, K6 every NVFP4 spoof, K7
-GDN. Hail marys in KERNEL_CAMPAIGN (E2M1 256-entry product LUT,
+GDN, K8 Lightning Mamba-2 + MoE + NVFP4 expert spoofs. Hail marys
+in KERNEL_CAMPAIGN (E2M1 256-entry product LUT, Lightning 5c,
 large GRF, W4A8 progressive quant, PP=2+push) are allowed and
 must be labeled and measured.
 
@@ -109,8 +110,10 @@ worktrees.
 ## Models (after the math floor, not instead of it)
 
 `docs/MODELS.md`. Dense: Qwen3.8-27B already on disk (BF16, FP8
-W8A16 incumbent, W8A8, GPTQ-INT4, NVFP4). MoE: Ornith-1.5-35B-A3B
-on disk; fetch Qwen3.6-35B-A3B when you want that name. Gemma 4
+W8A16 incumbent, W8A8, GPTQ-INT4, NVFP4). MoE: Nemotron 3.5
+Lightning 30B-A3B is the named NVFP4 hybrid (K8,
+`kernels/nemotron/`); Ornith-1.5-35B-A3B is the on-disk A3B
+stand-in; fetch Qwen3.6-35B-A3B when you want that name. Gemma 4
 26B A4B compact fetch. Flash-Next is stretch (NVMe experts/PLE),
 not the first serve. Quants: INT8 W8A16/W8A8, integer INT4, NVFP4
 spoof (never bitcast E2M1 onto s4). FP8 is the dense control.

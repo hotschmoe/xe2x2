@@ -48,20 +48,41 @@ Use this family for: K4 W8 A/B, K5 epilogue-quant in a real layer
 shape, K6 NVFP4 spoof vs resident 4-bit, TP=2 decode once collectives
 are healthy. One-card INT4/NVFP4/FP8; two-card INT8 and long KV.
 
-## MoE primary -- Qwen3.6-35B-A3B class (~3B active)
+## MoE primary -- 30B/35B-A3B class (~3B active)
+
+Two named bodies, same size class. Kernel work is K8 for Lightning
+(Mamba-2 + MoE + rare attn) and grouped GEMM / EP vs PP for both.
+
+### Nemotron 3.5 Lightning 30B-A3B
+
+The NVFP4 MoE we actually want to trick onto Xe2. Hugging Face:
+`nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16` and
+`...-NVFP4`. Hybrid 52-layer `nemotron_h`: 23 Mamba-2, 23 MoE
+(128 routed top-6 + 1 shared, 1856 / 3712), 6 GQA (32/2, d=128),
+hidden 2688. Official PTQ: W4A16 experts, FP8 mamba in/out + KV.
+Kernel brief `kernels/nemotron/README.md`. Do not copy 66G BF16
+into xe2x2; fetch NVFP4 or sibling GPTQ-INT4 G64 when a real
+tensor is required. Sibling B70 already served GPTQ-INT4+DFlash
+(refs/ cookbook, ~187 tok/s C1) -- dump, do not cite as FINDINGS.
+
+Lightning makes **expert-parallel vs PP=2** a current 2-card
+question (NVIDIA trains EP=8 TP=1). Mamba state wants replicate.
+Do not start a serve in this repo.
+
+### Qwen3.6-35B-A3B / Ornith stand-in
 
 Named target for grouped GEMM, expert routing, and TP vs PP vs
-batching. Sibling labs served GPTQ-INT4 and Quark W8A8. Not in the
-current `models/files/` live set; fetch when MoE serving starts.
+batching on a dense-attn MoE (not Mamba). Sibling labs served
+GPTQ-INT4 and Quark W8A8. Qwen3.6 is not in the current
+`models/files/` live set; fetch when that name is required.
 Until then, **Ornith-1.5-35B-A3B is already on disk** (BF16, GPTQ
-INT4, NVFP4, W8A8 RTN) and is the same size class. Use Ornith as the
-on-hand MoE body; do not pretend it is Qwen3.6 when reporting.
+INT4, NVFP4, W8A8 RTN). Use Ornith as the on-hand MoE body; do
+not pretend it is Qwen3.6 or Lightning when reporting.
 
 MoE is where PP=2 and batching get interesting: fewer cross-card
 bytes than per-layer TP allreduce, stages stay busy at c>1, expert
 placement per stage is an open map. TP=2 still shards wide
 projections and can win decode if AR is fused (Steve). Measure both.
-Expert-parallel is a later question, not a charter axis yet.
 
 ## MoE compact -- Gemma 4 26B A4B
 

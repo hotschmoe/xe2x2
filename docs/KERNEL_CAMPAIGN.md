@@ -1,7 +1,7 @@
 # Kernel and math campaign
 
 Open research map for Xe2 / B70 kernels, integer DPAS, NVFP4 spoofing,
-and later TP=2 / PP=2 fabric. Updated 2026-09-02.
+and later TP=2 / PP=2 fabric. Updated 2026-09-04 (K8 Lightning).
 
 This file is a question list, not a locked design. Agents may pick any
 workstream after P0 (host freeze + health). Do not treat a suggested
@@ -236,6 +236,15 @@ Qwen3.8-27B and 35B-A3B-class models are GDN hybrids. Inventory plus
 micros for conv1d / delta update / qkvz. A GEMM win that leaves GDN
 eager is not a model win.
 
+### K8  Nemotron Lightning MoE  `kernels/nemotron/`
+
+NVIDIA Nemotron 3.5 Lightning 30B-A3B (`nemotron_h`): 23 Mamba-2 +
+23 MoE (128 routed top-6 + 1 shared) + 6 GQA layers, hidden 2688.
+Official NVFP4 is W4A16 on experts, FP8 on mamba in/out and KV.
+Checklist `kernels/nemotron/TASKS.md`. A GEMM win that leaves SSU
+and grouped MoE eager is not a model win. Do not bitcast E2M1 to
+s4. Do not reuse GDN leftover tiles as Mamba-2.
+
 ## Hail-mary arms (still measure)
 
 These are allowed. They are not the first binary. Label them
@@ -277,6 +286,11 @@ hail-mary in CONFIG. Kill or keep with numbers.
 8. **W4A8 progressive quant (QServe-style)** so dequant does not
    leave the XMX pipe. Protective range, subtract-after-multiply.
    NVIDIA paper; the Xe2 analogue is an experiment.
+
+9. **Lightning expert NVFP4 tricks** (K8 5c). Dual-path DPAS +
+   8/12 fixup, shared-expert s8 / routed E2M1, bf16 GEMV at
+   M=1 1856, per-expert lo-only if overflow is a tail, W4A8 on
+   2688x1856. Label hail-mary. Kill with us.
 
 ## Literature to fetch (read-only agent is fine)
 

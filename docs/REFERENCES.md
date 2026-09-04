@@ -143,6 +143,9 @@ of FINDINGS.
 - intel/llvm#21741 -- B70 ESIMD DPAS wrong inside large SYCL builds
 - NVIDIA NVFP4: https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/
 - OCP MX spec v1.0 -- MXFP4 is not NVFP4
+- Nemotron 3.5 Lightning BF16: https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
+- Nemotron 3.5 Lightning NVFP4: https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+- Nemotron 3.5 Lightning pretrain recipe (layer mix, EP=8): https://docs.nvidia.com/nemotron/nightly/nemotron/lightning35/pretrain.html
 - QServe / QoQ: arXiv 2405.04532 (W4A8, keep dequant on-pipe)
 - oneAPI GPU opt guide, Xe architecture (GRF 128/256, XVE vs XMX)
 

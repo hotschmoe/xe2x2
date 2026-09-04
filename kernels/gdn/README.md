@@ -4,6 +4,9 @@ Question: Qwen3.8-27B and the 35B-A3B-class MoEs are GDN hybrids,
 not plain transformers. What actually runs in the Gated DeltaNet
 path on these two B70s, and is it XMX, XVE, or launch-bound?
 
+Nemotron 3.5 Lightning is Mamba-2 + MoE, not GDN. That is K8
+(`kernels/nemotron/`). Do not reuse these leftover tiles as SSU.
+
 Open. We under-weighted this versus GEMM. A "faster INT8 GEMM" that
 leaves GDN in eager bf16 can lose the model even if K4 looks great.
 

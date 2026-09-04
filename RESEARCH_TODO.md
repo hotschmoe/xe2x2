@@ -1,7 +1,7 @@
 # RESEARCH_TODO.md -- xe2x2 work order
 
-Updated 2026-09-02. P0 is the only hard gate. After P0, kernel
-workstreams (K0-K6) may run in any order. Do not mix environment
+Updated 2026-09-04. P0 is the only hard gate. After P0, kernel
+workstreams (K0-K8) may run in any order. Do not mix environment
 refresh, kernel changes, and parallelism-map changes in one
 comparison.
 
@@ -782,6 +782,16 @@ P2 bulk hang is a new leftover.
    L2-once 327, conv-L2 358,
    conv-L2r 531. No new
    mapping on the shelf.
+4. K8 Nemotron 3.5 Lightning
+   MoE. First two-wide after
+   inventory: card0 Mamba-2
+   SSU T=1, card1 grouped s8
+   M=1 6-of-128 2688x1856 vs
+   W8A8. Then NVFP4 spoofs on
+   that expert tile. Brief:
+   kernels/nemotron/README.md
+   checklist:
+   kernels/nemotron/TASKS.md.
 Park o-proj: NT=1 SK=2 44
 beats W8A8 47. STOP sc 62,
 NT=4 103, NT=1 55, wg 4x2 74,
@@ -833,6 +843,8 @@ Pick a directory, one question per run. Details in each README.
 - K5 `kernels/epilogue_quant/` -- INT8 without ~160 quant launches
 - K6 `kernels/nvfp4/` -- every NVFP4 spoof / LUT / split
 - K7 `kernels/gdn/` -- GDN hybrid leftover (Qwen3.8 is not plain attn)
+- K8 `kernels/nemotron/` -- Lightning 30B-A3B Mamba-2 + MoE
+  + NVFP4 expert spoofs. Not a GDN rerun. Not a serve.
 
 Launch pairing: `docs/AGENT_LAUNCH.md`. A literature agent may fetch
 `docs/REFERENCES.md` campaign papers with no GPU lease.

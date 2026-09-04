@@ -62,6 +62,11 @@ Card0 || card1: split the arm list, swap. Real checkpoints if present
 under `/mnt/vm_8tb/github/b70_ai_things` models; otherwise synthetic
 E2M1 tensors with a documented histogram.
 
+Lightning 30B-A3B is the real NVFP4 MoE customer (W4A16 experts,
+FP8 mamba). Re-run these spoofs on 2688 x 1856 / 3712 grouped
+tiles under K8 (`kernels/nemotron/TASKS.md` section 5). Do not
+treat a 5120 square FINDING as a Lightning expert RESULT.
+
 ## Record
 
 VRAM bytes of weights, us, GB/s, TOPS, cosine vs E2M1 reference
